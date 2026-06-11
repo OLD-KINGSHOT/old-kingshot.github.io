@@ -753,6 +753,7 @@ function init(){
   const sp=document.getElementById('splash');
   if(sp){ const t0=window.__splashT0||Date.now();
     setTimeout(()=>{ sp.classList.add('off'); setTimeout(()=>sp.remove(),600); },Math.max(0,900-(Date.now()-t0))); }
+  showOnboard(); /* first-run: pilih bahasa + jam (muncul saat splash memudar) */
   /* cross-device sync: pull on open + every 5 min; re-render only when newer data applied */
   if(typeof ksSync!=='undefined'&&ksSync.on()){
     const onPull=r=>{ if(r!=='applied') return;
@@ -760,6 +761,35 @@ function init(){
     ksSync.pull().then(onPull);
     setInterval(()=>ksSync.pull().then(onPull),5*60000);
   }
+}
+/* First-run chooser: bahasa (ID/EN) + jam (WIB/UTC). Bilingual labels because it
+   shows BEFORE a language is chosen. Per-device preference — not synced. */
+function showOnboard(){
+  if(store.get('onboard',0)||document.getElementById('onboard')) return;
+  const d=document.createElement('div'); d.id='onboard';
+  d.innerHTML=`<div class="ob-box">
+    <div class="ob-t">KINGSHOT13</div>
+    <div class="ob-l">Bahasa / Language</div>
+    <div class="ob-row" id="ob_lang"><button data-v="id" class="active">🇮🇩 Indonesia</button><button data-v="en">🇬🇧 English</button></div>
+    <div class="ob-l">Jam / Clock</div>
+    <div class="ob-row" id="ob_tz"><button data-v="WIB" class="active">WIB (UTC+7)</button><button data-v="UTC">UTC</button></div>
+    <button class="ob-go" id="ob_go">MULAI →</button>
+  </div>`;
+  document.body.appendChild(d);
+  ['ob_lang','ob_tz'].forEach(id=>{
+    d.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{
+      d.querySelectorAll('#'+id+' button').forEach(x=>x.classList.toggle('active',x===b));
+      if(id==='ob_lang') d.querySelector('#ob_go').textContent=b.dataset.v==='en'?'START →':'MULAI →';
+    });
+  });
+  d.querySelector('#ob_go').onclick=()=>{
+    const lang=d.querySelector('#ob_lang button.active').dataset.v;
+    const tz=d.querySelector('#ob_tz button.active').dataset.v;
+    store.set('onboard',1);
+    if(typeof setTZ==='function') setTZ(tz);
+    if(window.setLang) window.setLang(lang);
+    d.classList.add('off'); setTimeout(()=>d.remove(),450);
+  };
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 

@@ -21,7 +21,7 @@ const store={
    Strategi konflik: last-write-wins per snapshot (cukup untuk 1 pemain multi-HP).
    Kunci volatil (cache yang bisa diambil ulang / preferensi per-perangkat) di-skip. */
 const ksSync={
-  _skip:['ks_syncMeta','ks_liveEvents','ks_kdates','ks_clockOffset','ks_clockSyncAt','ks_clockNudge','ks_islandZoom','ks_lang','ks_lastTab','ks_evSub','ks_lastSit'],
+  _skip:['ks_syncMeta','ks_liveEvents','ks_kdates','ks_clockOffset','ks_clockSyncAt','ks_clockNudge','ks_islandZoom','ks_lang','ks_lastTab','ks_evSub','ks_lastSit','ks_onboard','ks_tz'],
   _t:null,
   meta(){ try{ return JSON.parse(localStorage.getItem('ks_syncMeta')||'null'); }catch(e){ return null; } },
   _saveMeta(m){ try{ localStorage.setItem('ks_syncMeta',JSON.stringify(m)); }catch(e){} },
