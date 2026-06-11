@@ -1,0 +1,389 @@
+/* ============================================================
+   KINGSHOT COMPANION — ENGINE (utils, clock, API, advisories)
+   Reuses proven logic: official player API + MD5 sign, UTC clock sync,
+   event advisory engine, gift-code live fetch + redeem.
+   ============================================================ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const fmt=n=>{n=Number(n)||0;return n.toLocaleString('id-ID');};
+const esc=v=>(''+(v==null?'':v)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const parseNum=v=>{ if(v==null) return 0; v=(''+v).replace(/[.\s]/g,'').replace(/,/g,'.'); const n=parseFloat(v); return isNaN(n)?0:n; };
+const store={
+  get(k,d){ try{const v=localStorage.getItem('ks_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{localStorage.setItem('ks_'+k,JSON.stringify(v));}catch(e){}
+    if(typeof ksSync!=='undefined'&&ksSync._skip.indexOf('ks_'+k)<0) ksSync.schedule(); }
+};
+
+/* ── Sinkron otomatis antar perangkat ──
+   Backend: textdb.online (gratis, tanpa daftar, CORS penuh) — satu "kode sinkron"
+   acak 128-bit = satu slot data bersama. Perangkat dengan kode sama saling sinkron:
+   PULL saat app dibuka, PUSH (debounce 4 dtk) tiap ada perubahan tersimpan.
+   Strategi konflik: last-write-wins per snapshot (cukup untuk 1 pemain multi-HP).
+   Kunci volatil (cache yang bisa diambil ulang / preferensi per-perangkat) di-skip. */
+const ksSync={
+  _skip:['ks_syncMeta','ks_liveEvents','ks_kdates','ks_clockOffset','ks_clockSyncAt','ks_clockNudge','ks_islandZoom','ks_lang','ks_lastTab','ks_evSub','ks_lastSit'],
+  _t:null,
+  meta(){ try{ return JSON.parse(localStorage.getItem('ks_syncMeta')||'null'); }catch(e){ return null; } },
+  _saveMeta(m){ try{ localStorage.setItem('ks_syncMeta',JSON.stringify(m)); }catch(e){} },
+  on(){ const m=this.meta(); return !!(m&&m.code); },
+  newCode(){ const a=new Uint8Array(16); crypto.getRandomValues(a);
+    return 'KS2-'+Array.from(a,b=>('0'+b.toString(16)).slice(-2)).join('').toUpperCase(); },
+  collect(){ const data={};
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i);
+      if(k&&k.indexOf('ks_')===0&&this._skip.indexOf(k)<0) data[k]=localStorage.getItem(k); }
+    return data; },
+  schedule(){ if(!this.on()) return; clearTimeout(this._t);
+    this._t=setTimeout(()=>this.push(),4000); },
+  async push(){
+    const m=this.meta(); if(!m||!m.code) return false;
+    const payload={_v:1,ts:Date.now(),data:this.collect()};
+    try{
+      const r=await fetch('https://textdb.online/update',{method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:'key='+encodeURIComponent(m.code)+'&value='+encodeURIComponent(JSON.stringify(payload))});
+      if(!r.ok) throw new Error('http '+r.status);
+      m.ts=payload.ts; m.at=Date.now(); m.err=''; this._saveMeta(m); this._badge();
+      return true;
+    }catch(e){ m.err='push'; this._saveMeta(m); this._badge(); return false; }
+  },
+  /* returns: 'off' | 'applied' | 'current' | 'empty' | 'err' */
+  async pull(){
+    const m=this.meta(); if(!m||!m.code) return 'off';
+    try{
+      const r=await fetch('https://textdb.online/'+encodeURIComponent(m.code)+'?t='+Date.now());
+      if(!r.ok) throw new Error('http '+r.status);
+      const txt=(await r.text()).trim();
+      if(!txt) return 'empty';
+      const j=JSON.parse(txt); if(!j||!j.data) return 'empty';
+      if((j.ts||0)>(m.ts||0)){
+        for(const k in j.data){ if(k.indexOf('ks_')===0&&this._skip.indexOf(k)<0&&typeof j.data[k]==='string') localStorage.setItem(k,j.data[k]); }
+        m.ts=j.ts; m.at=Date.now(); m.err=''; this._saveMeta(m); this._badge();
+        return 'applied';
+      }
+      m.at=Date.now(); m.err=''; this._saveMeta(m); this._badge();
+      return 'current';
+    }catch(e){ const mm=this.meta(); if(mm){ mm.err='pull'; this._saveMeta(mm); } this._badge(); return 'err'; }
+  },
+  async enable(){ const code=this.newCode(); this._saveMeta({code,ts:0,at:0,err:''});
+    const ok=await this.push(); if(!ok){ localStorage.removeItem('ks_syncMeta'); return null; } return code; },
+  async connect(code){ code=(code||'').trim(); if(!code) return 'bad';
+    this._saveMeta({code,ts:0,at:0,err:''});
+    const res=await this.pull();
+    if(res==='err'){ localStorage.removeItem('ks_syncMeta'); return 'err'; }
+    if(res==='empty'){ await this.push(); return 'pushed'; } /* slot kosong → unggah data lokal */
+    return res; /* 'applied' */
+  },
+  disconnect(){ clearTimeout(this._t); localStorage.removeItem('ks_syncMeta'); this._badge(); },
+  _badge(){ const b=document.getElementById('syncbadge'); if(!b) return;
+    const m=this.meta();
+    b.textContent=!m?'':(m.err?'🔁⚠':'🔁'); b.title=!m?'':(m.err?'Sinkron: gangguan jaringan':'Sinkron aktif'); }
+};
+function pad(n){return String(n).padStart(2,'0');}
+const ID_MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const ID_MON_FULL=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const ID_DOW=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const WIB_OFFSET_MS=7*3600000;
+const KVK_BATTLE_UTC_HOUR=12;
+
+/* ── Authoritative clock (server UTC; daily reset 00:00 UTC = 07:00 WIB) ── */
+const ksClock={
+  offset:0, nudge:0, synced:false,
+  load(){ this.offset=Number(store.get('clockOffset',0))||0; this.nudge=Number(store.get('clockNudge',0))||0;
+    /* a persisted offset is only trustworthy for ~24h (device clock may have been corrected since) */
+    const at=Number(store.get('clockSyncAt',0))||0;
+    if(at&&Date.now()-at<86400000){ this.synced=true; } else { this.offset=0; }
+  },
+  now(){ return new Date(Date.now()+this.offset+this.nudge*60000); },
+  setNudge(min){ this.nudge=Number(min)||0; store.set('clockNudge',this.nudge); },
+  _apply(srvEpoch){ if(isNaN(srvEpoch)) return false; this.offset=srvEpoch-Date.now(); store.set('clockOffset',this.offset); store.set('clockSyncAt',Date.now()); this.synced=true; return true; },
+  async sync(){
+    try{
+      const race=Promise.race([
+        fetch('https://timeapi.io/api/time/current/zone?timeZone=UTC'),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000))
+      ]);
+      const res=await race; const j=await res.json();
+      if(j&&j.year){ return this._apply(Date.UTC(j.year,(j.month||1)-1,j.day||1,j.hour||0,j.minute||0,j.seconds||0,j.milliSeconds||0)); }
+      if(j&&j.dateTime){ return this._apply(Date.parse(j.dateTime.replace(/(\.\d{3})\d*$/,'$1')+'Z')); }
+    }catch(e){}
+    return false;
+  }
+};
+function daysBetween(a,b){ return Math.floor((b-a)/86400000); }
+function todayMidnight(){ const n=ksClock.now(); return new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate())); }
+function wibNow(){ return new Date(ksClock.now().getTime()+WIB_OFFSET_MS); }
+function nextResetUTC(){ const n=ksClock.now(); return Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate()+1); }
+function battleUTC(){ const n=ksClock.now(); return Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate(),KVK_BATTLE_UTC_HOUR); }
+/* ── Alliance-set event times (R4/R5 announce the hour) ──
+   Stored as profile.eventTimes[id] = "HH:MM" in WIB. Events come from the
+   RECURRING_* data flagged settable:true (daily=every day; else dows). */
+const SETTABLE_EVENTS=(typeof RECURRING_DAILY!=='undefined'?RECURRING_DAILY:[]).concat(typeof RECURRING_WEEKLY!=='undefined'?RECURRING_WEEKLY:[]).filter(e=>e&&e.settable);
+function evtTimes(){ const p=store.get('profile',{}); const t=Object.assign({},p.eventTimes||{}); if(p.bearTime&&t.bear===undefined) t.bear=p.bearTime; /* migrate old single field */ return t; }
+/* Next occurrence (UTC ms) of a settable event at its WIB time. */
+function nextRecurUTC(ev,hhmm){ if(!ev||!hhmm) return null; const a=hhmm.split(':'); const wh=parseInt(a[0]); const wm=parseInt(a[1])||0; if(isNaN(wh)) return null;
+  const days=ev.daily?[0,1,2,3,4,5,6]:(ev.dows||[]); if(!days.length) return null; const now=ksClock.now().getTime(); let best=null;
+  for(let off=0;off<=8;off++){ const wib=new Date(ksClock.now().getTime()+WIB_OFFSET_MS+off*86400000); if(days.indexOf(wib.getUTCDay())>=0){ const t=Date.UTC(wib.getUTCFullYear(),wib.getUTCMonth(),wib.getUTCDate(),wh-7,wm,0); if(t>now&&(best===null||t<best)) best=t; } }
+  return best; }
+/* Show a WIB-entered time in the active display timezone. */
+function evtTimeDisp(hhmm){ if(!hhmm) return ''; if(DISPLAY_TZ!=='UTC') return hhmm+' WIB'; const a=hhmm.split(':'); const h=(((parseInt(a[0])||0)-7)%24+24)%24; return pad(h)+':'+pad(parseInt(a[1])||0)+' UTC'; }
+/* ── Display timezone: WIB (default) ⇄ UTC. Reset = 00:00 UTC = 07:00 WIB; KvK battle = 12:00 UTC = 19:00 WIB. ── */
+let DISPLAY_TZ=store.get('tz','WIB');
+const TZINFO={ WIB:{off:7*3600000,label:'WIB',reset:'07:00',battle:'19:00'}, UTC:{off:0,label:'UTC',reset:'00:00',battle:'12:00'} };
+function tzInfo(){ return TZINFO[DISPLAY_TZ]||TZINFO.WIB; }
+function dispNow(){ return new Date(ksClock.now().getTime()+tzInfo().off); }
+function setTZ(t){ DISPLAY_TZ=(t==='UTC')?'UTC':'WIB'; store.set('tz',DISPLAY_TZ); const b=document.getElementById('tztoggle'); if(b) b.textContent=DISPLAY_TZ; if(typeof renderTopClock==='function') renderTopClock(); if(typeof activate==='function') activate(store.get('lastTab','sekarang')); }
+function hms(ms){ if(ms<0)ms=0; const s=Math.floor(ms/1000); return pad(Math.floor(s/3600))+':'+pad(Math.floor(s/60)%60)+':'+pad(s%60); }
+/* KONVENSI HARI SERVER (sejak 2026-06-11): 1-based, sama dengan game —
+   hari server buka = Hari ke-1. Terverifikasi via HoG-2 Kingdom #2114:
+   model "HoG mulai hari 6, siklus 14" + buka 27 Mei → HoG-2 = H20 = 15 Juni,
+   persis seperti yang tampil in-game (konvensi lama 0-based meleset 1 hari).
+   addDaysFmt/ISO menerima NOMOR HARI 1-based → tanggal = start + (n-1). */
+function addDaysFmt(start,n){ const d=new Date(start.getTime()+(n-1)*86400000); return d.getUTCDate()+' '+ID_MON[d.getUTCMonth()]+' '+d.getUTCFullYear(); }
+function addDaysISO(start,n){ const d=new Date(start.getTime()+(n-1)*86400000); return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate()); }
+function nextWibDay(dows,hhmm){ const wib=wibNow(); const cur=wib.getUTCDay(); let best=99; for(const dw of dows){ let add=(dw-cur+7)%7;
+  if(add===0&&hhmm){ const a=hhmm.split(':'); const evMin=(+a[0])*60+(+a[1]||0); if(wib.getUTCHours()*60+wib.getUTCMinutes()>=evMin) add=7; } /* today's occurrence already passed */
+  if(add<best)best=add; } const d=new Date(wib.getTime()+best*86400000); return {days:best,date:d,label:ID_DOW[d.getUTCDay()].slice(0,3)+' '+d.getUTCDate()+' '+ID_MON[d.getUTCMonth()]}; }
+function utcToWibTime(hhmm){ if(!hhmm) return hhmm; const a=hhmm.split(':'); return pad(((+a[0])+7)%24)+':'+pad(+a[1]||0); }
+function profileAge(){ const p=store.get('profile',{}); if(!p.start) return {p,start:null,age:null,tc:0}; const start=new Date(p.start+'T00:00:00Z'); return {p,start,age:daysBetween(start,todayMidnight())+1,tc:parseInt(p.tc)||0}; }
+
+/* ── MD5 (for signing official API) ── */
+function md5(str){
+  function rh(n){let s='',j;for(j=0;j<=3;j++)s+=((n>>(j*8+4))&0x0F).toString(16)+((n>>(j*8))&0x0F).toString(16);return s;}
+  function ad(x,y){const l=(x&0xFFFF)+(y&0xFFFF);const m=(x>>16)+(y>>16)+(l>>16);return(m<<16)|(l&0xFFFF);}
+  function rl(n,c){return(n<<c)|(n>>>(32-c));}
+  function cmn(q,a,b,x,s,t){return ad(rl(ad(ad(a,q),ad(x,t)),s),b);}
+  function ff(a,b,c,d,x,s,t){return cmn((b&c)|((~b)&d),a,b,x,s,t);}
+  function gg(a,b,c,d,x,s,t){return cmn((b&d)|(c&(~d)),a,b,x,s,t);}
+  function hh(a,b,c,d,x,s,t){return cmn(b^c^d,a,b,x,s,t);}
+  function ii(a,b,c,d,x,s,t){return cmn(c^(b|(~d)),a,b,x,s,t);}
+  function c2b(s){const bin=[],mask=(1<<8)-1;let i;for(i=0;i<s.length*8;i+=8)bin[i>>5]|=(s.charCodeAt(i/8)&mask)<<(i%32);return bin;}
+  const x=c2b(str),len=str.length*8;
+  x[len>>5]|=0x80<<(len%32); x[(((len+64)>>>9)<<4)+14]=len;
+  let a=1732584193,b=-271733879,c=-1732584194,d=271733878,i;
+  for(i=0;i<x.length;i+=16){
+    const oa=a,ob=b,oc=c,od=d;
+    a=ff(a,b,c,d,x[i+0],7,-680876936);d=ff(d,a,b,c,x[i+1],12,-389564586);c=ff(c,d,a,b,x[i+2],17,606105819);b=ff(b,c,d,a,x[i+3],22,-1044525330);
+    a=ff(a,b,c,d,x[i+4],7,-176418897);d=ff(d,a,b,c,x[i+5],12,1200080426);c=ff(c,d,a,b,x[i+6],17,-1473231341);b=ff(b,c,d,a,x[i+7],22,-45705983);
+    a=ff(a,b,c,d,x[i+8],7,1770035416);d=ff(d,a,b,c,x[i+9],12,-1958414417);c=ff(c,d,a,b,x[i+10],17,-42063);b=ff(b,c,d,a,x[i+11],22,-1990404162);
+    a=ff(a,b,c,d,x[i+12],7,1804603682);d=ff(d,a,b,c,x[i+13],12,-40341101);c=ff(c,d,a,b,x[i+14],17,-1502002290);b=ff(b,c,d,a,x[i+15],22,1236535329);
+    a=gg(a,b,c,d,x[i+1],5,-165796510);d=gg(d,a,b,c,x[i+6],9,-1069501632);c=gg(c,d,a,b,x[i+11],14,643717713);b=gg(b,c,d,a,x[i+0],20,-373897302);
+    a=gg(a,b,c,d,x[i+5],5,-701558691);d=gg(d,a,b,c,x[i+10],9,38016083);c=gg(c,d,a,b,x[i+15],14,-660478335);b=gg(b,c,d,a,x[i+4],20,-405537848);
+    a=gg(a,b,c,d,x[i+9],5,568446438);d=gg(d,a,b,c,x[i+14],9,-1019803690);c=gg(c,d,a,b,x[i+3],14,-187363961);b=gg(b,c,d,a,x[i+8],20,1163531501);
+    a=gg(a,b,c,d,x[i+13],5,-1444681467);d=gg(d,a,b,c,x[i+2],9,-51403784);c=gg(c,d,a,b,x[i+7],14,1735328473);b=gg(b,c,d,a,x[i+12],20,-1926607734);
+    a=hh(a,b,c,d,x[i+5],4,-378558);d=hh(d,a,b,c,x[i+8],11,-2022574463);c=hh(c,d,a,b,x[i+11],16,1839030562);b=hh(b,c,d,a,x[i+14],23,-35309556);
+    a=hh(a,b,c,d,x[i+1],4,-1530992060);d=hh(d,a,b,c,x[i+4],11,1272893353);c=hh(c,d,a,b,x[i+7],16,-155497632);b=hh(b,c,d,a,x[i+10],23,-1094730640);
+    a=hh(a,b,c,d,x[i+13],4,681279174);d=hh(d,a,b,c,x[i+0],11,-358537222);c=hh(c,d,a,b,x[i+3],16,-722521979);b=hh(b,c,d,a,x[i+6],23,76029189);
+    a=hh(a,b,c,d,x[i+9],4,-640364487);d=hh(d,a,b,c,x[i+12],11,-421815835);c=hh(c,d,a,b,x[i+15],16,530742520);b=hh(b,c,d,a,x[i+2],23,-995338651);
+    a=ii(a,b,c,d,x[i+0],6,-198630844);d=ii(d,a,b,c,x[i+7],10,1126891415);c=ii(c,d,a,b,x[i+14],15,-1416354905);b=ii(b,c,d,a,x[i+5],21,-57434055);
+    a=ii(a,b,c,d,x[i+12],6,1700485571);d=ii(d,a,b,c,x[i+3],10,-1894986606);c=ii(c,d,a,b,x[i+10],15,-1051523);b=ii(b,c,d,a,x[i+1],21,-2054922799);
+    a=ii(a,b,c,d,x[i+8],6,1873313359);d=ii(d,a,b,c,x[i+15],10,-30611744);c=ii(c,d,a,b,x[i+6],15,-1560198380);b=ii(b,c,d,a,x[i+13],21,1309151649);
+    a=ii(a,b,c,d,x[i+4],6,-145523070);d=ii(d,a,b,c,x[i+11],10,-1120210379);c=ii(c,d,a,b,x[i+2],15,718787259);b=ii(b,c,d,a,x[i+9],21,-343485551);
+    a=ad(a,oa);b=ad(b,ob);c=ad(c,oc);d=ad(d,od);
+  }
+  return rh(a)+rh(b)+rh(c)+rh(d);
+}
+
+/* ── Player API: login-style detect (run once, remembers) ── */
+async function ksPlayerLookup(fid){
+  const time=Date.now();
+  const sign=md5('fid='+fid+'&time='+time+KS_SALT);
+  const body='sign='+sign+'&fid='+encodeURIComponent(fid)+'&time='+time;
+  const res=await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+  const dh=res.headers.get('date'); if(dh){ const srv=Date.parse(dh); if(!isNaN(srv)){ ksClock.offset=srv-Date.now(); store.set('clockOffset',ksClock.offset); ksClock.synced=true; } }
+  return res.json();
+}
+async function fetchKingdomDate(kid){
+  if(KINGDOM_DATES[String(kid)]) return KINGDOM_DATES[String(kid)];
+  const cached=store.get('kdates',{}); if(cached[String(kid)]) return cached[String(kid)];
+  const target='https://kingshot.net/api/kingdom-tracker?kingdomId='+kid;
+  /* corsproxy rejects file:// (null origin); allorigins flaky; r.jina.ai works everywhere */
+  const proxies=[t=>'https://corsproxy.io/?url='+encodeURIComponent(t),t=>'https://api.allorigins.win/raw?url='+encodeURIComponent(t),t=>'https://r.jina.ai/'+t];
+  for(const px of proxies){
+    try{
+      const r=await fetch(px(target)); const j=await r.json();
+      const srv=j&&j.data&&j.data.servers&&j.data.servers[0];
+      if(srv&&srv.openTime){ const dt=new Date(srv.openTime);
+        const iso=dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate());
+        KINGDOM_DATES[String(kid)]=iso; cached[String(kid)]=iso; store.set('kdates',cached); return iso; }
+    }catch(e){}
+  }
+  /* offline fallback: interpolate from the embedded anchor table (±2-3 hari).
+     NOT cached, so a later online lookup replaces it with the exact date. */
+  window._kdateEst=false;
+  if(typeof KINGDOM_ANCHORS!=='undefined'&&KINGDOM_ANCHORS.length>1){
+    const k=+kid, A=KINGDOM_ANCHORS;
+    if(k>=A[0][0]){
+      let t;
+      if(k>A[A.length-1][0]){ /* newer than the table: extrapolate the last slope */
+        const a=A[A.length-2], b=A[A.length-1];
+        t=Date.parse(b[1])+(Date.parse(b[1])-Date.parse(a[1]))*(k-b[0])/(b[0]-a[0]);
+      }else{
+        let lo=A[0], hi=A[A.length-1];
+        for(const p of A){ if(p[0]<=k) lo=p; if(p[0]>=k){ hi=p; break; } }
+        t=hi[0]===lo[0]?Date.parse(lo[1])
+          :Date.parse(lo[1])+(Date.parse(hi[1])-Date.parse(lo[1]))*(k-lo[0])/(hi[0]-lo[0]);
+      }
+      const dt=new Date(t); window._kdateEst=true;
+      return dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate());
+    }
+  }
+  return null;
+}
+/* Redeem one code. Returns {cls,txt}. */
+async function ksRedeem(fid,code){
+  let t=Date.now(); let s=md5('fid='+fid+'&time='+t+KS_SALT);
+  await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'sign='+s+'&fid='+encodeURIComponent(fid)+'&time='+t});
+  t=Date.now(); s=md5('cdk='+code+'&fid='+fid+'&time='+t+KS_SALT);
+  const body='sign='+s+'&fid='+encodeURIComponent(fid)+'&cdk='+encodeURIComponent(code)+'&time='+t;
+  const r=await fetch(KS_GIFT_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+  const j=await r.json(); const m=(j.msg||'').toUpperCase();
+  if(j.code===0||m.includes('SUCCESS')) return {cls:'ok',txt:'Berhasil'};
+  if(m.includes('RECEIVED')||m.includes('USED')) return {cls:'warn',txt:'Sudah dipakai'};
+  if(m.includes('NOT FOUND')||m.includes('CDK')) return {cls:'bad',txt:'Kode salah/tak ada'};
+  if(m.includes('TIME')||m.includes('EXPIRE')) return {cls:'bad',txt:'Kedaluwarsa'};
+  if(m.includes('CAPTCHA')) return {cls:'warn',txt:'Butuh captcha \u2014 redeem in-game'};
+  return {cls:'inf',txt:j.msg||'?'};
+}
+/* Live gift codes — aggregated from TWO sources (kingshot.net's API regularly lags
+   behind: per 2026-06 it listed 1 active code while kingshotwiki.com had 2).
+   Returns array of {code,exp}, or null only when EVERY source failed. */
+/* corsproxy rejects file:// (null origin); allorigins flaky; r.jina.ai works everywhere */
+const KS_PROXIES=[t=>'https://corsproxy.io/?url='+encodeURIComponent(t),t=>'https://api.allorigins.win/raw?url='+encodeURIComponent(t),t=>'https://r.jina.ai/'+t];
+const ksFT=(u)=>Promise.race([fetch(u),new Promise((_,rej)=>setTimeout(()=>rej(new Error('t')),9000))]);
+async function ksNetCodes(){
+  const target='https://kingshot.net/api/gift-codes';
+  for(const px of KS_PROXIES){ try{ const r=await ksFT(px(target)); const j=await r.json();
+    if(j&&j.data&&j.data.giftCodes){ const now=Date.now();
+      return j.data.giftCodes.filter(g=>!g.expiresAt||new Date(g.expiresAt).getTime()>now)
+        .map(g=>({code:g.code,exp:g.expiresAt?new Date(g.expiresAt).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'-'})); } }catch(e){} }
+  return null;
+}
+async function ksWikiCodes(){
+  /* kingshotwiki.com/giftcodes — Century's semi-official wiki, server-rendered WordPress.
+     Primary parse: <span class="code">XXX</span> inside the "Active Codes" section.
+     Fallback parse: "XXXCopy" tokens (what r.jina.ai's markdown rendering leaves). */
+  const target='https://kingshotwiki.com/giftcodes/';
+  for(const px of KS_PROXIES){ try{ const r=await ksFT(px(target)); const t=await r.text();
+    const seg=(t.match(/Active Codes:?([\s\S]{0,4000}?)(Concierge|How to Redeem)/i)||[])[1]||'';
+    let codes=[...seg.matchAll(/class="code">\s*([A-Za-z0-9]{3,24})\s*</g)].map(m=>m[1]);
+    /* markdown fallback: codes render as "XXXCopy" run together ("Kingshot888CopyVIP777Copy"),
+       so split on the literal "Copy" and take the trailing alphanumeric run of each piece */
+    if(!codes.length) codes=seg.split('Copy').map(s=>(s.match(/([A-Za-z0-9]{3,24})\s*$/)||[])[1]).filter(Boolean);
+    if(codes.length) return codes;
+  }catch(e){} }
+  return null;
+}
+/* Live kingdom-wide schedule + KvK/Transfer countdown from kingshot.net.
+   Fetches ALL 4 weeks of the rotation (?week=N) so the monthly calendar can
+   project weekly events onto any date. Cached 6h; countdowns recomputed from
+   the response timestamp at render. */
+async function ksLiveEvents(force){
+  const c=store.get('liveEvents',null);
+  if(!force&&c&&c.t&&Date.now()-c.t<6*3600*1000&&c.d&&c.d.weeks) return c.d;
+  const get=async w=>{ const target='https://kingshot.net/api/events'+(w?'?week='+w:'');
+    for(const px of KS_PROXIES){ try{ const r=await ksFT(px(target)); const j=await r.json();
+      if(j&&j.calendar&&j.calendar.events) return j; }catch(e){} } return null; };
+  const cur=await get(0); if(!cur) return c?c.d:null; /* stale cache beats nothing */
+  const wk=cur.calendar.currentWeek;
+  const restW=[1,2,3,4].filter(w=>w!==wk);
+  const rest=await Promise.all(restW.map(get));
+  const weeks={}; weeks[wk]=cur.calendar.events;
+  restW.forEach((w,i)=>{ if(rest[i]) weeks[w]=rest[i].calendar.events; });
+  const d={kvk:cur.kvk,transfer:cur.transfer,timestamp:cur.timestamp,calendar:cur.calendar,weeks};
+  store.set('liveEvents',{t:Date.now(),d}); return d;
+}
+/* weekly events that cover a given UTC date (projected from the 4-week cycle) */
+function wkEventsOnDate(cd){
+  const c=store.get('liveEvents',null); const d=c&&c.d;
+  const ref=d&&d.calendar&&Date.parse(d.calendar.cycleReference);
+  if(!ref||!d.weeks) return [];
+  const days=Math.floor((cd.getTime()-ref)/86400000); if(days<0) return [];
+  const w=(Math.floor(days/7)%4)+1, wd=days%7; /* 0 = Monday (cycleReference is a Monday) */
+  const DI={Monday:0,Tuesday:1,Wednesday:2,Thursday:3,Friday:4,Saturday:5,Sunday:6};
+  return (d.weeks[w]||[]).filter(e=>{ if(e.type==='PACK') return false;
+    const s=DI[e.startDay],t=DI[e.endDay]; if(s==null||t==null) return false;
+    return s<=t?(wd>=s&&wd<=t):(wd>=s||wd<=t); });
+}
+async function ksLiveCodes(){
+  const [api,wiki]=await Promise.all([ksNetCodes(),ksWikiCodes()]);
+  if(api===null&&wiki===null) return null;
+  const seen=new Set(), out=[];
+  (api||[]).forEach(g=>{ const k=g.code.toLowerCase(); if(!seen.has(k)){ seen.add(k); out.push(g); } });
+  (wiki||[]).forEach(c=>{ const k=c.toLowerCase(); if(!seen.has(k)){ seen.add(k); out.push({code:c,exp:'-'}); } });
+  return out;
+}
+
+/* ── Event prediction & advisory ── */
+function predictedEvents(start,age){
+  const out=[];
+  let hog=age<6?6:6+Math.floor((age-6)/14)*14;
+  for(let k=0;k<3;k++){ const d=hog+k*14; out.push({type:'hog',day:d,date:addDaysISO(start,d),conf:'tinggi'}); }
+  let kvk=age<70?70:70+Math.floor((age-70)/28)*28;
+  const klen=(EVENT_TEMPLATES.kvk&&EVENT_TEMPLATES.kvk.len)||5;
+  if(age>=kvk+klen) kvk+=28; /* current cycle already over → predict the next one */
+  out.push({type:'kvk',day:kvk,date:addDaysISO(start,kvk),conf:'sedang'});
+  return out;
+}
+function evAdvisory(ev){
+  const tpl=EVENT_TEMPLATES[ev.type]; if(!tpl) return null;
+  const start=new Date(ev.date+'T00:00:00Z'); const di=daysBetween(start,todayMidnight());
+  const _pf=store.get('profile',{});
+  if(tpl.minDay && _pf.start){
+    const esd=daysBetween(new Date(_pf.start+'T00:00:00Z'),start);
+    if(esd<tpl.minDay) return {type:ev.type,name:tpl.name,status:'BELUM ELIGIBLE',cls:'warn',di,start,tpl,notEligible:true,
+      lines:['Server masih baru (hari '+esd+'). '+tpl.name+' baru aktif ~hari '+tpl.minDay+'.']};
+  }
+  let status,cls,lines=[];
+  if(tpl.milestone){
+    if(di<0){ status='H-'+(-di); cls='inf'; lines.push('Belum mulai \u2014 '+tpl.goal); }
+    else if(di<tpl.len){ status='D'+(di+1)+(di===tpl.len-1?' (TERAKHIR)':''); cls='ok';
+      lines.push(tpl.goal);
+      lines.push('\u2705 Event MILESTONE power \u2014 SELESAIKAN upgrade/riset/training/hero SEKARANG. Di sini upgrade JANGAN ditahan.');
+      if(SPEED_NOTE[ev.type]) lines.push(SPEED_NOTE[ev.type]+'.');
+      if(di===tpl.len-1) lines.push('\u26a0 HARI TERAKHIR \u2014 push power maksimal sebelum reset 07:00 WIB!');
+    } else { status='Selesai'; cls='inf'; lines.push('Event sudah lewat.'); }
+    return {type:ev.type,name:tpl.name,status,cls,lines,start,tpl,di};
+  }
+  if(di<0){ const h=-di; status='H-'+h+' (prep)'; cls=h<=1?'bad':h<=3?'warn':'inf';
+    lines.push('\ud83d\udd12 TAHAN & siapkan: '+tpl.hold+'.');
+    lines.push('\ud83d\udeab Jangan selesaikan upgrade besar \u2014 tahan untuk diselesaikan saat event.');
+    if(h<=1) lines.push('\u26a0 MULAI BESOK! Pastikan upgrade hampir selesai & buff siap.');
+  } else if(di<tpl.len){ status='D'+(di+1)+' AKTIF'; cls='ok';
+    lines.push('\ud83c\udfaf '+tpl.days[di]);
+    lines.push('\u2705 Pakai SEKARANG: '+(tpl.spend[di]||'item sesuai tema')+'.');
+    if(SPEED_NOTE[ev.type]) lines.push(SPEED_NOTE[ev.type]+'.');
+    lines.push('\ud83d\udd50 Batas hari ini: spend/selesaikan SEBELUM reset 07:00 WIB.');
+    if(tpl.battleWIB&&di===tpl.len-1) lines.push('\u2694 Battle '+tpl.battleWIB+(ev.time?' \u00b7 jam event '+ev.time+' WIB':''));
+    else if(ev.time) lines.push('\u23f0 Jam event: '+ev.time+' WIB');
+  } else { status='Selesai'; cls='inf'; lines.push('Event sudah lewat.'); }
+  return {type:ev.type,name:tpl.name,status,cls,lines,start,tpl,di};
+}
+function activeAdvisories(start,age){
+  const sched=store.get('events',[]).map(evAdvisory).filter(a=>a&&!a.notEligible&&a.di>=0&&a.di<a.tpl.len);
+  const haveT=new Set(sched.map(a=>a.type));
+  if(age>=1&&age<=7&&!haveT.has('burst')){ const b=evAdvisory({type:'burst',date:addDaysISO(start,1)}); if(b&&b.di>=0&&b.di<b.tpl.len){ sched.unshift(b); haveT.add('burst'); } }
+  predictedEvents(start,age).forEach(pp=>{ if(haveT.has(pp.type))return; const a=evAdvisory({type:pp.type,date:pp.date}); if(a&&a.di>=0&&a.di<a.tpl.len){ sched.push(a); haveT.add(pp.type); } });
+  return sched;
+}
+
+/* ── Phase plan (computed action list per server age + TC) ── */
+function phasePlan(age,tc){
+  const a=[];
+  if(tc<10) a.push('\ud83c\udfd7 Rush Town Center ke 10 \u2014 lewat chapter mission (lebih cepat dari gathering).');
+  else if(tc<30) a.push('\ud83c\udfd7 Lanjut upgrade TC (target 30). Jaga builder & antrian riset TIDAK kosong.');
+  else a.push('\ud83c\udfd7 TC30 \u2705 \u2014 fokus Truegold / War Academy & ranking event.');
+  if(age<3) a.push('\ud83e\udd1d Gabung alliance (saat TC6) + klaim Jabel + pull joiner Epic gratis (Chenko/Amane/Yeonwoo/Gordon).');
+  if(age<45){
+    a.push('\ud83e\uddb8 Naikkan skill kunci joiner Epic \u2192 4\u2605 (Chenko/Amane/Yeonwoo).');
+    a.push('\ud83d\udc8e SIMPAN gem (jangan dipakai!) untuk Hero Roulette Zoe (~hari 50).');
+    a.push('\ud83d\udc3b Pakai Diana untuk Beast Hunt (hemat stamina) \u2014 farming Forgehammer harian.');
+  } else if(age<113){
+    a.push('\ud83e\uddb8 Spin Zoe di Roulette (utamakan saat HoG Hari 2-3) + ambil Marlin di Hall of Heroes.');
+  } else if(age<197){
+    a.push('\ud83e\uddb8 Bangun Petra (Gen 3) via Roulette; dorong Zoe ke 4\u2605 + widget.');
+  } else a.push('\ud83e\uddb8 Lanjut hero generasi baru sesuai Timeline Investasi (tab Hero).');
+  a.push('\u2705 Checklist harian: daily mission, Bear Hunt, help alliance, habiskan stamina, klaim gift code.');
+  if(age>=45) a.push('\ud83c\udfc6 Kejar milestone event aktif (Strongest Governor / Hall of Governors).');
+  a.push('\ud83d\udee1 Simpan resource di backpack (anti-jarah) sebelum logout.');
+  return a;
+}

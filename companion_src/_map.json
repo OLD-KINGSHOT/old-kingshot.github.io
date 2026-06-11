@@ -1,0 +1,182 @@
+[
+  {
+    "i": 0,
+    "id": "fbbc01a0-0e70-4fd2-8965-c9c789ca02e6",
+    "mime": "application/javascript",
+    "compressed": true,
+    "bytes": 4622,
+    "file": "00_fbbc01a0.js",
+    "otherKeys": []
+  },
+  {
+    "i": 1,
+    "id": "fa4c6c09-0772-4566-94e7-66420f73be63",
+    "mime": "application/javascript",
+    "compressed": true,
+    "bytes": 29181,
+    "file": "01_fa4c6c09.js",
+    "otherKeys": []
+  },
+  {
+    "i": 2,
+    "id": "94e98c84-f8e2-427e-bfbc-2e414f50f323",
+    "mime": "application/javascript",
+    "compressed": true,
+    "bytes": 20141,
+    "file": "02_94e98c84.js",
+    "otherKeys": []
+  },
+  {
+    "i": 3,
+    "id": "7897e180-492b-4848-92ae-63531f62adb1",
+    "mime": "application/javascript",
+    "compressed": true,
+    "bytes": 15390,
+    "file": "03_7897e180.js",
+    "otherKeys": []
+  },
+  {
+    "i": 4,
+    "id": "0ce30e21-23e5-4166-a695-7853e82207c6",
+    "mime": "application/javascript",
+    "compressed": true,
+    "bytes": 22402,
+    "file": "04_0ce30e21.js",
+    "otherKeys": []
+  },
+  {
+    "i": 5,
+    "id": "8b5b9238-f65f-4ebe-bb9e-eb87db9c306f",
+    "mime": "application/javascript",
+    "compressed": true,
+    "bytes": 20248,
+    "file": "05_8b5b9238.js",
+    "otherKeys": []
+  },
+  {
+    "i": 6,
+    "id": "6fa7ad27-33ef-4732-94a0-e87fd3c02c71",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 25960,
+    "file": "06_6fa7ad27.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 7,
+    "id": "5f380c5a-4058-4076-b6de-34b67f6b8b94",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 18748,
+    "file": "07_5f380c5a.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 8,
+    "id": "e711bb1a-89d0-4703-8510-694f273328d9",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 11232,
+    "file": "08_e711bb1a.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 9,
+    "id": "a7effb2b-a964-41c5-9033-a491204a5277",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 18996,
+    "file": "09_a7effb2b.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 10,
+    "id": "beae56c5-c388-4374-b26a-d5b77093964a",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 10252,
+    "file": "10_beae56c5.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 11,
+    "id": "ab1cf3d0-f20d-407f-b02c-fe2d8fc00adf",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 85068,
+    "file": "11_ab1cf3d0.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 12,
+    "id": "14b1946a-d404-42ea-82c2-a4cd7c15ec78",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 48256,
+    "file": "12_14b1946a.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 13,
+    "id": "7581df78-59f9-40c4-81a5-981468df27cd",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 1640,
+    "file": "13_7581df78.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 14,
+    "id": "a1b85790-b0aa-41ce-92ea-61dd75fe5896",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 8872,
+    "file": "14_a1b85790.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 15,
+    "id": "9b0791d8-666d-4dd8-9dc3-e278d952bf4d",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 6836,
+    "file": "15_9b0791d8.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 16,
+    "id": "7a2c5a4b-a242-45ac-8f10-9919db0abc03",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 5888,
+    "file": "16_7a2c5a4b.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 17,
+    "id": "428cb827-d32e-4d5b-bdb0-07bab71ca358",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 11624,
+    "file": "17_428cb827.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 18,
+    "id": "354967d2-7d8c-46bc-8e0b-65eea2f1a929",
+    "mime": "font/woff2",
+    "compressed": false,
+    "bytes": 31432,
+    "file": "18_354967d2.woff2",
+    "otherKeys": []
+  },
+  {
+    "i": 19,
+    "id": "a7e3f9d2-90af-4c3e-8b21-c0ffee190001",
+    "mime": "image/webp",
+    "compressed": false,
+    "bytes": 265368,
+    "file": "19_island.webp",
+    "otherKeys": []
+  }
+]

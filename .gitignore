@@ -1,0 +1,7 @@
+# Publish ONLY the app — research scrapes, debug artifacts, and local tooling stay local.
+/*
+!/.gitignore
+!/README.md
+!/index.html
+!/companion_repack.js
+!/companion_src
