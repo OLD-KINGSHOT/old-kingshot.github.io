@@ -21,7 +21,7 @@ const store={
    Strategi konflik: last-write-wins per snapshot (cukup untuk 1 pemain multi-HP).
    Kunci volatil (cache yang bisa diambil ulang / preferensi per-perangkat) di-skip. */
 const ksSync={
-  _skip:['ks_syncMeta','ks_liveEvents','ks_kdates','ks_clockOffset','ks_clockSyncAt','ks_clockNudge','ks_islandZoom','ks_lang','ks_lastTab','ks_evSub','ks_lastSit','ks_onboard','ks_tz'],
+  _skip:['ks_syncMeta','ks_liveEvents','ks_kdates','ks_clockOffset','ks_clockSyncAt','ks_clockNudge','ks_islandZoom','ks_lang','ks_lastTab','ks_evSub','ks_lastSit','ks_onboard','ks_tz','ks_visitPing'],
   _t:null,
   meta(){ try{ return JSON.parse(localStorage.getItem('ks_syncMeta')||'null'); }catch(e){ return null; } },
   _saveMeta(m){ try{ localStorage.setItem('ks_syncMeta',JSON.stringify(m)); }catch(e){} },
@@ -303,6 +303,40 @@ function wkEventsOnDate(cd){
   return (d.weeks[w]||[]).filter(e=>{ if(e.type==='PACK') return false;
     const s=DI[e.startDay],t=DI[e.endDay]; if(s==null||t==null) return false;
     return s<=t?(wd>=s&&wd<=t):(wd>=s||wd<=t); });
+}
+/* ── Daftar pengunjung ──
+   Ping 1× per hari per perangkat (hanya yang sudah terhubung Player ID) ke satu
+   slot textdb bersama: {pid:{nick,kid,tc,first,last,visits}}. Data yang dicatat =
+   identitas game yang memang publik (nickname/kingdom/TC). Maks 300 entri
+   (yang paling lama tidak berkunjung digusur). Race antar-penulis simultan bisa
+   menghilangkan 1 ping — dapat diterima untuk skala komunitas. */
+const KS_VISIT_KEY='ks2vis_b3f7d2a90c14e5a8';
+async function ksVisitorPing(){
+  try{
+    const p=store.get('profile',{}); if(!p.pid) return;
+    const today=ksClock.now().toISOString().slice(0,10);
+    if(store.get('visitPing','')===today) return;
+    let map={};
+    try{ const r=await fetch('https://textdb.online/'+KS_VISIT_KEY+'?t='+Date.now());
+      const tx=(await r.text()).trim(); if(tx) map=JSON.parse(tx)||{}; }catch(e){}
+    if(typeof map!=='object'||Array.isArray(map)||!map) map={};
+    const e0=map[p.pid]||{first:today,visits:0};
+    map[p.pid]={nick:p.nick||e0.nick||'',kid:String(p.kingdom||e0.kid||''),tc:String(p.tc||e0.tc||''),
+      first:e0.first||today,last:today,visits:(e0.visits||0)+1};
+    const keys=Object.keys(map);
+    if(keys.length>300){ keys.sort((a,b)=>(map[a].last||'').localeCompare(map[b].last||''));
+      keys.slice(0,keys.length-300).forEach(k=>delete map[k]); }
+    const r2=await fetch('https://textdb.online/update',{method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'key='+KS_VISIT_KEY+'&value='+encodeURIComponent(JSON.stringify(map))});
+    if(r2.ok) store.set('visitPing',today);
+  }catch(e){}
+}
+async function ksVisitorList(){
+  try{ const r=await fetch('https://textdb.online/'+KS_VISIT_KEY+'?t='+Date.now());
+    const tx=(await r.text()).trim(); if(!tx) return {};
+    const m=JSON.parse(tx); return (m&&typeof m==='object'&&!Array.isArray(m))?m:{};
+  }catch(e){ return null; }
 }
 async function ksLiveCodes(){
   const [api,wiki]=await Promise.all([ksNetCodes(),ksWikiCodes()]);

@@ -614,6 +614,10 @@ function renderProfil(){
       `<p class="muted small">App ikut waktu server (UTC) \u2014 reset 07:00 WIB. Sinkron otomatis saat online. Kalau meleset, geser manual (menit):</p>
        <div class="row"><input id="pf_nudge" type="number" step="1" value="${esc(ksClock.nudge)}" style="width:100px"><button class="btn sec sm" id="pf_nudgeset">Terapkan</button><span id="pf_synstat" class="muted small">${ksClock.synced?'\u2713 tersinkron server':'pakai jam perangkat'}</span></div>`)
     +card('Notifikasi otomatis','◉',notifBody())
+    +(p.pid==='330300846'?card('Daftar Pengunjung','👥',
+      `<p class="muted small">Pemain yang membuka app dengan Player ID terhubung — tercatat 1× per hari per perangkat (nickname/kingdom/TC = data publik game). Kartu ini hanya tampil di akunmu.</p>
+       <div class="row" style="margin-bottom:8px"><button class="btn sec sm" id="vs_load">↻ Muat daftar</button><span class="small muted" id="vs_meta"></span></div>
+       <div id="vs_out"></div>`):'')
     +card('Sinkron Otomatis Antar Perangkat','🔁',syncBody())
     +card('Backup & Pindah Perangkat','💾',
       `<p class="muted small">Semua data (profil, checklist, jam alliance, progres) tersimpan di browser INI saja. Ganti HP/browser = data hilang. Export dulu, lalu Import di perangkat baru.</p>
@@ -654,6 +658,18 @@ function renderProfil(){
     };
   }
   wireNotif(el);
+  /* visitor list (owner only) */
+  const vl=$('#vs_load',el); if(vl) vl.onclick=async()=>{
+    const out=$('#vs_out',el), meta=$('#vs_meta',el);
+    out.innerHTML='<div class="muted small">⏳ Memuat…</div>';
+    const m=await ksVisitorList();
+    if(m===null){ out.innerHTML='<div class="alert warn small">Gagal memuat (offline/diblokir).</div>'; return; }
+    const rows=Object.entries(m).sort((a,b)=>(b[1].last||'').localeCompare(a[1].last||''));
+    if(meta) meta.textContent=rows.length+' pengunjung';
+    out.innerHTML=rows.length?('<div class="scrollx"><table><thead><tr><th>Pemain</th><th>K#</th><th>TC</th><th>Kunjungan</th><th>Terakhir</th></tr></thead><tbody>'
+      +rows.map(([pid,v])=>`<tr><td><b>${esc(v.nick||'?')}</b><div class="dim small num">${esc(pid)}</div></td><td class="num">${esc(v.kid||'')}</td><td class="num">${esc(v.tc||'')}</td><td class="num">${esc(v.visits||0)}×<div class="dim small">sejak ${esc(v.first||'')}</div></td><td class="small num" style="white-space:nowrap">${esc(v.last||'')}</td></tr>`).join('')
+      +'</tbody></table></div>'):'<div class="muted small">Belum ada pengunjung tercatat.</div>';
+  };
   /* sync wiring */
   const sm=$('#sy_make',el); if(sm) sm.onclick=async()=>{ sm.disabled=true; const st=$('#sy_status');
     if(st) st.innerHTML='<div class="alert inf small">⏳ Membuat slot sinkron…</div>';
@@ -725,7 +741,7 @@ async function autoDetectUI(){
     else dateMsg=' \u00b7 <span style="color:var(--warn)">tanggal buka tak ketemu, isi manual</span>';
     /* save straight to the store (renderProfil() would wipe #pf_status if we set it first) */
     const old=store.get('profile',{});
-    store.set('profile',Object.assign({},old,{pid:fid,kingdom:String(d.kid),tc:String(d.stove_lv||old.tc||''),start:openDate||old.start||''}));
+    store.set('profile',Object.assign({},old,{pid:fid,nick:d.nickname||old.nick||'',kingdom:String(d.kid),tc:String(d.stove_lv||old.tc||''),start:openDate||old.start||''}));
     renderProfil(); renderTopClock();
     const st2=$('#pf_status'); if(st2) st2.innerHTML='<div class="alert ok small">\u2705 <b>'+esc(d.nickname)+'</b> \u00b7 Kingdom #'+esc(d.kid)+' \u00b7 TC '+esc(d.stove_lv)+dateMsg+'</div>';
   }catch(e){ const stE=$('#pf_status'); if(stE) stE.innerHTML='<div class="alert bad small">Gagal menghubungi server (offline/diblokir). Isi manual saja.</div>'; }
@@ -754,6 +770,7 @@ function init(){
   if(sp){ const t0=window.__splashT0||Date.now();
     setTimeout(()=>{ sp.classList.add('off'); setTimeout(()=>sp.remove(),600); },Math.max(0,900-(Date.now()-t0))); }
   showOnboard(); /* first-run: pilih bahasa + jam + Player ID (muncul saat splash memudar) */
+  setTimeout(()=>{ if(typeof ksVisitorPing==='function') ksVisitorPing(); },5000); /* daftar pengunjung (1×/hari) */
   /* jaring pengaman EN di perangkat lambat: render async menyusul → terjemahkan ulang */
   if(window.__getLang&&window.__getLang()==='en') [1200,3000,6000,10000].forEach(t=>setTimeout(()=>{ if(window.__translate) window.__translate(); },t));
   /* cross-device sync: pull on open + every 5 min; re-render only when newer data applied */
@@ -822,7 +839,7 @@ function showOnboard(){
       const dd=j.data;
       const openDate=await fetchKingdomDate(dd.kid);
       const old=store.get('profile',{});
-      store.set('profile',Object.assign({},old,{pid:fid,kingdom:String(dd.kid),tc:String(dd.stove_lv||old.tc||''),start:openDate||old.start||''}));
+      store.set('profile',Object.assign({},old,{pid:fid,nick:dd.nickname||old.nick||'',kingdom:String(dd.kid),tc:String(dd.stove_lv||old.tc||''),start:openDate||old.start||''}));
       finish();
     }catch(e){
       go.disabled=false; go.textContent=lbl;
