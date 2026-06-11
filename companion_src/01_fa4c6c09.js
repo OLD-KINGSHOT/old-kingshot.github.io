@@ -768,7 +768,9 @@ function init(){
    auto-deteksi Kingdom/TC/tanggal server) — supaya tak perlu mengisi lagi di dalam.
    Label bilingual karena tampil SEBELUM bahasa dipilih. Per-perangkat — tidak disinkron. */
 function showOnboard(){
-  if(store.get('onboard',0)||document.getElementById('onboard')) return;
+  if(document.getElementById('onboard')) return;
+  /* GATE: tampil terus sampai bahasa+jam dipilih DAN Player ID terhubung */
+  if(store.get('onboard',0)&&(store.get('profile',{})||{}).pid) return;
   const d=document.createElement('div'); d.id='onboard';
   d.innerHTML=`<div class="ob-box">
     <div class="ob-t">OLD.KINGSHOT</div>
@@ -779,27 +781,34 @@ function showOnboard(){
     <div class="ob-row" id="ob_tz"><button data-v="WIB" class="active">WIB (UTC+7)</button><button data-v="UTC">UTC</button></div>
     <div class="ob-l">Player ID</div>
     <input id="ob_pid" inputmode="numeric" autocomplete="off" placeholder="cth / e.g. 330300846" class="ob-in">
-    <div class="ob-hint">Kingdom, TC & umur server terdeteksi otomatis / auto-detected</div>
+    <div class="ob-hint">Kingdom, TC & umur server terdeteksi otomatis / auto-detected · ID ada di profil dalam game / see your in-game profile</div>
     <div class="ob-err" id="ob_err"></div>
     <button class="ob-go" id="ob_go">MULAI →</button>
-    <button class="ob-skip" id="ob_skip">Lewati / Skip — isi nanti di tab Profil</button>
+    <button class="ob-skip" id="ob_skip" style="display:none">Lanjut tanpa ID / Continue without ID</button>
   </div>`;
   document.body.appendChild(d);
-  ['ob_lang','ob_tz'].forEach(id=>{
-    d.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{
-      d.querySelectorAll('#'+id+' button').forEach(x=>x.classList.toggle('active',x===b));
-      if(id==='ob_lang') d.querySelector('#ob_go').textContent=b.dataset.v==='en'?'START →':'MULAI →';
-    });
+  /* tombol mencerminkan preferensi TERSIMPAN (gate bisa muncul ulang), dan pilihan
+     DITERAPKAN LANGSUNG saat disentuh — MULAI tak pernah menimpa pilihan user */
+  const curLang=(window.__getLang&&window.__getLang())||'id';
+  const curTz=(typeof DISPLAY_TZ!=='undefined')?DISPLAY_TZ:'WIB';
+  const mark=(id,v)=>d.querySelectorAll('#'+id+' button').forEach(x=>x.classList.toggle('active',x.dataset.v===v));
+  mark('ob_lang',curLang); mark('ob_tz',curTz);
+  d.querySelector('#ob_go').textContent=curLang==='en'?'START →':'MULAI →';
+  d.querySelectorAll('#ob_lang button').forEach(b=>b.onclick=()=>{
+    mark('ob_lang',b.dataset.v);
+    d.querySelector('#ob_go').textContent=b.dataset.v==='en'?'START →':'MULAI →';
+    if(window.setLang) window.setLang(b.dataset.v); /* langsung terasa */
+  });
+  d.querySelectorAll('#ob_tz button').forEach(b=>b.onclick=()=>{
+    mark('ob_tz',b.dataset.v);
+    if(typeof setTZ==='function') setTZ(b.dataset.v);
   });
   const finish=()=>{
-    const lang=d.querySelector('#ob_lang button.active').dataset.v;
-    const tz=d.querySelector('#ob_tz button.active').dataset.v;
     store.set('onboard',1);
-    if(typeof setTZ==='function') setTZ(tz);
-    if(window.setLang) window.setLang(lang);
+    if(typeof activate==='function') activate(store.get('lastTab','sekarang')); /* render ulang dgn profil baru */
     if(typeof updateSideProf==='function') updateSideProf();
     /* perangkat lambat: render async (advisory/jadwal live) menyusul — terjemahkan ulang */
-    if(lang==='en') [800,2500,6000].forEach(t=>setTimeout(()=>{ if(window.__translate) window.__translate(); },t));
+    if(window.__getLang&&window.__getLang()==='en') [800,2500,6000].forEach(t=>setTimeout(()=>{ if(window.__translate) window.__translate(); },t));
     d.classList.add('off'); setTimeout(()=>d.remove(),450);
   };
   const go=d.querySelector('#ob_go'), err=d.querySelector('#ob_err');
@@ -817,7 +826,8 @@ function showOnboard(){
       finish();
     }catch(e){
       go.disabled=false; go.textContent=lbl;
-      err.textContent='Player ID tidak ditemukan / gagal terhubung — coba lagi atau Lewati. (Not found / connection failed — retry or Skip.)';
+      err.textContent='Player ID tidak ditemukan / gagal terhubung — periksa ID lalu coba lagi. (Not found / connection failed — check the ID and retry.)';
+      d.querySelector('#ob_skip').style.display=''; /* pintu darurat hanya saat gagal */
     }
   };
   d.querySelector('#ob_skip').onclick=()=>finish();
