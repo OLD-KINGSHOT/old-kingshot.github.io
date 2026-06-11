@@ -2,7 +2,7 @@
 
 Aplikasi pendamping Kingshot (single-file, tanpa backend): advisory harian berbasis umur server, kalender & jadwal kingdom live, panduan hero/lineup, peta My Island interaktif, gift code auto-redeem, dan sinkron antar perangkat.
 
-**Buka:** https://faturochman13.github.io/kingshot/
+**Buka:** https://old-kingshot.github.io/
 
 - Semua data progres tersimpan di browser (localStorage) + sinkron opsional via kode rahasia.
 - Sumber data live: kingshot.net (jadwal kingdom, tanggal buka server) & kingshotwiki.com (gift code).
