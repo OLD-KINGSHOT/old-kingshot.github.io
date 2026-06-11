@@ -34,35 +34,50 @@ const ksSync={
     return data; },
   schedule(){ if(!this.on()) return; clearTimeout(this._t);
     this._t=setTimeout(()=>this.push(),4000); },
+  /* server sendiri (Cloudflare Worker + D1) = jalur UTAMA; textdb = cadangan */
+  async _apiGet(code){ try{
+    const r=await Promise.race([fetch(KS_DATA_API+'/sync/'+encodeURIComponent(code)+'?t='+Date.now()),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('t')),9000))]);
+    if(!r.ok) return null; const tx=(await r.text()).trim(); if(!tx) return null;
+    const j=JSON.parse(tx); return (j&&j.data)?j:null; }catch(e){ return null; } },
+  async _apiPut(code,payload){ try{
+    const r=await Promise.race([fetch(KS_DATA_API+'/sync/'+encodeURIComponent(code),{method:'PUT',body:JSON.stringify(payload)}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('t')),9000))]);
+    return r.ok; }catch(e){ return false; } },
+  async _tdbGet(code){ try{
+    const r=await fetch('https://textdb.online/'+encodeURIComponent(code)+'?t='+Date.now());
+    if(!r.ok) return null; const tx=(await r.text()).trim(); if(!tx) return null;
+    const j=JSON.parse(tx); return (j&&j.data)?j:null; }catch(e){ return null; } },
+  async _tdbPut(code,payload){ try{
+    const r=await fetch('https://textdb.online/update',{method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'key='+encodeURIComponent(code)+'&value='+encodeURIComponent(JSON.stringify(payload))});
+    return r.ok; }catch(e){ return false; } },
   async push(){
     const m=this.meta(); if(!m||!m.code) return false;
     const payload={_v:1,ts:Date.now(),data:this.collect()};
-    try{
-      const r=await fetch('https://textdb.online/update',{method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:'key='+encodeURIComponent(m.code)+'&value='+encodeURIComponent(JSON.stringify(payload))});
-      if(!r.ok) throw new Error('http '+r.status);
-      m.ts=payload.ts; m.at=Date.now(); m.err=''; this._saveMeta(m); this._badge();
-      return true;
-    }catch(e){ m.err='push'; this._saveMeta(m); this._badge(); return false; }
+    const okApi=await this._apiPut(m.code,payload);
+    const ok=okApi||await this._tdbPut(m.code,payload);
+    if(ok){ m.ts=payload.ts; m.at=Date.now(); m.err=''; this._saveMeta(m); this._badge(); return true; }
+    m.err='push'; this._saveMeta(m); this._badge(); return false;
   },
   /* returns: 'off' | 'applied' | 'current' | 'empty' | 'err' */
   async pull(){
     const m=this.meta(); if(!m||!m.code) return 'off';
-    try{
-      const r=await fetch('https://textdb.online/'+encodeURIComponent(m.code)+'?t='+Date.now());
-      if(!r.ok) throw new Error('http '+r.status);
-      const txt=(await r.text()).trim();
-      if(!txt) return 'empty';
-      const j=JSON.parse(txt); if(!j||!j.data) return 'empty';
-      if((j.ts||0)>(m.ts||0)){
-        for(const k in j.data){ if(k.indexOf('ks_')===0&&this._skip.indexOf(k)<0&&typeof j.data[k]==='string') localStorage.setItem(k,j.data[k]); }
-        m.ts=j.ts; m.at=Date.now(); m.err=''; this._saveMeta(m); this._badge();
-        return 'applied';
-      }
-      m.at=Date.now(); m.err=''; this._saveMeta(m); this._badge();
-      return 'current';
-    }catch(e){ const mm=this.meta(); if(mm){ mm.err='pull'; this._saveMeta(mm); } this._badge(); return 'err'; }
+    const api=await this._apiGet(m.code);
+    const tdb=api?null:await this._tdbGet(m.code); /* cadangan hanya kalau server kosong/gagal */
+    const j=api||tdb;
+    if(!j){ /* dua-duanya kosong ≠ error jaringan; anggap slot kosong */
+      m.at=Date.now(); this._saveMeta(m); this._badge(); return 'empty'; }
+    /* migrasi: data lama hanya ada di textdb → angkat ke server */
+    if(!api&&tdb) this._apiPut(m.code,tdb);
+    if((j.ts||0)>(m.ts||0)){
+      for(const k in j.data){ if(k.indexOf('ks_')===0&&this._skip.indexOf(k)<0&&typeof j.data[k]==='string') localStorage.setItem(k,j.data[k]); }
+      m.ts=j.ts; m.at=Date.now(); m.err=''; this._saveMeta(m); this._badge();
+      return 'applied';
+    }
+    m.at=Date.now(); m.err=''; this._saveMeta(m); this._badge();
+    return 'current';
   },
   async enable(){ const code=this.newCode(); this._saveMeta({code,ts:0,at:0,err:''});
     const ok=await this.push(); if(!ok){ localStorage.removeItem('ks_syncMeta'); return null; } return code; },
@@ -304,38 +319,30 @@ function wkEventsOnDate(cd){
     const s=DI[e.startDay],t=DI[e.endDay]; if(s==null||t==null) return false;
     return s<=t?(wd>=s&&wd<=t):(wd>=s||wd<=t); });
 }
+/* ── Server data milik sendiri (Cloudflare Worker + D1) ── */
+const KS_DATA_API='https://old-kingshot-api.old-kingshot.workers.dev';
 /* ── Daftar pengunjung ──
-   Ping 1× per hari per perangkat (hanya yang sudah terhubung Player ID) ke satu
-   slot textdb bersama: {pid:{nick,kid,tc,first,last,visits}}. Data yang dicatat =
-   identitas game yang memang publik (nickname/kingdom/TC). Maks 300 entri
-   (yang paling lama tidak berkunjung digusur). Race antar-penulis simultan bisa
-   menghilangkan 1 ping — dapat diterima untuk skala komunitas. */
-const KS_VISIT_KEY='ks2vis_b3f7d2a90c14e5a8';
+   Ping 1× per hari (Player ID terhubung) ke server sendiri; dedup per-hari dihitung
+   DI SERVER (jam server, anti-manipulasi). Data = identitas game yang memang publik
+   (nickname/kingdom/TC). Daftar hanya bisa dibaca dengan kunci pemilik. */
 async function ksVisitorPing(){
   try{
     const p=store.get('profile',{}); if(!p.pid) return;
     const today=ksClock.now().toISOString().slice(0,10);
     if(store.get('visitPing','')===today) return;
-    let map={};
-    try{ const r=await fetch('https://textdb.online/'+KS_VISIT_KEY+'?t='+Date.now());
-      const tx=(await r.text()).trim(); if(tx) map=JSON.parse(tx)||{}; }catch(e){}
-    if(typeof map!=='object'||Array.isArray(map)||!map) map={};
-    const e0=map[p.pid]||{first:today,visits:0};
-    map[p.pid]={nick:p.nick||e0.nick||'',kid:String(p.kingdom||e0.kid||''),tc:String(p.tc||e0.tc||''),
-      first:e0.first||today,last:today,visits:(e0.visits||0)+1};
-    const keys=Object.keys(map);
-    if(keys.length>300){ keys.sort((a,b)=>(map[a].last||'').localeCompare(map[b].last||''));
-      keys.slice(0,keys.length-300).forEach(k=>delete map[k]); }
-    const r2=await fetch('https://textdb.online/update',{method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:'key='+KS_VISIT_KEY+'&value='+encodeURIComponent(JSON.stringify(map))});
-    if(r2.ok) store.set('visitPing',today);
+    const r=await fetch(KS_DATA_API+'/visit',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({pid:p.pid,nick:p.nick||'',kid:String(p.kingdom||''),tc:String(p.tc||'')})});
+    if(r.ok) store.set('visitPing',today);
   }catch(e){}
 }
+/* returns array [{pid,nick,kid,tc,first,last,visits}] | null kalau gagal */
 async function ksVisitorList(){
-  try{ const r=await fetch('https://textdb.online/'+KS_VISIT_KEY+'?t='+Date.now());
-    const tx=(await r.text()).trim(); if(!tx) return {};
-    const m=JSON.parse(tx); return (m&&typeof m==='object'&&!Array.isArray(m))?m:{};
+  try{
+    const key=store.get('ownerKey',''); if(!key) return 'nokey';
+    const r=await fetch(KS_DATA_API+'/visitors?key='+encodeURIComponent(key));
+    if(r.status===403) return 'badkey';
+    if(!r.ok) return null;
+    const j=await r.json(); return j.visitors||[];
   }catch(e){ return null; }
 }
 async function ksLiveCodes(){

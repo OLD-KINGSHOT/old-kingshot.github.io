@@ -5,3 +5,10 @@
 !/index.html
 !/companion_repack.js
 !/companion_src
+!/server
+# server secrets & artifacts stay local
+/server/.owner_key.txt
+/server/.t.json
+/server/.v.json
+/server/node_modules
+/server/.wrangler

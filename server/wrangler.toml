@@ -1,0 +1,9 @@
+name = "old-kingshot-api"
+main = "worker.js"
+compatibility_date = "2026-06-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "oldks"
+database_id = "ccf12f34-2eec-441c-9e33-1ab0d6328bd8"

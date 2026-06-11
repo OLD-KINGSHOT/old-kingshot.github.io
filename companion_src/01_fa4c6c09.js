@@ -615,7 +615,8 @@ function renderProfil(){
        <div class="row"><input id="pf_nudge" type="number" step="1" value="${esc(ksClock.nudge)}" style="width:100px"><button class="btn sec sm" id="pf_nudgeset">Terapkan</button><span id="pf_synstat" class="muted small">${ksClock.synced?'\u2713 tersinkron server':'pakai jam perangkat'}</span></div>`)
     +card('Notifikasi otomatis','◉',notifBody())
     +(p.pid==='330300846'?card('Daftar Pengunjung','👥',
-      `<p class="muted small">Pemain yang membuka app dengan Player ID terhubung — tercatat 1× per hari per perangkat (nickname/kingdom/TC = data publik game). Kartu ini hanya tampil di akunmu.</p>
+      `<p class="muted small">Pemain yang membuka app dengan Player ID terhubung — tercatat 1× per hari (dihitung di server, anti-manipulasi). Kartu ini hanya tampil di akunmu.</p>
+       ${store.get('ownerKey','')?'':`<label class="fl">Kunci pemilik (sekali isi)</label><div class="row" style="margin-bottom:8px"><input id="vs_key" style="flex:1" placeholder="kunci dari Claude"><button class="btn sec sm" id="vs_keysave">Simpan</button></div>`}
        <div class="row" style="margin-bottom:8px"><button class="btn sec sm" id="vs_load">↻ Muat daftar</button><span class="small muted" id="vs_meta"></span></div>
        <div id="vs_out"></div>`):'')
     +card('Sinkron Otomatis Antar Perangkat','🔁',syncBody())
@@ -659,15 +660,17 @@ function renderProfil(){
   }
   wireNotif(el);
   /* visitor list (owner only) */
+  const vk=$('#vs_keysave',el); if(vk) vk.onclick=()=>{ const v=($('#vs_key').value||'').trim(); if(!v) return; store.set('ownerKey',v); renderProfil(); };
   const vl=$('#vs_load',el); if(vl) vl.onclick=async()=>{
     const out=$('#vs_out',el), meta=$('#vs_meta',el);
     out.innerHTML='<div class="muted small">⏳ Memuat…</div>';
-    const m=await ksVisitorList();
-    if(m===null){ out.innerHTML='<div class="alert warn small">Gagal memuat (offline/diblokir).</div>'; return; }
-    const rows=Object.entries(m).sort((a,b)=>(b[1].last||'').localeCompare(a[1].last||''));
+    const rows=await ksVisitorList();
+    if(rows==='nokey'){ out.innerHTML='<div class="alert warn small">Isi kunci pemilik dulu di atas.</div>'; return; }
+    if(rows==='badkey'){ out.innerHTML='<div class="alert bad small">Kunci pemilik salah.</div>'; store.set('ownerKey',''); renderProfil(); return; }
+    if(rows===null){ out.innerHTML='<div class="alert warn small">Gagal memuat (offline/diblokir).</div>'; return; }
     if(meta) meta.textContent=rows.length+' pengunjung';
     out.innerHTML=rows.length?('<div class="scrollx"><table><thead><tr><th>Pemain</th><th>K#</th><th>TC</th><th>Kunjungan</th><th>Terakhir</th></tr></thead><tbody>'
-      +rows.map(([pid,v])=>`<tr><td><b>${esc(v.nick||'?')}</b><div class="dim small num">${esc(pid)}</div></td><td class="num">${esc(v.kid||'')}</td><td class="num">${esc(v.tc||'')}</td><td class="num">${esc(v.visits||0)}×<div class="dim small">sejak ${esc(v.first||'')}</div></td><td class="small num" style="white-space:nowrap">${esc(v.last||'')}</td></tr>`).join('')
+      +rows.map(v=>`<tr><td><b>${esc(v.nick||'?')}</b><div class="dim small num">${esc(v.pid)}</div></td><td class="num">${esc(v.kid||'')}</td><td class="num">${esc(v.tc||'')}</td><td class="num">${esc(v.visits||0)}×<div class="dim small">sejak ${esc(v.first||'')}</div></td><td class="small num" style="white-space:nowrap">${esc(v.last||'')}</td></tr>`).join('')
       +'</tbody></table></div>'):'<div class="muted small">Belum ada pengunjung tercatat.</div>';
   };
   /* sync wiring */
