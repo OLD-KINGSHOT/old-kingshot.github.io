@@ -768,7 +768,8 @@ function showOnboard(){
   if(store.get('onboard',0)||document.getElementById('onboard')) return;
   const d=document.createElement('div'); d.id='onboard';
   d.innerHTML=`<div class="ob-box">
-    <div class="ob-t">KINGSHOT13</div>
+    <div class="ob-t">OLD.KINGSHOT</div>
+    <div class="ob-s">powered by INDONENEN13</div>
     <div class="ob-l">Bahasa / Language</div>
     <div class="ob-row" id="ob_lang"><button data-v="id" class="active">🇮🇩 Indonesia</button><button data-v="en">🇬🇧 English</button></div>
     <div class="ob-l">Jam / Clock</div>
