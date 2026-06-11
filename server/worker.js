@@ -10,9 +10,17 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,PUT,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Owner-Key',
   'Access-Control-Max-Age': '86400',
 };
+/* constant-time string compare (avoid timing leaks on the owner key) */
+function safeEq(a, b) {
+  a = String(a || ''); b = String(b || '');
+  if (a.length !== b.length) return false;
+  let r = 0;
+  for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r === 0;
+}
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'Content-Type': 'application/json', ...CORS } });
 const text = (t, s = 200) => new Response(t, { status: s, headers: { 'Content-Type': 'text/plain; charset=utf-8', ...CORS } });
 
@@ -68,7 +76,8 @@ export default {
       }
 
       if (p === '/visitors' && req.method === 'GET') {
-        if (url.searchParams.get('key') !== env.OWNER_KEY) return json({ error: 'forbidden' }, 403);
+        /* key via HEADER (not query string) so it never lands in access logs */
+        if (!safeEq(req.headers.get('x-owner-key'), env.OWNER_KEY)) return json({ error: 'forbidden' }, 403);
         const rs = await env.DB.prepare('SELECT pid,nick,kid,tc,first,last,visits FROM visitors ORDER BY last DESC, visits DESC LIMIT 1000').all();
         return json({ visitors: rs.results || [] });
       }

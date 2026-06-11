@@ -339,7 +339,7 @@ async function ksVisitorPing(){
 async function ksVisitorList(){
   try{
     const key=store.get('ownerKey',''); if(!key) return 'nokey';
-    const r=await fetch(KS_DATA_API+'/visitors?key='+encodeURIComponent(key));
+    const r=await fetch(KS_DATA_API+'/visitors',{headers:{'X-Owner-Key':key}});
     if(r.status===403) return 'badkey';
     if(!r.ok) return null;
     const j=await r.json(); return j.visitors||[];
