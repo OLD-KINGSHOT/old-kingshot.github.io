@@ -749,6 +749,10 @@ function init(){
     /* only force a re-render if the sync actually moved us to a different game day — otherwise it would wipe in-progress typing */
     if(changed){ const ae=document.activeElement; if(!ae||!/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) activate(store.get('lastTab','sekarang')); }
   } });
+  /* bumper splash: tahan minimal ~900ms biar terasa, lalu fade (fallback 6s ada di template) */
+  const sp=document.getElementById('splash');
+  if(sp){ const t0=window.__splashT0||Date.now();
+    setTimeout(()=>{ sp.classList.add('off'); setTimeout(()=>sp.remove(),600); },Math.max(0,900-(Date.now()-t0))); }
   /* cross-device sync: pull on open + every 5 min; re-render only when newer data applied */
   if(typeof ksSync!=='undefined'&&ksSync.on()){
     const onPull=r=>{ if(r!=='applied') return;
