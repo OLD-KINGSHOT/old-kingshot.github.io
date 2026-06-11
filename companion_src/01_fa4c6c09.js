@@ -753,7 +753,9 @@ function init(){
   const sp=document.getElementById('splash');
   if(sp){ const t0=window.__splashT0||Date.now();
     setTimeout(()=>{ sp.classList.add('off'); setTimeout(()=>sp.remove(),600); },Math.max(0,900-(Date.now()-t0))); }
-  showOnboard(); /* first-run: pilih bahasa + jam (muncul saat splash memudar) */
+  showOnboard(); /* first-run: pilih bahasa + jam + Player ID (muncul saat splash memudar) */
+  /* jaring pengaman EN di perangkat lambat: render async menyusul → terjemahkan ulang */
+  if(window.__getLang&&window.__getLang()==='en') [1200,3000,6000,10000].forEach(t=>setTimeout(()=>{ if(window.__translate) window.__translate(); },t));
   /* cross-device sync: pull on open + every 5 min; re-render only when newer data applied */
   if(typeof ksSync!=='undefined'&&ksSync.on()){
     const onPull=r=>{ if(r!=='applied') return;
@@ -762,8 +764,9 @@ function init(){
     setInterval(()=>ksSync.pull().then(onPull),5*60000);
   }
 }
-/* First-run chooser: bahasa (ID/EN) + jam (WIB/UTC). Bilingual labels because it
-   shows BEFORE a language is chosen. Per-device preference — not synced. */
+/* ATURAN TETAP layar masuk (first-run): pilih Bahasa + Jam + Player ID (submit =
+   auto-deteksi Kingdom/TC/tanggal server) — supaya tak perlu mengisi lagi di dalam.
+   Label bilingual karena tampil SEBELUM bahasa dipilih. Per-perangkat — tidak disinkron. */
 function showOnboard(){
   if(store.get('onboard',0)||document.getElementById('onboard')) return;
   const d=document.createElement('div'); d.id='onboard';
@@ -774,7 +777,12 @@ function showOnboard(){
     <div class="ob-row" id="ob_lang"><button data-v="id" class="active">🇮🇩 Indonesia</button><button data-v="en">🇬🇧 English</button></div>
     <div class="ob-l">Jam / Clock</div>
     <div class="ob-row" id="ob_tz"><button data-v="WIB" class="active">WIB (UTC+7)</button><button data-v="UTC">UTC</button></div>
+    <div class="ob-l">Player ID</div>
+    <input id="ob_pid" inputmode="numeric" autocomplete="off" placeholder="cth / e.g. 330300846" class="ob-in">
+    <div class="ob-hint">Kingdom, TC & umur server terdeteksi otomatis / auto-detected</div>
+    <div class="ob-err" id="ob_err"></div>
     <button class="ob-go" id="ob_go">MULAI →</button>
+    <button class="ob-skip" id="ob_skip">Lewati / Skip — isi nanti di tab Profil</button>
   </div>`;
   document.body.appendChild(d);
   ['ob_lang','ob_tz'].forEach(id=>{
@@ -783,14 +791,36 @@ function showOnboard(){
       if(id==='ob_lang') d.querySelector('#ob_go').textContent=b.dataset.v==='en'?'START →':'MULAI →';
     });
   });
-  d.querySelector('#ob_go').onclick=()=>{
+  const finish=()=>{
     const lang=d.querySelector('#ob_lang button.active').dataset.v;
     const tz=d.querySelector('#ob_tz button.active').dataset.v;
     store.set('onboard',1);
     if(typeof setTZ==='function') setTZ(tz);
     if(window.setLang) window.setLang(lang);
+    if(typeof updateSideProf==='function') updateSideProf();
+    /* perangkat lambat: render async (advisory/jadwal live) menyusul — terjemahkan ulang */
+    if(lang==='en') [800,2500,6000].forEach(t=>setTimeout(()=>{ if(window.__translate) window.__translate(); },t));
     d.classList.add('off'); setTimeout(()=>d.remove(),450);
   };
+  const go=d.querySelector('#ob_go'), err=d.querySelector('#ob_err');
+  go.onclick=async()=>{
+    const fid=(d.querySelector('#ob_pid').value||'').trim();
+    if(!fid){ err.textContent='Isi Player ID, atau pilih Lewati / Enter your Player ID, or Skip.'; return; }
+    const lbl=go.textContent; go.disabled=true; go.textContent='⏳ …'; err.textContent='';
+    try{
+      const j=await ksPlayerLookup(fid);
+      if(j.code!==0||!j.data) throw new Error('notfound');
+      const dd=j.data;
+      const openDate=await fetchKingdomDate(dd.kid);
+      const old=store.get('profile',{});
+      store.set('profile',Object.assign({},old,{pid:fid,kingdom:String(dd.kid),tc:String(dd.stove_lv||old.tc||''),start:openDate||old.start||''}));
+      finish();
+    }catch(e){
+      go.disabled=false; go.textContent=lbl;
+      err.textContent='Player ID tidak ditemukan / gagal terhubung — coba lagi atau Lewati. (Not found / connection failed — retry or Skip.)';
+    }
+  };
+  d.querySelector('#ob_skip').onclick=()=>finish();
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 

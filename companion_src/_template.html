@@ -959,7 +959,13 @@ html{scrollbar-width:thin;scrollbar-color:var(--bg-4) transparent}
 #onboard .ob-row{display:flex;gap:8px}
 #onboard .ob-row button{flex:1;padding:10px 8px;background:#10141C;border:1px solid #2A3142;border-radius:6px;color:#9AA4B8;font-family:var(--font-mono,monospace);font-size:12.5px;font-weight:700;cursor:pointer}
 #onboard .ob-row button.active{background:rgba(232,255,58,.12);color:#E8FF3A;border-color:rgba(232,255,58,.5)}
-#onboard .ob-go{margin-top:16px;padding:12px;background:#E8FF3A;color:#06080C;border:0;border-radius:6px;font-family:var(--font-mono,monospace);font-size:13px;font-weight:800;letter-spacing:.1em;cursor:pointer}
+#onboard .ob-in{padding:11px 12px;background:#10141C;border:1px solid #2A3142;border-radius:6px;color:#EDF1F7;font-family:var(--font-mono,monospace);font-size:14px;letter-spacing:.04em;width:100%;box-sizing:border-box}
+#onboard .ob-in:focus{outline:none;border-color:rgba(232,255,58,.5)}
+#onboard .ob-hint{font-family:var(--font-mono,monospace);font-size:9px;letter-spacing:.06em;color:#5C6478;text-transform:uppercase}
+#onboard .ob-err{font-family:var(--font-mono,monospace);font-size:10.5px;color:#FF4655;line-height:1.5}
+#onboard .ob-go{margin-top:10px;padding:12px;background:#E8FF3A;color:#06080C;border:0;border-radius:6px;font-family:var(--font-mono,monospace);font-size:13px;font-weight:800;letter-spacing:.1em;cursor:pointer}
+#onboard .ob-go:disabled{opacity:.6;cursor:wait}
+#onboard .ob-skip{padding:8px;background:transparent;border:0;color:#5C6478;font-family:var(--font-mono,monospace);font-size:10.5px;letter-spacing:.04em;cursor:pointer;text-decoration:underline}
 </style>
 <script>window.__splashT0=Date.now();setTimeout(function(){var s=document.getElementById('splash');if(s){s.classList.add('off');setTimeout(function(){s.remove();},600);}},6000);</script>
 <div class="app">
