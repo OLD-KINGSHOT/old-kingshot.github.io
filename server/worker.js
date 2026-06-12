@@ -33,6 +33,25 @@ export default {
     try {
       if (p === '/health') return text('ok');
 
+      // ---- upstream passthroughs (kingshot.net has no CORS; we fetch server-side,
+      //      edge-cached, so the app never depends on flaky public CORS proxies) ----
+      const mK = p.match(/^\/kingdom\/(\d{1,7})$/);
+      if (mK && req.method === 'GET') {
+        const r = await fetch('https://kingshot.net/api/kingdom-tracker?kingdomId=' + mK[1],
+          { cf: { cacheTtl: 86400, cacheEverything: true } });
+        return new Response(await r.text(), { status: r.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=86400', ...CORS } });
+      }
+      if (p === '/events' && req.method === 'GET') {
+        const w = url.searchParams.get('week');
+        const r = await fetch('https://kingshot.net/api/events' + (w ? '?week=' + encodeURIComponent(w) : ''),
+          { cf: { cacheTtl: 1800, cacheEverything: true } });
+        return new Response(await r.text(), { status: r.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=1800', ...CORS } });
+      }
+      if (p === '/codes' && req.method === 'GET') {
+        const r = await fetch('https://kingshot.net/api/gift-codes', { cf: { cacheTtl: 3600, cacheEverything: true } });
+        return new Response(await r.text(), { status: r.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600', ...CORS } });
+      }
+
       // ---- sync slots (key-value, client owns the random secret code) ----
       const mSync = p.match(/^\/sync\/([A-Za-z0-9_-]{8,80})$/);
       if (mSync) {

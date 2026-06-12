@@ -211,11 +211,10 @@ async function fetchKingdomDate(kid){
   if(KINGDOM_DATES[String(kid)]) return KINGDOM_DATES[String(kid)];
   const cached=store.get('kdates',{}); if(cached[String(kid)]) return cached[String(kid)];
   const target='https://kingshot.net/api/kingdom-tracker?kingdomId='+kid;
-  /* corsproxy rejects file:// (null origin); allorigins flaky; r.jina.ai works everywhere */
-  const proxies=[t=>'https://corsproxy.io/?url='+encodeURIComponent(t),t=>'https://api.allorigins.win/raw?url='+encodeURIComponent(t),t=>'https://r.jina.ai/'+t];
-  for(const px of proxies){
+  /* jalur 1 = server sendiri (KS_PROXIES[0]); proxy publik hanya cadangan */
+  for(const px of KS_PROXIES){
     try{
-      const r=await fetch(px(target)); const j=await r.json();
+      const r=await ksFT(px(target)); const j=await r.json();
       const srv=j&&j.data&&j.data.servers&&j.data.servers[0];
       if(srv&&srv.openTime){ const dt=new Date(srv.openTime);
         const iso=dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate());
@@ -262,9 +261,17 @@ async function ksRedeem(fid,code){
 /* Live gift codes — aggregated from TWO sources (kingshot.net's API regularly lags
    behind: per 2026-06 it listed 1 active code while kingshotwiki.com had 2).
    Returns array of {code,exp}, or null only when EVERY source failed. */
-/* corsproxy rejects file:// (null origin); allorigins flaky; r.jina.ai works everywhere */
-const KS_PROXIES=[t=>'https://corsproxy.io/?url='+encodeURIComponent(t),t=>'https://api.allorigins.win/raw?url='+encodeURIComponent(t),t=>'https://r.jina.ai/'+t];
-const ksFT=(u)=>Promise.race([fetch(u),new Promise((_,rej)=>setTimeout(()=>rej(new Error('t')),9000))]);
+/* Jalur 1 = SERVER SENDIRI (passthrough ber-cache, selalu CORS) — proxy publik
+   (corsproxy/allorigins/jina) tinggal cadangan darurat; sering diblokir di HP. */
+const ksOwnProxy=t=>{
+  const m=t.match(/kingdom-tracker\?kingdomId=(\d+)/); if(m) return KS_DATA_API+'/kingdom/'+m[1];
+  if(t.indexOf('kingshot.net/api/events')>=0){ const q=t.split('?')[1]; return KS_DATA_API+'/events'+(q?'?'+q:''); }
+  if(t.indexOf('kingshot.net/api/gift-codes')>=0) return KS_DATA_API+'/codes';
+  return null;
+};
+const KS_PROXIES=[t=>ksOwnProxy(t),t=>'https://corsproxy.io/?url='+encodeURIComponent(t),t=>'https://api.allorigins.win/raw?url='+encodeURIComponent(t),t=>'https://r.jina.ai/'+t];
+const ksFT=(u)=>{ if(!u) return Promise.reject(new Error('skip'));
+  return Promise.race([fetch(u),new Promise((_,rej)=>setTimeout(()=>rej(new Error('t')),9000))]); };
 async function ksNetCodes(){
   const target='https://kingshot.net/api/gift-codes';
   for(const px of KS_PROXIES){ try{ const r=await ksFT(px(target)); const j=await r.json();
