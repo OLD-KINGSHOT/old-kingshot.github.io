@@ -35,7 +35,7 @@ const EFFECT_OP=[
   ['101','Lethality','Chenko, Yeonwoo, (Amadeus)'],
   ['102','Attack','Amane, Margot, (Hilde)'],
   ['111','Defense','Howard, Quinn'],
-  ['112','Defense','Saul (dual 112+113)'],
+  ['112','Defense','Saul (dual 112+113), Hilde (dual 102+112)'],
   ['113','Health','Gordon, Saul (dual)'],
   ['201','Kurangi dmg musuh','Fahd'],
 ];

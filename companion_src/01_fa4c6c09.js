@@ -155,6 +155,12 @@ function renderEvent(){
   const ency=EVENTS_INFO.map(grp=>`<div class="lbl" style="color:var(--accent);margin:14px 0 4px">${esc(grp.g)}</div>`+grp.items.map(e=>{
     const parts=[`<div class="kv"><span>Jadwal</span><b>${esc(e.freq)}</b></div>`];
     if(e.what) parts.push(`<div class="small" style="margin-top:4px">${esc(e.what)}</div>`);
+    if(e.tpl && EVENT_TEMPLATES[e.tpl] && (EVENT_TEMPLATES[e.tpl].days||[]).length){
+      const t=EVENT_TEMPLATES[e.tpl];
+      parts.push(`<h3 style="margin:10px 0 4px">Jadwal per hari</h3><div class="scrollx"><table><thead><tr><th>Hari</th><th>Tema skor</th><th>Pakai SEKARANG</th></tr></thead><tbody>${t.days.map((d,i)=>`<tr><td><b>${esc(d.split(' ')[0])}</b></td><td class="small">${esc(d.replace(/^D\d+\s*/,''))}</td><td class="small muted">${esc(t.spend[i]||'item sesuai tema')}</td></tr>`).join('')}</tbody></table></div>`);
+      if(SPEED_NOTE[e.tpl]) parts.push(`<div class="alert warn small" style="margin-top:6px">${SPEED_NOTE[e.tpl]}.</div>`);
+      if(t.hold) parts.push(`<div class="alert inf small">🔒 TAHAN: ${esc(t.hold)}</div>`);
+    }
     if(e.sit){ const s=SITUATIONS.find(x=>x.key===e.sit); if(s) parts.push(lineupCard(s,age)); }
     return `<details><summary>${esc(e.n)} <span class="tag" style="margin-left:auto">${esc(e.cat)}</span></summary><div class="dt">${parts.join('')}</div></details>`;
   }).join('')).join('');

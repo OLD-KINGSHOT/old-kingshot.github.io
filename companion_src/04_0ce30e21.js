@@ -51,7 +51,7 @@ const TROOP_INFO={
     'Stage troop T9 SEBELUM event, promote DI DALAM window skor (KvK D4, Strongest Governor combat day).',
     'Jaga queue training selalu jalan (durasi panjang sebelum tidur).',
     'JANGAN biarkan hospital penuh \u2192 pasukan mati permanen. Batch-heal pakai slider, bukan speedup.',
-    'Floor 5.000 infantry di formasi rally (trigger skill hero infantry). Rasio dasar 50/30/20.',
+    'Floor 5.000 infantry di formasi rally (trigger skill hero infantry). Rasio default (seimbang / musuh tak diketahui) = 50/20/30 — rasio per situasi lihat tabel Formasi.',
   ]
 };
 const GEAR_INFO=[
@@ -81,8 +81,8 @@ const PETS=[
   {n:'Bison',w:1,day:'~55',role:'Utility',skill:'Grip of the Titan: 1 gather tile selesai instan',f2p:'Lv15-20 (ROI primer Gen2 terbaik)',pri:'A'},
   {n:'Cheetah',w:2,day:'~72-80',role:'Ekonomi',skill:'Scent Mastery: cari 500 Pet Food',f2p:'Lv25-30 (mendanai pet food sendiri)',pri:'A'},
   {n:'Moose',w:2,day:'~72-80',role:'Combat',skill:'Horror Stare: \u22125% enemy squad HP',f2p:'WAJIB Lv15 \u2192 gate menangkap Lion',pri:'C'},
-  {n:'Lion',w:3,day:'~110',role:'Ekonomi \u2605',skill:'Gift of the King: hasilkan item (Truegold/Forgehammer/gear mats) tiap ~1-2 hari',f2p:'#1 PRIORITAS F2P \u2014 ROI jangka panjang terbaik',pri:'S'},
-  {n:'Grizzly Bear',w:3,day:'~110',role:'Combat',skill:'The Howler: +30% march speed, \u22125% enemy lethality',f2p:'Opsional',pri:'B'},
+  {n:'Lion',w:3,day:'~113',role:'Ekonomi \u2605',skill:'Gift of the King: hasilkan item (Truegold/Forgehammer/gear mats) tiap ~1-2 hari',f2p:'#1 PRIORITAS F2P \u2014 ROI jangka panjang terbaik',pri:'S'},
+  {n:'Grizzly Bear',w:3,day:'~113',role:'Combat',skill:'The Howler: +30% march speed, \u22125% enemy lethality',f2p:'Opsional',pri:'B'},
   {n:'Giant Rhino',w:4,day:'~190',role:'Combat',skill:'Wild Charge: +10% Attack semua squad',f2p:'\u2192Lv30 gate Mighty Bison',pri:'B'},
   {n:'Mighty Bison',w:4,day:'~190',role:'Combat \u2605',skill:'Fearless Roar: +15.000 Squad Capacity 2 jam',f2p:'Bantu bahkan saat JOIN rally \u2014 prioritas tinggi',pri:'S'},
   {n:'Great Moose',w:5,day:'~270',role:'Combat',skill:'Antler Impact: +150.000 Rally Capacity',f2p:'Late-game',pri:'A'},
@@ -194,8 +194,8 @@ const EVENTS_INFO=[
    {n:'Fortress Battle',cat:'Aliansi \u00b7 season',freq:'Per season',what:'Rebut Fortress \u2014 bernilai 2 season point. Koordinasi aliansi penuh.',sit:'fortress'},
    {n:'Kingdom of Power (KvK)',cat:'Aliansi \u00b7 musiman \u00b7 PENTING',freq:'~hari 70+ \u00b7 tiap 4 minggu',what:'2 kerajaan berperang + Castle Battle (19:00 WIB). Combat = RPS. Jatuhkan rally dalam 1-5 detik.',sit:'kvk-rally'},
    {n:'All Out (Kill Event)',cat:'PvP \u00b7 server \u00b7 PENTING',freq:'~2 hari',what:'Seluruh server saling serang. F2P: SHIELD + farm gatherer + incar troop tier tinggi.',sit:'all-out'},
-   {n:'Strongest Governor',cat:'Solo \u00b7 poin',freq:'7 hari',what:'Kompetisi poin harian per tema. TAHAN speedup \u2192 ledakkan di hari temanya.'},
-   {n:'Hall of Governors (HoG)',cat:'Solo \u00b7 poin',freq:'~tiap 14 hari (mulai ~hari 6)',what:'Poin dari spending per tema. Tahan item \u2192 selesai di hari tema.'},
+   {n:'Strongest Governor',cat:'Solo \u00b7 poin',freq:'7 hari',what:'Kompetisi poin harian per tema. TAHAN speedup \u2192 ledakkan di hari temanya.',tpl:'sg'},
+   {n:'Hall of Governors (HoG)',cat:'Solo \u00b7 poin',freq:'~tiap 14 hari (mulai ~hari 6)',what:'Poin dari spending per tema. Tahan item \u2192 selesai di hari tema.',tpl:'hog'},
  ]},
  {g:'Server-age (sekali, ikut umur)', items:[
    {n:'Burst of Life',cat:'Server baru \u00b7 milestone',freq:'Hari 0-6 (sekali)',what:'SELESAIKAN upgrade/riset/troop SEKARANG (kebalikan "tahan") \u2192 kejar 4M power. Reward: City Skin + gem.'},
@@ -267,7 +267,7 @@ const EVENT_TEMPLATES={
     spend:['Buang SEMUA speedup (30/mnt) + selesaikan bangunan','Mithril 40k + Roulette + shard','Advanced Taming Mark (15k)','Promote troop (T11 49/unit)','Mithril + buang speedup','Governor Gear + promote troop','Tempered Truegold + Taming Mark + speedup'],
     hold:'speedup (utk D1/D5/D7), Mithril (D2/D4/D5), Advanced Taming Mark (D3), troop T9 (D4/D6), gem'},
   hog:{name:'Hall of Governors',len:7,battleWIB:null,
-    days:['D1 Construction/Power','D2 Hero Dev','D3 Train Troops','D4 Beast/Charm/Gather','D5 Power Boost','D6 Governor Gear','D7 Hero Dev'],
+    days:['D1 Construction/Power','D2 Hero Dev','D3 Train Troops','D4 Beast/Gather','D5 Power Boost','D6 Governor Gear/Charm','D7 Hero Dev'],
     spend:['Pakai SPEEDUP CONSTRUCTION (+research) \u2192 selesaikan bangunan. TAHAN speedup training utk D3.','\u2605 SPIN Hero Roulette (+90.000/spin!) pakai GEM/KUNCI + hero shard','Pakai SPEEDUP TRAINING \u2192 train/promote troop','Rally Terror (+90.000) / bunuh Beast','Forgehammer + Gear Widget','Naikkan Governor Gear','Hero shard + speedup'],
     hold:'gem (utk Roulette D2 = 90k/spin!), troop T9 (D3), Forgehammer/Widget (D5)'},
   armament:{name:'Armament Competition',len:2,battleWIB:null,minDay:65,

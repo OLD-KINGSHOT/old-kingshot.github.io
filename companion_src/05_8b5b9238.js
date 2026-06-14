@@ -26,7 +26,7 @@ const MILESTONES=[
   {d:50, name:'King\u2019s Castle Battle pertama', cat:'PvP', note:'(\u00b148-54)'},
   {d:57, name:'Gen 1 Pets', cat:'Pet', note:'Gray Wolf, Lynx, Bison (\u00b155-60)'},
   {d:65, name:'Age of Truegold', cat:'Truegold', note:'Truegold Lv1-3. WAJIB sudah TC30! (\u00b159-70)', key:true},
-  {d:75, name:'KvK (Kingdom of Power)', cat:'PvP', note:'Eligibel sesudah Age of Truegold, lalu ~bulanan (\u00b170-80)', key:true},
+  {d:70, name:'KvK (Kingdom of Power)', cat:'PvP', note:'Eligibel sesudah Age of Truegold, lalu ~bulanan (\u00b170-80)', key:true},
   {d:76, name:'Gen 2 Pets', cat:'Pet', note:'Cheetah, Moose (\u00b172-80)'},
   {d:113,name:'Gen 3 Heroes', cat:'Hero', note:'Eric, Petra, Jaeger + Master Academy (TC25) (\u00b1105-120)'},
   {d:152,name:'Truegold Lv5 + Crucible', cat:'Truegold', note:'Buka eligibilitas Transfer Window (\u00b1150-155)'},
@@ -37,10 +37,10 @@ const MILESTONES=[
   {d:449,name:'Gen 7 Heroes', cat:'Hero', note:'Charles, Ava, Wee & Woo'},
 ];
 function genForAge(d){
-  if(d>=365)return 'Gen 6'; if(d>=281)return 'Gen 5'; if(d>=197)return 'Gen 4';
+  if(d>=449)return 'Gen 7'; if(d>=365)return 'Gen 6'; if(d>=281)return 'Gen 5'; if(d>=197)return 'Gen 4';
   if(d>=113)return 'Gen 3'; if(d>=50)return 'Gen 2'; return 'Gen 1';
 }
-const GEN_DAY={1:0,2:50,3:113,4:197,5:281,6:365};
+const GEN_DAY={1:0,2:50,3:113,4:197,5:281,6:365,7:449};
 const HERO_GEN={Amadeus:1,Helga:1,Jabel:1,Saul:1,Howard:1,Chenko:1,Quinn:1,Diana:1,Gordon:1,Fahd:1,Amane:1,Yeonwoo:1,Edwin:1,Seth:1,Olive:1,Zoe:2,Hilde:2,Marlin:2,Petra:3,Eric:3,Jaeger:3,Rosa:4,Alcar:4,Margot:4,'Long Fei':5,Thrud:5,Vivian:5,Sophia:6,Triton:6,Yang:6};
 
 /* ============================================================

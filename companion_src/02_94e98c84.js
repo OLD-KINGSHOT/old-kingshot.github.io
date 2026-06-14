@@ -251,7 +251,8 @@ function renderHero(){
            <div class="scrollx"><table><thead><tr><th>Hero</th><th>Skill di-MAX (nama in-game)</th><th>Peran</th></tr></thead><tbody>
            ${SKILL_MAX.map(([h,c,s,r])=>`<tr><td><b>${esc(h)}</b></td><td class="small">${s}</td><td class="small muted">${esc(r)}</td></tr>`).join('')}
            </tbody></table></div>
-           <div class="alert bad small">\u26d4 Boros buku #1: naikkan skill 2/3 / gear / widget hero JOINER (cuma skill #1 kepakai). Juga Conquest kalau tak main Arena.</div>`)
+           <div class="alert bad small">\u26d4 Boros buku #1: naikkan skill 2/3 / gear / widget hero JOINER (cuma skill #1 kepakai). Juga Conquest kalau tak main Arena.</div>
+           <div class="alert inf small">\ud83d\udca1 Sisa buku Expedition \u2192 hero biru <b>Forrest & Olive</b> (skill gathering kayu & roti) = bottleneck resource F2P. Buku Conquest: TABUNG kalau tak main Arena.</div>`)
         +card('Prioritas Hero \u2014 naikkan dulu','\u2605',
           ruleBox+HERO_PRIORITY.map(h=>`<div class="lcard" style="padding:11px 13px">
             <div class="lh"><span class="nm" style="font-size:13px">#${h.rank} ${esc(h.name)}</span><span class="rolechip ${/[Gg]arrison/.test(h.role)?'garrison':(/Support|ekonomi/.test(h.role)?'defense':'rally')}">${esc(h.role)}</span><span class="tag">${esc(h.troop)} \u00b7 ${esc(h.star)}</span></div>
