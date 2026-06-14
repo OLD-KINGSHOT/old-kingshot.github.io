@@ -131,6 +131,8 @@ const RECURRING_DAILY=[
 ];
 
 /* ── Item ROI (KvK) & speedup guide ── */
+/* SUMBER KANONIK angka poin KvK. Angka 40k/15k/8k dst yang disebut di
+   KVK_PREP & EVENT_TEMPLATES.spend harus cocok dengan tabel ini. */
 const POINTS=[
   {item:'Mithril',kvk:'40.000',note:'\u2713 Item TERBAIK. Skor hari Gear (D4/D5)'},
   {item:'Tempered Truegold',kvk:'30.000',note:'(?) belum terverifikasi'},
@@ -278,6 +280,7 @@ const EVENT_TEMPLATES={
     goal:'Kumpulkan POWER (upgrade + riset + train troop + hero) untuk 8 tier milestone: 50rb \u2192 4 juta power. Reward puncak: City Skin + 2\u00d71.000 gem.',
     days:[],spend:[],hold:''},
 };
+/* SUMBER KANONIK ROI speedup per event (dipakai render encyclopedia + roi card). */
 const SPEED_NOTE={kvk:'\u2705 PAKAI speedup (30/mnt) sesuai tema hari',sg:'\u2705 PAKAI speedup (30/mnt) di D1/D5/D7 \u2014 buang bank speedup di sini',hog:'\u26d4 Speedup nyaris tak ber-poin di HoG \u2014 pakai hanya untuk selesaikan upgrade (naik power)',armament:'\u26d4 JANGAN buang speedup di Armament (1 poin/menit)',burst:'\u2705 PAKAI speedup untuk selesaikan upgrade (naik power)'};
 /* "Harus ngapain" per event mingguan kingdom (key = titleKey API kingshot.net) */
 const WEEKLY_GUIDE={

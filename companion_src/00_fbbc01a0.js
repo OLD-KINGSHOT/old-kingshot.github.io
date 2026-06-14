@@ -4,6 +4,7 @@
 
 /* ── Tracker progres pribadi (checklist, tersimpan) ── */
 const TRACKER=[
+  /* \u2605 target hero = cermin HERO_TARGETS (file 05, target fase terakhir) \u2014 jaga sinkron saat ubah target bintang */
   {g:'Hero \u2014 target bintang',items:[
     ['Chenko \u2192 4\u2605','Joiner lethality (Expedition #1 Lv5)'],
     ['Amane \u2192 4\u2605','Joiner attack (102) \u2014 stack dgn Chenko'],
@@ -11,8 +12,8 @@ const TRACKER=[
     ['Gordon \u2192 4\u2605','Joiner health / garrison KvK'],
     ['Saul \u2192 4\u2605 (+spin 2\u2605 awal)','Joiner defensif + buff konstruksi'],
     ['Jabel \u2192 3\u2605','Garrison Gen 1 (lalu tahan)'],
-    ['Zoe \u2192 4\u2605','INTI garrison \u2014 investasi utama'],
-    ['Marlin \u2192 3\u2605+','Rally leader archer (Gen 2)'],
+    ['Zoe \u2192 4\u2605 \u2192 5\u2605','INTI garrison \u2014 investasi utama'],
+    ['Marlin \u2192 3-4\u2605','Rally leader archer (Gen 2)'],
     ['Petra \u2192 3-4\u2605','Rally leader cavalry (Gen 3)'],
   ]},
   {g:'Pets',items:[

@@ -148,7 +148,7 @@ function renderEvent(){
   /* ROI points */
   const roi=`<div class="scrollx"><table><thead><tr><th>Item</th><th>Poin KvK</th><th>Catatan</th></tr></thead><tbody>
     ${POINTS.map(x=>`<tr><td><b>${esc(x.item)}</b></td><td class="num">${esc(x.kvk)}</td><td class="muted small">${esc(x.note)}</td></tr>`).join('')}</tbody></table></div>
-    <div class="alert bad small">\u26d4 Speedup = 30/menit di KvK tapi 1/menit di Armament. Jangan buang bank speedup di Armament!</div>`;
+    <div class="alert bad small">${SPEED_NOTE.armament} \u2014 KvK = 30/mnt (lihat tabel di atas). Simpan bank speedup untuk KvK/SG.</div>`;
   const itemGuide=`<div class="scrollx"><table><thead><tr><th>Item</th><th>Status</th><th>Pakai di</th></tr></thead><tbody>
     ${ITEM_GUIDE.map(([it,st,d])=>`<tr><td><b>${esc(it)}</b></td><td><span class="pill ${st==='BEBAS'?'f2p':'s'}">${esc(st)}</span></td><td class="muted small">${esc(d)}</td></tr>`).join('')}</tbody></table></div>`;
   /* encyclopedia */
