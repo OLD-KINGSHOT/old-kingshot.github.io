@@ -24,6 +24,67 @@ function safeEq(a, b) {
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'Content-Type': 'application/json', ...CORS } });
 const text = (t, s = 200) => new Response(t, { status: s, headers: { 'Content-Type': 'text/plain; charset=utf-8', ...CORS } });
 
+/* ===== Gift-code watcher (cron) =====================================
+   Cek kingshot.net gift-code, bandingkan dgn D1 `seen_codes`, push kode BARU
+   ke HP via ntfy dan/atau Telegram. Run pertama = seed diam (tak spam kode lama). */
+async function fetchActiveCodes() {
+  const r = await fetch('https://kingshot.net/api/gift-codes', { cf: { cacheTtl: 0 } });
+  const j = await r.json();
+  const now = Date.now();
+  return (j && j.data && j.data.giftCodes ? j.data.giftCodes : [])
+    .filter(g => g && g.code && (!g.expiresAt || new Date(g.expiresAt).getTime() > now))
+    .map(g => ({ code: String(g.code), exp: g.expiresAt || null }));
+}
+
+async function notify(env, { title, body, url }) {
+  const jobs = [];
+  if (env.NTFY_TOPIC) {
+    jobs.push(fetch('https://ntfy.sh', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic: env.NTFY_TOPIC, title, message: body, tags: ['gift'], priority: 4, ...(url ? { click: url } : {}) }),
+    }));
+  }
+  if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
+    jobs.push(fetch('https://api.telegram.org/bot' + env.TELEGRAM_BOT_TOKEN + '/sendMessage', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: '*' + title + '*\n' + body, parse_mode: 'Markdown', disable_web_page_preview: true }),
+    }));
+  }
+  await Promise.allSettled(jobs);
+}
+
+/* AUTO-REDEEM — opsi masa depan, default OFF. Aktifkan nanti: set env.AUTO_REDEEM='1'
+   + env.REDEEM_FID (player id), lalu implementasi POST bertanda-tangan ke KS gift_code
+   API (perlu md5(salt+...) seperti redeem client-side di app). Sekarang sengaja no-op. */
+async function maybeAutoRedeem(env, code) {
+  if (env.AUTO_REDEEM !== '1' || !env.REDEEM_FID) return null;
+  // TODO: signed redeem request here.
+  return null;
+}
+
+async function checkCodes(env) {
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS seen_codes (code TEXT PRIMARY KEY, ts INTEGER)').run();
+  const codes = await fetchActiveCodes();           // throws on network error -> caller skips seen update
+  if (!codes.length) return { ok: true, fetched: 0, new: [] };
+  const rows = await env.DB.prepare('SELECT code FROM seen_codes').all();
+  const seen = new Set((rows.results || []).map(r => String(r.code).toLowerCase()));
+  const firstRun = seen.size === 0;
+  const fresh = codes.filter(c => !seen.has(c.code.toLowerCase()));
+  const now = Date.now();
+  const ins = env.DB.prepare('INSERT OR IGNORE INTO seen_codes (code, ts) VALUES (?1, ?2)');
+  await env.DB.batch(codes.map(c => ins.bind(c.code, now)));
+  if (firstRun) return { ok: true, seeded: codes.length, new: [] }; // silent seed
+  if (fresh.length) {
+    await notify(env, {
+      title: '🎁 Kode Kingshot baru!',
+      body: fresh.map(c => c.code).join(', ') + '\nTap untuk auto-redeem di app.',
+      url: 'https://old-kingshot.github.io/',
+    });
+    for (const c of fresh) await maybeAutoRedeem(env, c.code);
+  }
+  return { ok: true, fetched: codes.length, new: fresh.map(c => c.code) };
+}
+
 export default {
   async fetch(req, env) {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -50,6 +111,11 @@ export default {
       if (p === '/codes' && req.method === 'GET') {
         const r = await fetch('https://kingshot.net/api/gift-codes', { cf: { cacheTtl: 3600, cacheEverything: true } });
         return new Response(await r.text(), { status: r.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600', ...CORS } });
+      }
+      /* manual trigger for the gift-code watcher (testing without waiting for cron) */
+      if (p === '/codes/check' && req.method === 'GET') {
+        if (!safeEq(req.headers.get('x-owner-key') || url.searchParams.get('key'), env.OWNER_KEY)) return json({ error: 'forbidden' }, 403);
+        return json(await checkCodes(env));
       }
 
       // ---- sync slots (key-value, client owns the random secret code) ----
@@ -105,5 +171,10 @@ export default {
     } catch (e) {
       return json({ error: 'server' }, 500);
     }
+  },
+
+  /* Cron Trigger (wrangler.toml: every 30 min) — push new gift codes to phone. */
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(checkCodes(env).catch(() => {}));
   },
 };

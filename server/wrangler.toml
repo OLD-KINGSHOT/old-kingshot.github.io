@@ -7,3 +7,7 @@ workers_dev = true
 binding = "DB"
 database_name = "oldks"
 database_id = "ccf12f34-2eec-441c-9e33-1ab0d6328bd8"
+
+# Cek gift code baru tiap 30 menit, push ke HP (ntfy/Telegram) via scheduled().
+[triggers]
+crons = ["*/30 * * * *"]
