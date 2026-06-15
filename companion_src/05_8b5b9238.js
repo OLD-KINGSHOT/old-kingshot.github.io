@@ -96,6 +96,10 @@ const SITUATIONS=[
   heroes:[{n:'march terkuat',note:'lethality'}],ratio:{inf:30,cav:40,arc:30},
   skillUp:'\u2014 (fokus shield & farm aman)',
   do:'SHIELD tiap offline. Farm GATHERER lawan (injured=killed, tak ada hospital). Incar troop tier tinggi.'},
+ {key:'coliseum',name:'Coliseum',sub:'Mystic Trial · Sen-Sel · gear-only',icon:'🏛',kind:'pvp',role:'Solo PvE',evType:null,minDay:0,
+  heroes:[{n:'Inf tank',note:'mis. Zoe'},{n:'Archer DPS',note:'mis. Marlin'}],ratio:{inf:50,cav:10,arc:40},
+  skillUp:'Hero Gear (per-hero) MAKS — Pet/Charm/Governor Gear/Academy DIABAIKAN di sini.',
+  do:'Dungeon gear-only. Rotasi 1 set Hero Gear terbaik antar tim (gear-swap) > sebar gear lemah. Formasi 50/10/40 (sesuaikan lawan: 50/10/35 atau 50/20/30). Target F2P: tembus Stage 10. Reward: Crystal + Hero Gear material → danai Mithril.'},
 ];
 
 /* HERO_PRIORITY: exped = skill Expedition yang dinaikkan; conq = skill Conquest (Arena) */
