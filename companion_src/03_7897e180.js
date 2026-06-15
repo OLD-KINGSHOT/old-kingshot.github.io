@@ -200,11 +200,14 @@ function md5(str){
 
 /* ── Player API: login-style detect (run once, remembers) ── */
 async function ksPlayerLookup(fid){
-  const time=Date.now();
+  /* sign with SERVER-corrected time, not the raw device clock — a skewed phone
+     clock makes the signed `time` fall outside the API window -> err_code 40004
+     ("not login"). The whole app already runs on ksClock; signing must too. */
+  const time=ksClock.now().getTime();
   const sign=md5('fid='+fid+'&time='+time+KS_SALT);
   const body='sign='+sign+'&fid='+encodeURIComponent(fid)+'&time='+time;
   const res=await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
-  const dh=res.headers.get('date'); if(dh){ const srv=Date.parse(dh); if(!isNaN(srv)){ ksClock.offset=srv-Date.now(); store.set('clockOffset',ksClock.offset); ksClock.synced=true; } }
+  const dh=res.headers.get('date'); if(dh){ const srv=Date.parse(dh); if(!isNaN(srv)) ksClock._apply(srv); }
   return res.json();
 }
 async function fetchKingdomDate(kid){
@@ -245,18 +248,29 @@ async function fetchKingdomDate(kid){
 }
 /* Redeem one code. Returns {cls,txt}. */
 async function ksRedeem(fid,code){
-  let t=Date.now(); let s=md5('fid='+fid+'&time='+t+KS_SALT);
-  await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'sign='+s+'&fid='+encodeURIComponent(fid)+'&time='+t});
-  t=Date.now(); s=md5('cdk='+code+'&fid='+fid+'&time='+t+KS_SALT);
+  /* 1) "login" hit. Sign with corrected time, and (key) resync ksClock from the
+        response's HTTP Date header \u2014 server time is authoritative and always
+        present, so the very next sign is correct even if the device clock and a
+        prior sync were both wrong. This is what kills the "not login" (40004). */
+  let t=ksClock.now().getTime(); let s=md5('fid='+fid+'&time='+t+KS_SALT);
+  const lr=await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'sign='+s+'&fid='+encodeURIComponent(fid)+'&time='+t});
+  const dh=lr.headers.get('date'); if(dh){ const srv=Date.parse(dh); if(!isNaN(srv)) ksClock._apply(srv); }
+  /* 2) redeem, signed with the now-corrected clock */
+  t=ksClock.now().getTime(); s=md5('cdk='+code+'&fid='+fid+'&time='+t+KS_SALT);
   const body='sign='+s+'&fid='+encodeURIComponent(fid)+'&cdk='+encodeURIComponent(code)+'&time='+t;
   const r=await fetch(KS_GIFT_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
-  const j=await r.json(); const m=(j.msg||'').toUpperCase();
+  const j=await r.json();
+  const m=String(j.msg==null?'':j.msg).toUpperCase();   /* msg can come back as the NUMBER 40004 -> String() first, else .toUpperCase() throws */
+  const ec=Number(j.err_code)||0;
   if(j.code===0||m.includes('SUCCESS')) return {cls:'ok',txt:'Berhasil'};
   if(m.includes('RECEIVED')||m.includes('USED')) return {cls:'warn',txt:'Sudah dipakai'};
-  if(m.includes('NOT FOUND')||m.includes('CDK')) return {cls:'bad',txt:'Kode salah/tak ada'};
-  if(m.includes('TIME')||m.includes('EXPIRE')) return {cls:'bad',txt:'Kedaluwarsa'};
+  if(m.includes('CDK')||m.includes('NOT FOUND')) return {cls:'bad',txt:'Kode salah/tak ada'};
   if(m.includes('CAPTCHA')) return {cls:'warn',txt:'Butuh captcha \u2014 redeem in-game'};
-  return {cls:'inf',txt:j.msg||'?'};
+  if(m.includes('EXPIRE')) return {cls:'bad',txt:'Kedaluwarsa'};
+  /* 40004 = sign/time/"not login": almost always a meleset device clock */
+  if(ec===40004||m.includes('LOGIN')||m.includes('SIGN')||m.includes('TIME')||m==='40004')
+    return {cls:'bad',txt:'Jam perangkat meleset \u2014 sinkronkan jam lalu coba lagi'};
+  return {cls:'inf',txt:String(j.msg==null?'?':j.msg)};
 }
 /* Live gift codes — aggregated from TWO sources (kingshot.net's API regularly lags
    behind: per 2026-06 it listed 1 active code while kingshotwiki.com had 2).
