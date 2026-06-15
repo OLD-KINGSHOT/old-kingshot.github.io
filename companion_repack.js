@@ -7,6 +7,7 @@ const html=fs.readFileSync(IN,"utf8");
 const scripts=[...html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/g)];
 // find manifest script index
 let mi=scripts.findIndex(s=>/__bundler\/manifest/.test(s[1]));
+if(mi<0){ console.error("manifest script not found in "+IN+" — aborting"); process.exit(1); }
 const oldManifest=JSON.parse(scripts[mi][2]);
 const newManifest={};
 for(const m of map){

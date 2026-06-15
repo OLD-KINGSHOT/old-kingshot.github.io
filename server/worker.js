@@ -24,6 +24,17 @@ function safeEq(a, b) {
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'Content-Type': 'application/json', ...CORS } });
 const text = (t, s = 200) => new Response(t, { status: s, headers: { 'Content-Type': 'text/plain; charset=utf-8', ...CORS } });
 
+/* Lazily create every table we touch. CREATE TABLE IF NOT EXISTS is idempotent &
+   cheap, so a fresh D1 (or a brand-new deploy) just works — previously only
+   seen_codes was created, so /sync and /visit threw "no such table" on a clean DB. */
+async function ensureSchema(env) {
+  await env.DB.batch([
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS seen_codes (code TEXT PRIMARY KEY, ts INTEGER)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS sync (code TEXT PRIMARY KEY, ts INTEGER, data TEXT, updated INTEGER)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS visitors (pid TEXT PRIMARY KEY, nick TEXT, kid TEXT, tc TEXT, first TEXT, last TEXT, visits INTEGER)'),
+  ]);
+}
+
 /* ===== Gift-code watcher (cron) =====================================
    Cek kingshot.net gift-code, bandingkan dgn D1 `seen_codes`, push kode BARU
    ke HP via ntfy dan/atau Telegram. Run pertama = seed diam (tak spam kode lama). */
@@ -63,7 +74,7 @@ async function maybeAutoRedeem(env, code) {
 }
 
 async function checkCodes(env) {
-  await env.DB.prepare('CREATE TABLE IF NOT EXISTS seen_codes (code TEXT PRIMARY KEY, ts INTEGER)').run();
+  await ensureSchema(env);
   const codes = await fetchActiveCodes();           // throws on network error -> caller skips seen update
   if (!codes.length) return { ok: true, fetched: 0, new: [] };
   const rows = await env.DB.prepare('SELECT code FROM seen_codes').all();
@@ -122,13 +133,15 @@ export default {
       const mSync = p.match(/^\/sync\/([A-Za-z0-9_-]{8,80})$/);
       if (mSync) {
         const code = mSync[1];
+        await ensureSchema(env);
         if (req.method === 'GET') {
           const row = await env.DB.prepare('SELECT data FROM sync WHERE code=?1').bind(code).first();
           return text(row ? row.data : '');
         }
         if (req.method === 'PUT' || req.method === 'POST') {
           const body = await req.text();
-          if (!body || body.length > 262144) return json({ error: 'size' }, 413);
+          if (!body) return json({ error: 'empty' }, 400);
+          if (body.length > 262144) return json({ error: 'size' }, 413);
           let ts = 0;
           try { const j = JSON.parse(body); ts = Number(j.ts) || 0; } catch (e) { return json({ error: 'json' }, 400); }
           await env.DB.prepare(
@@ -144,6 +157,7 @@ export default {
         let b; try { b = await req.json(); } catch (e) { return json({ error: 'json' }, 400); }
         const pid = String(b.pid || '').slice(0, 20);
         if (!/^\d{4,15}$/.test(pid)) return json({ error: 'pid' }, 400);
+        await ensureSchema(env);
         const nick = String(b.nick || '').slice(0, 40);
         const kid = String(b.kid || '').slice(0, 10);
         const tc = String(b.tc || '').slice(0, 6);
@@ -163,6 +177,7 @@ export default {
       if (p === '/visitors' && req.method === 'GET') {
         /* key via HEADER (not query string) so it never lands in access logs */
         if (!safeEq(req.headers.get('x-owner-key'), env.OWNER_KEY)) return json({ error: 'forbidden' }, 403);
+        await ensureSchema(env);
         const rs = await env.DB.prepare('SELECT pid,nick,kid,tc,first,last,visits FROM visitors ORDER BY last DESC, visits DESC LIMIT 1000').all();
         return json({ visitors: rs.results || [] });
       }
