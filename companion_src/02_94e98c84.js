@@ -92,14 +92,20 @@ function ratioBar(r){
   return `<div class="rbar">${seg('inf',r.inf)}${seg('cav',r.cav)}${seg('arc',r.arc)}</div>
     <div class="rleg"><b class="inf">\u25b0</b> ${r.inf}% Inf \u00b7 <b class="cav">\u25b0</b> ${r.cav}% Cav \u00b7 <b class="arc">\u25b0</b> ${r.arc}% Archer</div>`;
 }
+/* ── Roster pemain (hero + ★, tersimpan & sinkron via ks_roster) ── */
+function rosterGet(){ return store.get('roster',{}); }
+function rosterStar(n){ return +(rosterGet()[n]||0); }
+function rosterAny(){ const r=rosterGet(); for(const k in r){ if(+r[k]>0) return true; } return false; }
+function rosterBest(ty){ const r=rosterGet(); return HEROES.filter(h=>h.ty===ty&&+r[h.n]>0).sort((a,b)=>r[b.n]-r[a.n])[0]||null; }
 function lineupCard(s,age){
-  const heroes=s.heroes.map(h=>`<span class="hc">${esc(h.n)}${h.note?' <small>('+esc(h.note)+')</small>':''}</span>`).join(s.pick?'<span class="dim small" style="align-self:center">atau</span>':'');
+  const heroes=s.heroes.map(h=>{ const st=rosterStar(h.n); return `<span class="hc">${esc(h.n)}${h.note?' <small>('+esc(h.note)+')</small>':''}${st?' <span class="pill f2p">'+st+'★</span>':''}</span>`; }).join(s.pick?'<span class="dim small" style="align-self:center">atau</span>':'');
   const gate=(age!=null&&s.minDay>0&&age<s.minDay)?`<div class="alert warn small" style="margin:0 0 8px">\u23f3 Belum aktif \u2014 mulai ~hari ${s.minDay} (server hari ${age}). Simpan persiapan.</div>`:'';
   return `<div class="lcard">
     <div class="lh"><span class="nm">${s.icon} ${esc(s.name)}${s.sub?' <span class="dim" style="font-weight:400">'+esc(s.sub)+'</span>':''}</span><span class="rolechip ${s.kind}">${esc(s.role)}</span></div>
     ${gate}${s.free?'<div class="dim small" style="margin-bottom:4px">Khusus Arena: 5 hero BEBAS kelas (aturan march tidak berlaku).</div>':'<div class="dim small" style="margin-bottom:4px">⚔ 1 march: max 3 hero, SATU per kelas (Inf/Cav/Arc) — 2 Archer (mis. Yeonwoo+Amane) TIDAK BISA bareng.</div>'}${s.role==='Joiner'?'<div class="dim small" style="margin-bottom:4px">Joiner → cuma hero SLOT-1 yang dihitung (skill Expedition #1).</div>':''}${s.pick?'<div class="dim small" style="margin-bottom:2px">Cukup SATU hero — pilih salah satu (taruh di slot-1):</div>':''}<div class="herochips">${heroes}</div>${ratioBar(s.ratio)}
     ${s.table?`<div class="scrollx" style="margin-top:9px"><table class="ltbl"><tbody>${s.table.map((row,ri)=>`<tr>${row.map((c,ci)=>ri===0?`<th>${esc(c)}</th>`:(ci===0?`<td><b>${esc(c)}</b></td>`:`<td class="small">${esc(c)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`:''}
     <div class="lrow up"><span class="lk">Skill\u2191</span>${esc(s.skillUp)}</div>
+    ${rosterAny()?(function(){const inf=rosterBest('Infantry'),cav=rosterBest('Cavalry'),arc=rosterBest('Archer'),list=[inf,cav,arc].filter(Boolean),ld=list.slice().sort((a,b)=>rosterStar(b.n)-rosterStar(a.n))[0],c=(l,h)=>l+': '+(h?esc(h.n)+' '+rosterStar(h.n)+'\u2605':'\u2014');return `<div class="lrow"><span class="lk">Punyamu</span>${c('Inf',inf)} \u00b7 ${c('Cav',cav)} \u00b7 ${c('Arc',arc)}${ld?' \u00b7 \ud83d\udc51 leader '+esc(ld.n):''}</div>`;})():''}
     <div class="lrow"><span class="lk">Lakukan</span>${esc(s.do)}</div>
   </div>`;
 }
@@ -288,7 +294,7 @@ function renderHero(){
       html=card('Tier List','\u25a4',
           `<div class="row" style="margin-bottom:10px"><button class="btn ghost sm" data-fil="all">Semua</button><button class="btn ghost sm" data-fil="f2p">F2P</button><button class="btn ghost sm" data-fil="now">Tersedia kini</button></div>
            ${age!=null?`<div class="alert inf small">Server hari ${age} \u2192 generasi aktif <b>${gen}</b>.</div>`:''}
-           <div class="scrollx"><table><thead><tr><th>Hero</th><th>Tier</th><th>Tipe</th><th>Gen</th><th>Catatan</th></tr></thead><tbody id="herobody2"></tbody></table></div>`)
+           <div class="alert ok small">⭐ <b>Set ★ hero yang kamu punya</b> di kolom "★ Punya" (0-5) → lineup di tab Lineup & Sekarang otomatis pakai hero terkuatmu + tunjuk leader.</div><div class="scrollx"><table><thead><tr><th>Hero</th><th>Tier</th><th>Tipe</th><th>Gen</th><th>★ Punya</th><th>Catatan</th></tr></thead><tbody id="herobody2"></tbody></table></div>`)
         +card('Hero Awal Server (Gen 1)','\u25cb',
           `<div class="scrollx"><table><thead><tr><th>Hero</th><th>Rarity</th><th>Cara dapat</th><th>Catatan</th></tr></thead><tbody>
            ${EARLY_HEROES.map(([n,r,c,note])=>`<tr><td><b>${esc(n)}</b></td><td class="small">${esc(r)}</td><td class="small">${esc(c)}</td><td class="small muted">${esc(note)}</td></tr>`).join('')}</tbody></table></div>`)
@@ -314,9 +320,10 @@ function renderHero(){
     if(which==='daftar'){
       const fill=f=>{ const ag=profileAge().age;
         $('#herobody2',body).innerHTML=sorted.filter(h=>{ if(f==='f2p')return h.f2p; if(f==='now')return ag==null?true:(GEN_DAY[HERO_GEN[h.n]||1]<=ag); return true; }).map(h=>{
-          const tc={S:'s',A:'a',B:'b',C:'c',Gen6:'gen6'}[h.t]; const g=HERO_GEN[h.n]||1;
-          return `<tr><td><b>${esc(h.n)}</b> ${h.f2p?'<span class="pill f2p">F2P</span>':''}</td><td><span class="pill ${tc}">${h.t}</span></td><td class="small">${esc(h.ty)}</td><td class="small">Gen ${g}</td><td class="small muted">${esc(h.note)}</td></tr>`;
-        }).join(''); };
+          const tc={S:'s',A:'a',B:'b',C:'c',Gen6:'gen6'}[h.t]; const g=HERO_GEN[h.n]||1; const cur=rosterStar(h.n);
+          return `<tr><td><b>${esc(h.n)}</b> ${h.f2p?'<span class="pill f2p">F2P</span>':''}</td><td><span class="pill ${tc}">${h.t}</span></td><td class="small">${esc(h.ty)}</td><td class="small">Gen ${g}</td><td><select class="rost" data-h="${esc(h.n)}">${[0,1,2,3,4,5].map(n=>`<option value="${n}"${n===cur?' selected':''}>${n?n+'★':'—'}</option>`).join('')}</select></td><td class="small muted">${esc(h.note)}</td></tr>`;
+        }).join('');
+        $$('select.rost',body).forEach(sel=>sel.onchange=()=>{ const r=store.get('roster',{}); const v=+sel.value; if(v) r[sel.dataset.h]=v; else delete r[sel.dataset.h]; store.set('roster',r); }); };
       $$('[data-fil]',body).forEach(b=>b.onclick=()=>{ $$('[data-fil]',body).forEach(x=>x.classList.remove('active')); b.classList.add('active'); fill(b.dataset.fil); });
       fill('all');
     }
