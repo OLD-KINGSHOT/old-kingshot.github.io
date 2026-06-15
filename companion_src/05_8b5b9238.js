@@ -100,6 +100,10 @@ const SITUATIONS=[
   heroes:[{n:'Inf tank',note:'mis. Zoe'},{n:'Archer DPS',note:'mis. Marlin'}],ratio:{inf:50,cav:10,arc:40},
   skillUp:'Hero Gear (per-hero) MAKS — Pet/Charm/Governor Gear/Academy DIABAIKAN di sini.',
   do:'Dungeon gear-only. Rotasi 1 set Hero Gear terbaik antar tim (gear-swap) > sebar gear lemah. Formasi 50/10/40 (sesuaikan lawan: 50/10/35 atau 50/20/30). Target F2P: tembus Stage 10. Reward: Crystal + Hero Gear material → danai Mithril.'},
+ {key:'ac-lane',name:'Alliance Championship',sub:'pilih 1 lane · kamu LEAD',icon:'🛡',kind:'pvp',role:'Lane PvP',evType:null,minDay:0,
+  heroes:[{n:'Howard',note:'Inf'},{n:'Jabel',note:'Cav · leader'},{n:'Saul / Yeonwoo',note:'Arc'}],ratio:{inf:50,cav:20,arc:30},
+  skillUp:'LEAD = semua 3 skill Expedition. Leader Jabel: Rally Flag → Youthful Rage → Hero’s Domain. Upgrade: Zoe (Inf) · Marlin (Arc) · Petra (Cav).',
+  do:'PILIH 1 LANE (1 player = 1 lane). KUAT (top-20 power aliansi) → masuk lane yang DITUMPUK (strategi 2-1: menang 2 dari 3 lane). LEMAH (di luar top-20) → bebas / lane korban; skor tak dihitung tapi TETAP hadir utk reward. Ikut arahan R4/R5. Deploy 3 hero (1 per kelas) + troop SEBELUM tanding (yg lagi march/heal tak ikut). Counter lawan (RPS): vs Inf → Archer 30/20/50 · vs Cav → Inf 60/10/30 · vs Archer → Cav 30/50/20. Aktifkan SEMUA buff sebelum registrasi (snapshot LOCK). Ambil 2 kill/ronde.'},
 ];
 
 /* HERO_PRIORITY: exped = skill Expedition yang dinaikkan; conq = skill Conquest (Arena) */
