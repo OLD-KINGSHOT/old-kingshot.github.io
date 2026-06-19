@@ -109,10 +109,16 @@ function rosterAny(){ const r=rosterGet(); for(const k in r){ if(+r[k]>0) return
 function rosterBest(ty){ const r=rosterGet(); return HEROES.filter(h=>h.ty===ty&&+r[h.n]>0).sort((a,b)=>r[b.n]-r[a.n])[0]||null; }
 function lineupCard(s,age){
   const heroes=s.heroes.map(h=>{ const st=rosterStar(h.n); return `<span class="hc">${esc(h.n)}${h.note?' <small>('+esc(h.note)+')</small>':''}${st?' <span class="pill f2p">'+st+'★</span>':''}</span>`; }).join(s.pick?'<span class="dim small" style="align-self:center">atau</span>':'');
+  /* Bear Hunt: rasio bergeser ke archer tiap generasi — otomatis sesuai umur server */
+  let ratio=s.ratio, ratioNote='';
+  if(s.key==='bear-trap'&&age!=null){
+    ratio = age>=197?{inf:1,cav:10,arc:89} : age>=113?{inf:10,cav:10,arc:80} : age>=50?{inf:10,cav:20,arc:70} : {inf:10,cav:30,arc:60};
+    ratioNote=` <span class="dim small">(${genForAge(age)}${age>=197?' · min 5.000 infantry':''} — bergeser ke archer tiap gen)</span>`;
+  }
   const gate=(age!=null&&s.minDay>0&&age<s.minDay)?`<div class="alert warn small" style="margin:0 0 8px">\u23f3 Belum aktif \u2014 mulai ~hari ${s.minDay} (server hari ${age}). Simpan persiapan.</div>`:'';
   return `<div class="lcard">
     <div class="lh"><span class="nm">${s.icon} ${esc(s.name)}${s.sub?' <span class="dim" style="font-weight:400">'+esc(s.sub)+'</span>':''}</span><span class="rolechip ${s.kind}">${esc(s.role)}</span></div>
-    ${gate}${s.free?'<div class="dim small" style="margin-bottom:4px">Khusus Arena: 5 hero BEBAS kelas (aturan march tidak berlaku).</div>':'<div class="dim small" style="margin-bottom:4px">⚔ 1 march: max 3 hero, SATU per kelas (Inf/Cav/Arc) — 2 Archer (mis. Yeonwoo+Amane) TIDAK BISA bareng.</div>'}${s.role==='Joiner'?'<div class="dim small" style="margin-bottom:4px">Joiner → cuma hero SLOT-1 yang dihitung (skill Expedition #1).</div>':''}${s.pick?'<div class="dim small" style="margin-bottom:2px">Cukup SATU hero — pilih salah satu (taruh di slot-1):</div>':''}<div class="herochips">${heroes}</div>${ratioBar(s.ratio)}
+    ${gate}${s.free?'<div class="dim small" style="margin-bottom:4px">Khusus Arena: 5 hero BEBAS kelas (aturan march tidak berlaku).</div>':'<div class="dim small" style="margin-bottom:4px">⚔ 1 march: max 3 hero, SATU per kelas (Inf/Cav/Arc) — 2 Archer (mis. Yeonwoo+Amane) TIDAK BISA bareng.</div>'}${s.role==='Joiner'?'<div class="dim small" style="margin-bottom:4px">Joiner → cuma hero SLOT-1 yang dihitung (skill Expedition #1).</div>':''}${s.pick?'<div class="dim small" style="margin-bottom:2px">Cukup SATU hero — pilih salah satu (taruh di slot-1):</div>':''}<div class="herochips">${heroes}</div>${ratioBar(ratio)}${ratioNote}
     ${s.table?`<div class="scrollx" style="margin-top:9px"><table class="ltbl"><tbody>${s.table.map((row,ri)=>`<tr>${row.map((c,ci)=>ri===0?`<th>${esc(c)}</th>`:(ci===0?`<td><b>${esc(c)}</b></td>`:`<td class="small">${esc(c)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`:''}
     <div class="lrow up"><span class="lk">Skill\u2191</span>${esc(s.skillUp)}</div>
     ${rosterAny()?(function(){const inf=rosterBest('Infantry'),cav=rosterBest('Cavalry'),arc=rosterBest('Archer'),list=[inf,cav,arc].filter(Boolean),ld=list.slice().sort((a,b)=>rosterStar(b.n)-rosterStar(a.n))[0],c=(l,h)=>l+': '+(h?esc(h.n)+' '+rosterStar(h.n)+'\u2605':'\u2014');return `<div class="lrow"><span class="lk">Punyamu</span>${c('Inf',inf)} \u00b7 ${c('Cav',cav)} \u00b7 ${c('Arc',arc)}${ld?' \u00b7 \ud83d\udc51 leader '+esc(ld.n):''}</div>`;})():''}
