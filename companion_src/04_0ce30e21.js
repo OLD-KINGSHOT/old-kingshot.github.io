@@ -248,6 +248,13 @@ const EVENTS_INFO=[
    {n:'Truegold Wonders',cat:'Truegold \u00b7 komisi',freq:'mingguan (Age of Truegold)',what:'Komisi mingguan di War Academy \u2192 True Gold dust & gold untuk riset Truegold. F2P: kerjakan komisi GRATIS tiap minggu. (Muncul di kingshot.net; detail tahap verifikasi in-game.)'},
    {n:'Charm Craftsman',cat:'charm \u00b7 poin',freq:'rotasi',what:'Event poin seputar charm / Charm Design. F2P: pakai material charm yang sudah direncanakan, jangan beli khusus event. (Muncul di kingshot.net; verifikasi in-game.)'},
    {n:'Treasure Cove',cat:'chest/spend',freq:'berkala',what:'Event chest + daily task (mirip Buccaneer/Treasure Raiders). F2P: kerjakan daily efisien, BERHENTI sebelum milestone mahal; hanya push kalau overlap event yang memang sudah direncanakan. Bandingkan reward vs biaya tiap tier sebelum lanjut.'},
+   {n:'Top Governor — Governor Gear',cat:'poin · gear',freq:'rotasi (live kingshot.net)',what:'Varian "Top Governor" bertema Governor Gear — poin dari skor/upgrade Governor Gear. F2P: TAHAN material gear (Satin/Gilded/Artisan Vision) → selesaikan di window. (verifikasi tema/hari in-game)'},
+   {n:'Governor Gear Enhancement / Enhance Gear',cat:'poin · gear',freq:'rotasi (live)',what:'Poin dari enhance/upgrade gear (mirip Armament Type-2). F2P: pakai Forgehammer/Mithril/Artisan Vision di window; JANGAN buang speedup (1 poin/mnt). (verifikasi in-game)'},
+   {n:'Custom Arms Set',cat:'poin · hero gear',freq:'rotasi (live)',what:'Poin dari crafting/upgrade set Custom Mythic Hero Gear. F2P: pakai Forgehammer/Mithril yang sudah direncanakan, jangan beli. (verifikasi in-game)'},
+   {n:'Tech Storm',cat:'poin · riset',freq:'rotasi (live)',what:'Poin dari research (mirip Develop New Tech). F2P: TAHAN research speedup → pakai di window; barengkan dgn hari riset HoG/SG. (verifikasi in-game)'},
+   {n:'Conqueror',cat:'poin · tempur',freq:'rotasi (live)',what:'Poin dari aktivitas tempur/kill. F2P: skor dari aktivitas normal; hati-hati barengan All-Out (shield saat offline). (verifikasi in-game)'},
+   {n:'World Traveler',cat:'poin · jelajah/gather',freq:'rotasi (live)',what:'Poin dari gathering/eksplorasi peta. F2P: jalankan gather rutin & habiskan stamina; tak perlu spend. (verifikasi in-game)'},
+   {n:'Wishful Emporium',cat:'chest/toko',freq:'rotasi (live)',what:'Peti/toko undian (mirip Arcane Trove / Emporium of Enigma). F2P: pakai kunci GRATIS dari task, klaim milestone gratis, jangan beli kunci/judi. (verifikasi in-game)'},
  ]},
  {g:'Berkala / khusus', items:[
    {n:'Alliance Tech (riset aliansi)',cat:'fitur · aliansi',freq:'permanen (bukan rotasi event)',what:'Riset aliansi dari donasi: Regimentation (naikkan cap member) · Cooperative Protocols (potong waktu tiap Alliance Help) · Adaptive Tools (speed konstruksi aliansi) · Treaties (naikkan cap assist help). F2P: spam Help All harian + donasi ke tech ber-flag "preferred" R4 (+20% reward). Growth dulu, lalu Battle (rally cap), lalu Territory.'},
@@ -352,7 +359,15 @@ const WEEKLY_GUIDE={
   kvkFieldTriage:'Fase pemulihan KvK \u2014 heal pasukan (batch + help aliansi), klaim reward.',
   truegoldWonders:'Komisi mingguan \u2192 True Gold dust & gold. Kerjakan komisi GRATIS di War Academy.',
   charmCraftsman:'Poin dari charm / Charm Design. Pakai material terencana \u2014 jangan beli khusus event.',
-  treasureCove:'Event chest + daily task. Kerjakan daily efisien, berhenti sebelum milestone mahal.'
+  treasureCove:'Event chest + daily task. Kerjakan daily efisien, berhenti sebelum milestone mahal.',
+  governorGearEnhancement:'Poin dari enhance/upgrade gear. Pakai Forgehammer/Mithril/Artisan Vision di window; JANGAN buang speedup.',
+  enhanceGear:'Poin dari enhance/upgrade gear. Pakai material gear di window; jangan buang speedup.',
+  customArmsSet:'Poin dari craft/upgrade Custom Mythic Hero Gear. Pakai Forgehammer/Mithril terencana.',
+  techStorm:'Poin dari research. TAHAN research speedup → pakai di window (barengkan hari riset HoG/SG).',
+  conqueror:'Poin dari tempur/kill. Skor dari aktivitas normal; hati-hati barengan All-Out (shield offline).',
+  worldTraveler:'Poin dari gather/eksplorasi. Jalankan gather rutin & habiskan stamina; tak perlu spend.',
+  wishfulEmporium:'Peti/toko undian. Pakai kunci GRATIS dari task, klaim milestone gratis, jangan judi.',
+  topGovernor:'Varian Top Governor bertema (gear/dll). TAHAN material tema → selesaikan di window.'
 };
 const WEEKLY_GUIDE_DEFAULT='Cek detail di tab Events in-game. Aturan F2P: pakai attempt/reward gratis, jangan beli pack.';
 /* Jangkar tanggal buka kingdom — sampel tiap 25 ID dari kingshot.net kingdom-tracker
