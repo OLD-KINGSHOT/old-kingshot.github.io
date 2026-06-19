@@ -389,20 +389,15 @@ function islWire(el){
   const cv=$('#isl_cv',el); if(!cv) return;
   /* coordinates match the community map: origin "1" at BOTTOM-LEFT, x along the bottom, y rises upward */
   const ctx=cv.getContext('2d'); const N=(typeof ISLAND_N!=='undefined')?ISLAND_N:60, L=28,R=30,T=20,B=26;
+  /* COPY-ON-WRITE: profil yang belum pernah mengedit membaca BASE bersama (islandBase);
+     begitu diedit, store.set('islandMarks',…) menyimpan salinan per-profil (divergen).
+     Semua profil mulai dari peta yang sama; perubahan tersimpan terpisah per-ID. */
   let marks=store.get('islandMarks',null);
-  /* migrate: v1/v2 templates were digitized on a wrong 70×70 grid (real map = 60×60) and
-     missed 17 chests. If the stored map is an UNTOUCHED auto-template (42 chests, nothing
-     else), refresh it to the corrected 59-point seed. */
-  const looksUntouchedOld=marks&&store.get('islandSeedV',1)<3&&Object.keys(marks).length===42&&Object.values(marks).every(v=>v===1);
-  /* default = the community chest template (user asked the dots to be there out of the box) */
-  if(!marks||Object.keys(marks).length===0||looksUntouchedOld){
-    marks={};
-    if(typeof ISLAND_SEED!=='undefined') ISLAND_SEED.forEach(p=>{ marks[p[0]+','+p[1]]=1; });
-    store.set('islandMarks',marks); store.set('islandSeedV',3);
-  }
-  /* prune legacy reservoir marks (value 3) — the mode no longer exists */
+  const hasOwn=!!(marks&&Object.keys(marks).length>0);
+  if(!hasOwn) marks=Object.assign({}, (typeof islandBase==='function'?islandBase():{}));
+  /* prune legacy reservoir marks (value 3) — persist hanya kalau profil ini sudah punya salinan sendiri */
   { let pruned=false; for(const k in marks){ if(marks[k]===3){ delete marks[k]; pruned=true; } }
-    if(pruned) store.set('islandMarks',marks); }
+    if(pruned&&hasOwn) store.set('islandMarks',marks); }
   let zoom=Math.max(8,Math.min(56,parseInt(store.get('islandZoom',16))||16));
   let mode=1;
   /* screenshot-trace overlay: session-only (not persisted — keeps Export backup small) */
@@ -873,6 +868,7 @@ async function autoDetectUI(){
 /* ============ INIT ============ */
 function init(){
   migrateProfiles();
+  migrateIslandShared();
   ksClock.load();
   Object.assign(KINGDOM_DATES,store.get('kdates',{}));
   buildNav();

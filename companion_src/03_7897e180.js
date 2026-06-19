@@ -45,6 +45,33 @@ function migrateProfiles(){
     localStorage.setItem('ks_profilesV','1');
   }catch(e){ console.warn('migrateProfiles',e); }
 }
+/* Island = SATU base bersama untuk semua profil; edit tersimpan per-profil (copy-on-write).
+   islandBase() = peta dasar bersama (ks_islandShared), fallback ke template komunitas. */
+function islandBase(){
+  let b=null; try{ b=JSON.parse(localStorage.getItem('ks_islandShared')||'null'); }catch(e){}
+  if(b&&Object.keys(b).length) return b;
+  const seed={}; if(typeof ISLAND_SEED!=='undefined') ISLAND_SEED.forEach(p=>{ seed[p[0]+','+p[1]]=1; });
+  try{ localStorage.setItem('ks_islandShared',JSON.stringify(seed)); }catch(e){}
+  return seed;
+}
+/* Satukan island semua profil sekali jalan: tetapkan base bersama lalu hapus override
+   per-profil → semua profil membaca base yang sama. Edit berikutnya = copy-on-write. */
+function migrateIslandShared(){
+  try{
+    if(localStorage.getItem('ks_islandSharedV')) return;
+    let profs=[]; try{ profs=JSON.parse(localStorage.getItem('ks_profiles')||'[]'); }catch(e){}
+    /* tentukan base DULU (sebelum menghapus apa pun) */
+    let base=localStorage.getItem('ks_islandShared');
+    if(!base) base=localStorage.getItem('ks_islandMarks');               /* legacy single-profil */
+    if(!base){ for(const p of profs){ const m=localStorage.getItem('ks_p_'+p.pid+'_islandMarks');
+      if(m){ try{ if(Object.keys(JSON.parse(m)||{}).length){ base=m; break; } }catch(e){} } } }
+    if(base) localStorage.setItem('ks_islandShared',base);
+    /* hapus override per-profil + sisa legacy → semua baca base yang sama */
+    localStorage.removeItem('ks_islandMarks'); localStorage.removeItem('ks_islandSeedV');
+    for(const p of profs){ localStorage.removeItem('ks_p_'+p.pid+'_islandMarks'); localStorage.removeItem('ks_p_'+p.pid+'_islandSeedV'); }
+    localStorage.setItem('ks_islandSharedV','1');
+  }catch(e){ console.warn('migrateIslandShared',e); }
+}
 
 /* ── Sinkron otomatis antar perangkat ──
    Backend: textdb.online (gratis, tanpa daftar, CORS penuh) — satu "kode sinkron"
@@ -53,7 +80,7 @@ function migrateProfiles(){
    Strategi konflik: last-write-wins per snapshot (cukup untuk 1 pemain multi-HP).
    Kunci volatil (cache yang bisa diambil ulang / preferensi per-perangkat) di-skip. */
 const ksSync={
-  _skip:['ks_syncMeta','ks_liveEvents','ks_kdates','ks_clockOffset','ks_clockSyncAt','ks_clockNudge','ks_islandZoom','ks_lang','ks_lastTab','ks_evSub','ks_lastSit','ks_onboard','ks_tz','ks_visitPing','ks_activePid','ks_profilesV'],
+  _skip:['ks_syncMeta','ks_liveEvents','ks_kdates','ks_clockOffset','ks_clockSyncAt','ks_clockNudge','ks_islandZoom','ks_lang','ks_lastTab','ks_evSub','ks_lastSit','ks_onboard','ks_tz','ks_visitPing','ks_activePid','ks_profilesV','ks_islandSharedV'],
   _t:null,
   meta(){ try{ return JSON.parse(localStorage.getItem('ks_syncMeta')||'null'); }catch(e){ return null; } },
   _saveMeta(m){ try{ localStorage.setItem('ks_syncMeta',JSON.stringify(m)); }catch(e){} },
