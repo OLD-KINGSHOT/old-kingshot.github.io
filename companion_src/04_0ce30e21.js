@@ -245,8 +245,14 @@ const EVENTS_INFO=[
    {n:'Truegold Refinement',cat:'Truegold \u00b7 Deals',freq:'barengan All-Out',what:'Kumpul Lesser Truegold \u2192 tukar pack Truegold (tab DEALS, selalu barengan All-Out; butuh Age of Truegold). F2P: Lesser Truegold gratis dari gather 25M (\u00d75) + 50 stamina (\u00d75), CARRY-OVER \u2192 tabung ke pack besar. Trap: gather tak peduli rasio \u2192 pakai gather-boost di bread/wood.'},
    {n:'Windward Voyage',cat:'kapal/voyage',freq:'5 hari dispatch + 1 koleksi',what:'Kirim kapal (8 jam) \u2192 Tidal Treasure Chest (mat governor gear). F2P: 1 Voyager Team gratis + 5 Compass gratis (1/hari, percepat 1 jam); kejar milestone 60 chest. Trap: JANGAN over-merge \u2014 3 Common > 1 Premium; merge sebelum auto-buka di hari koleksi.'},
    {n:'Imperial Consortium',cat:'pack BERBAYAR',freq:'2 hari',what:'Tangga pack berbayar ($0.99-99.99) \u2014 beli tier rendah buka tier atas. F2P: SKIP (spend-only); paling banter pack termurah kalau routenya kasih mat charm/gear yang kamu butuh. Trap: didesain merantai pembelian, gampang boros.'},
+   {n:'Truegold Wonders',cat:'Truegold \u00b7 komisi',freq:'mingguan (Age of Truegold)',what:'Komisi mingguan di War Academy \u2192 True Gold dust & gold untuk riset Truegold. F2P: kerjakan komisi GRATIS tiap minggu. (Muncul di kingshot.net; detail tahap verifikasi in-game.)'},
+   {n:'Charm Craftsman',cat:'charm \u00b7 poin',freq:'rotasi',what:'Event poin seputar charm / Charm Design. F2P: pakai material charm yang sudah direncanakan, jangan beli khusus event. (Muncul di kingshot.net; verifikasi in-game.)'},
+   {n:'Treasure Cove',cat:'chest/spend',freq:'berkala',what:'Event chest + daily task (mirip Buccaneer/Treasure Raiders). F2P: kerjakan daily efisien, BERHENTI sebelum milestone mahal; hanya push kalau overlap event yang memang sudah direncanakan. Bandingkan reward vs biaya tiap tier sebelum lanjut.'},
  ]},
  {g:'Berkala / khusus', items:[
+   {n:'Alliance Tech (riset aliansi)',cat:'fitur · aliansi',freq:'permanen (bukan rotasi event)',what:'Riset aliansi dari donasi: Regimentation (naikkan cap member) · Cooperative Protocols (potong waktu tiap Alliance Help) · Adaptive Tools (speed konstruksi aliansi) · Treaties (naikkan cap assist help). F2P: spam Help All harian + donasi ke tech ber-flag "preferred" R4 (+20% reward). Growth dulu, lalu Battle (rally cap), lalu Territory.'},
+   {n:'Anniversary Event',cat:'tahunan',freq:'~hari server 365',what:'Perayaan ulang tahun server — milestone & task berhadiah besar. F2P: kejar reward milestone GRATIS, jangan kejar leaderboard berbayar. (Kingdom baru: masih jauh.)'},
+   {n:'Update Des 2026 (catatan QoL)',cat:'changelog',freq:'-',what:'Fitur baru relevan: daily mission khusus Mystic Trial; Rebel Invasion quick-battle (unlock TC25); 2 slot formasi tambahan (TC26 & TC30) + bisa menamai formasi (3 huruf); tukar (exchange) material gear/charm berlebih di interface gear.'},
    {n:'Kingdom Transfer',cat:'pindah server',freq:'~tiap 40-60 hari',what:'Kesempatan pindah ke Kingdom lain (gate: ~hari 152 / Truegold Lv5 + Crucible). Ada batas power & biaya. Pikirkan matang \u2014 cek aturan in-game.'},
    {n:'War Preparation',cat:'aliansi \u00b7 jelang KvK',freq:'2 hari (sebelum KvK)',what:'Persiapan perang menjelang KvK. Stage troop, isi formasi, kosongkan hospital, koordinasi aliansi.'},
    {n:'Fight Club',cat:'event tema \u00b7 PvE',freq:'berkala (event tema)',what:'Ring tinju bawah tanah bertema animatronik \u2014 kalahkan lawan demi kesempatan melawan Bear King. Event tema ringan: ikuti attempt gratis harian, kejar milestone, jangan beli attempt berbayar.'},
@@ -343,7 +349,10 @@ const WEEKLY_GUIDE={
   castleBattle:'Serang TURRET (bukan castle); TP masuk <1 jam sebelum mulai; batch-heal.',
   allOut:'Kill event: SHIELD tiap offline; farm gatherer lawan (injured = killed, tanpa hospital).',
   kvkPrepPhase:'War Preparation: stage troop, isi formasi, kosongkan hospital, koordinasi aliansi.',
-  kvkFieldTriage:'Fase pemulihan KvK \u2014 heal pasukan (batch + help aliansi), klaim reward.'
+  kvkFieldTriage:'Fase pemulihan KvK \u2014 heal pasukan (batch + help aliansi), klaim reward.',
+  truegoldWonders:'Komisi mingguan \u2192 True Gold dust & gold. Kerjakan komisi GRATIS di War Academy.',
+  charmCraftsman:'Poin dari charm / Charm Design. Pakai material terencana \u2014 jangan beli khusus event.',
+  treasureCove:'Event chest + daily task. Kerjakan daily efisien, berhenti sebelum milestone mahal.'
 };
 const WEEKLY_GUIDE_DEFAULT='Cek detail di tab Events in-game. Aturan F2P: pakai attempt/reward gratis, jangan beli pack.';
 /* Jangkar tanggal buka kingdom — sampel tiap 25 ID dari kingshot.net kingdom-tracker
