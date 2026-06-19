@@ -187,7 +187,7 @@ const KVK_PREP={
 const EVENTS_INFO=[
  {g:'Rutin (harian / mingguan)', items:[
    {n:'Bear Hunt (Bear Trap)',cat:'PvE \u00b7 harian \u00b7 PENTING',freq:'Per siklus (aliansi pasang 2 trap, jam beda)',what:'Rally beruang bareng aliansi pakai stamina. Beruang = INFANTRY \u2192 ARCHER +10%. Sumber utama Forgehammer. \u26a0 Hanya bisa serang SATU KALI per siklus \u2014 pilih Trap 1 ATAU Trap 2 sesuai jam onlinemu; sudah ikut satu, BT berikutnya muncul siklus depan.',sit:'bear-trap'},
-   {n:'Mystic Trial',cat:'PvE \u00b7 mingguan',freq:'Rotasi: Sen-Sel Coliseum \u00b7 Rab-Kam Forest \u00b7 Jum-Sab Nexus \u00b7 Min semua',what:'Dungeon solo. Sumber Misty Crystal \u2192 Mithril (bottleneck crafting gear). Kerjakan tiap buka. \u2694 COLISEUM (Sen-Sel) = "gear-only": Pet/Charm/Governor Gear/Academy DIABAIKAN \u2014 cuma Hero Gear (per-hero) + troop + skill yang dihitung. Formasi 50/10/40; rotasi 1 set Hero Gear terbaik antar tim (gear-swap) > sebar gear lemah. F2P: tembus Stage 10. Reward Crystal + Hero Gear material. CATATAN: Coliseum = satu-satunya tempat Hero Gear-mu kepakai PENUH (di rally kamu joiner \u2192 Hero Gear sia-sia), jadi 1 set Hero Gear rapi terbayar di sini.',sit:'coliseum'},
+   {n:'Mystic Trial',cat:'PvE \u00b7 mingguan',freq:'Rotasi harian: Sen-Sel Coliseum \u00b7 Rab-Kam Forest+Crystal \u00b7 Jum-Sab Nexus+Molten \u00b7 Min Radiant Spire',what:'\u2192 Detail 6 zona + kalkulator formasi: tab Event \u2192 sub-tab \ud83d\udd2e Mystic Trial. Dungeon solo. Sumber Misty Crystal \u2192 Mithril (bottleneck crafting gear). Kerjakan tiap buka. \u2694 COLISEUM (Sen-Sel) = "gear-only": Pet/Charm/Governor Gear/Academy DIABAIKAN \u2014 cuma Hero Gear (per-hero) + troop + skill yang dihitung. Formasi 50/10/40; rotasi 1 set Hero Gear terbaik antar tim (gear-swap) > sebar gear lemah. F2P: tembus Stage 10. Reward Crystal + Hero Gear material. CATATAN: Coliseum = satu-satunya tempat Hero Gear-mu kepakai PENUH (di rally kamu joiner \u2192 Hero Gear sia-sia), jadi 1 set Hero Gear rapi terbayar di sini.',sit:'coliseum'},
    {n:'Hall of Heroes',cat:'PvE \u00b7 hero',freq:'~3 hari',what:'Pertarungan hero bertahap. Sumber shard Marlin (F2P) + mat progres hero.'},
  ]},
  {g:'Aliansi & PvP besar', items:[
@@ -257,6 +257,41 @@ const EVENTS_INFO=[
    {n:'Power Up',cat:'milestone power',freq:'berkala (obs. pertama ~H18, Kingdom #2114)',what:'Event milestone kenaikan POWER dalam window event \u2014 mirip Burst of Life: power dari upgrade/riset/training/hero dihitung, tiap ambang = chest. F2P: TAHAN penyelesaian upgrade & riset besar untuk diselesaikan DI DALAM window-nya (idealnya barengan hari konstruksi HoG/SG = poin dobel). Tidak perlu spend khusus.'},
  ]},
 ];
+
+/* ── Mystic Trial: 6 zona (terverifikasi: kingshotguide, kingshotmastery, lootbar,
+   Strat Game Sloth, Echo). ratio=[Inf,Cav,Arc]. ── */
+const MYSTIC_TRIAL={
+  unlockTC:19,
+  common:{
+    counter:'Inf > Cav > Arc > Inf (archer counter infantry).',
+    aiNormal:'~33/33/33 (seimbang)', aiBoss:'~53/27/20 infantry-heavy di boss X-10',
+    attempts:'5 attempt/hari per zona — hanya terpakai kalau KALAH (menang = lanjut gratis).',
+    raid:'Clear Stage X-10 → unlock Raid → 10 Misty Crystal per stage tiap reset (~7 hari).',
+    deploy:'Jangan Quick Deploy (default 33/33/33). Atur via Edit Formation, keluar pakai BACK — JANGAN klik Deploy (buang attempt).',
+    rng:'Expedition battle variansinya besar — habiskan semua attempt, pakai tombol Skip.'
+  },
+  zones:[
+   {key:'coliseum',name:'Coliseum',days:'Sen-Sel',stat:'Hero + Hero Gear + Widget',ratio:[50,10,40],unlock:'Langsung',heroes:true,teams:'≤3 team',ownTroops:false,
+    tips:['Bawa hero SKILL TEMPUR (hero ekonomi spt Diana/Fahd jadi dead weight).','Pastikan semua hero punya gear minimal; fokus 1 set utama.','Makin dalam butuh 2–3 team → pakai bait-march & swap cavalry.']},
+   {key:'forest',name:'Forest of Life',days:'Rab-Kam',stat:'Pet (level + taming marks + combat skill)',ratio:[50,15,35],unlock:'~54 hari (Pet Gen-1)',heroes:false,teams:'tanpa hero',ownTroops:false,
+    tips:['Tidak bawa hero — troop hanya menerima stat dari pet.','Combat pet ability AKTIF otomatis (tak perlu trigger manual).','Naikkan level pet & taming marks untuk stat dasar.']},
+   {key:'crystal',name:'Crystal Cave',days:'Rab-Kam',stat:'Governor Charm (Lethality + Health)',ratio:[60,20,20],unlock:'TC 25',heroes:false,teams:'tanpa hero',ownTroops:false,
+    tips:['Hanya stat Governor Charm yang dihitung — paling "lurus".','Charm beri Lethality & Health (scaling lebih baik dari Atk/Def).','Charm Design = bottleneck utama; prioritas Inf→Arc→Cav, lompat L3→L5 efisien.']},
+   {key:'nexus',name:'Knowledge Nexus',days:'Jum-Sab',stat:'Academy + War Academy (riset)',ratio:[50,20,30],unlock:'Langsung',heroes:false,teams:'tanpa hero',ownTroops:false,
+    tips:['Tidak bawa hero — andalan Battle Research.','Riset beri squad capacity; jika War Academy terbuka, troop T11 bisa terpakai.','Salah satu zona di mana tier troop dari riset benar-benar membantu.']},
+   {key:'molten',name:'Molten Fort',days:'Jum-Sab',stat:'Governor Gear (Attack + Defense)',ratio:[60,15,25],unlock:'TC 22',heroes:false,teams:'tanpa hero',ownTroops:false,
+    tips:['Hanya Governor Gear — hero/charm/pet/riset DIABAIKAN (bait-march tidak relevan).','Prioritas upgrade Inf→Arc→Cav; bottleneck material = Artisan Vision.','Set bonus di 3 & 6 piece se-rarity. Gear beri Atk/Def; Lethality/Health dari Charm.']},
+   {key:'spire',name:'Radiant Spire',days:'Minggu',stat:'SEMUA stat + VIP + Skin + Oasis',ratio:[50,15,35],unlock:'Langsung',heroes:true,teams:'≤3 team',ownTroops:true,
+    tips:['Ujian pamungkas: semua sumber stat berlaku.','Pakai TROOP SENDIRI (bukan T10) → tier tinggi (True Gold+) unggul besar.','Butuh 3 team kuat → bait-march & swap cavalry sangat berguna.']}
+  ],
+  tactics:[
+   ['Bait-march (HANYA Coliseum & Radiant Spire)','Korbankan march pertama (hero lemah, formasi 2-jenis 60/40 Inf/Cav) → AI buang army terkuatnya di situ. Tumpuk hero terbaik di march 2 & 3 (50/20/30) → menang 2 pertarungan berikutnya. Tidak relevan di zona gear/charm/pet/tech.'],
+   ['Swap Cavalry (Coliseum & Spire)','Pindahkan hero cavalry terbaik ke march lain & balik formasi DPS jadi 50/40/10 (Inf/Cav/Arc) agar hero cavalry meng-cover 4× lebih banyak troop.'],
+   ['Mentok = naikkan stat, bukan formasi','Kalau rasio sudah benar tapi tetap kalah, itu batas investasi. Tingkatkan sumber stat zona tsb (gear/charm/pet/riset).']
+  ],
+  shop:'Mithril & Charm Design dulu (Charm Design = bottleneck F2P) → Mythic Hero Shard / Dev TP → True Gold Dust → speed-up paling akhir. Court of Knowledge (1–3% dari Trial Chest) = +20% Squad Attack permanen.',
+  note:'Komposisi musuh persis per nomor stage & threshold gear belum terdokumentasi (teori). Stage format Chapter-Stage (mis. 14-7), berlanjut ke ratusan level.'
+};
 
 /* ── Event templates (scheduler / advisory) ── */
 const EVENT_TEMPLATES={

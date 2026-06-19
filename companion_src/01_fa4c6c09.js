@@ -167,7 +167,7 @@ function renderEvent(){
 
   el.innerHTML=pageHead('Event & Kalender','Advisory otomatis: kapan TAHAN item, kapan PAKAI, dan jam berapa \u2014 digerakkan umur server.')
     +`<div class="seg" id="ev_sub" style="flex-wrap:wrap;margin:4px 0 10px">
-        <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="cal">\u2691 Kalender</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
+        <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="cal">\u2691 Kalender</button><button data-s="mystic">\ud83d\udd2e Mystic Trial</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
       </div><div id="ev_subc"></div>`;
 
   /* SEMUA bagian jadi sub-tab \u2014 satu bagian tampil pada satu waktu, tanpa scroll panjang */
@@ -176,6 +176,7 @@ function renderEvent(){
     live: card('Jadwal Kingdom (live)','\ud83d\udce1','<div id="evlive"></div>'),
     cal: card('Kalender Server','\u2691',
       `<p class="muted small">Event PERTUMBUHAN berbasis umur server (HoG \u00b7 KvK \u00b7 SG \u00b7 Burst \u00b7 Milestone). Event mingguan aliansi ada di sub-tab "\ud83d\udce1 Jadwal Live".</p><div id="evcal"></div>`),
+    mystic: mysticHTML(),
     kvk: card('KvK Prep','\u2620',
       `<div class="alert ok small">${esc(KVK_PREP.target)}</div>
        <h3>Hitung mundur</h3>${KVK_PREP.stockpile.map(s=>`<div class="check note"><div class="d" style="color:var(--fg)">${esc(s)}</div></div>`).join('')}
@@ -206,6 +207,7 @@ function renderEvent(){
       /* make sure weekly markers appear even if the Live sub-tab was never opened */
       if(typeof ksLiveEvents==='function') ksLiveEvents().then(()=>{ const ec=$('#evcal',el); if(ec&&store.get('evSub','adv')==='cal') renderCalendar(ec); }); }
     if(k==='live') fillLiveEvents();
+    if(k==='mystic') wireMystic(el);
     if(k==='adv'&&age!=null){
       const add=$('#sch_add',el); if(add) add.onclick=()=>{ const date=$('#sch_date').value; if(!date){$('#sch_date').focus();return;} const arr=store.get('events',[]); const ty=$('#sch_type').value; const i=arr.findIndex(x=>x.type===ty); if(i>=0)arr[i]={type:ty,date}; else arr.push({type:ty,date}); store.set('events',arr); renderEvent(); };
       $$('.del',el).forEach(b=>b.onclick=()=>{ const arr=store.get('events',[]); arr.splice(+b.dataset.idx,1); store.set('events',arr); renderEvent(); });
@@ -213,6 +215,69 @@ function renderEvent(){
     if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
   $$('#ev_sub button',el).forEach(b=>b.onclick=()=>showSub(b.dataset.s));
   showSub(store.get('evSub','adv'));
+}
+
+/* ── Mystic Trial sub-tab (data: MYSTIC_TRIAL) ── */
+const _MTC={inf:'#6fa8d6',cav:'#e8a23a',arc:'#ff5a1f'};
+function _mtBar(r){ return `<div style="display:flex;height:9px;border-radius:5px;overflow:hidden;border:1px solid var(--border);margin:6px 0">
+  <i style="width:${r[0]}%;background:${_MTC.inf}"></i><i style="width:${r[1]}%;background:${_MTC.cav}"></i><i style="width:${r[2]}%;background:${_MTC.arc}"></i></div>`; }
+function mysticHTML(){
+  const M=MYSTIC_TRIAL;
+  const week=[['Sen','Sel'],['Rab','Kam'],['Jum','Sab'],['Min']].map(grp=>{
+    const names=M.zones.filter(z=>grp.some(d=>z.days.indexOf(d)>=0)).map(z=>z.name);
+    return `<div class="kv"><span class="mono small">${grp.join('/')}</span><span class="small">${names.join(' · ')||'—'}</span></div>`;
+  }).join('');
+  const rules=`<ul class="mtul">
+    <li><b>Counter:</b> ${esc(M.common.counter)}</li>
+    <li><b>AI musuh:</b> ${esc(M.common.aiNormal)}; ${esc(M.common.aiBoss)}.</li>
+    <li><b>Attempt:</b> ${esc(M.common.attempts)}</li>
+    <li><b>Raid:</b> ${esc(M.common.raid)}</li>
+    <li style="color:var(--warn)">${esc(M.common.deploy)}</li>
+    <li>${esc(M.common.rng)}</li></ul>`;
+  const zoneBtns=M.zones.map((z,i)=>`<button class="btn ghost sm mzbtn${i===0?' active':''}" data-mz="${z.key}">${esc(z.name)}</button>`).join(' ');
+  const calcOpts=M.zones.map(z=>`<option value="${z.ratio.join(',')}"${z.key==='molten'?' selected':''}>${esc(z.name)} — ${z.ratio.join('/')}</option>`).join('');
+  const tableRows=M.zones.map(z=>`<tr><td><b>${esc(z.name)}</b></td><td class="small">${esc(z.days)}</td><td class="small">${esc(z.stat)}</td><td class="mono">${z.ratio.join('/')}</td><td class="small">${esc(z.unlock)}</td></tr>`).join('');
+  const tactics=M.tactics.map(t=>`<div class="check note"><div class="d" style="color:var(--fg)"><b>${esc(t[0])}</b><div class="muted small">${esc(t[1])}</div></div></div>`).join('');
+  return card('Mystic Trial — 6 Zona','🔮',
+      `<p class="muted small">PvE permanen, unlock TC ${M.unlockTC}. Total power TIDAK berlaku — tiap zona hanya menghitung SATU sumber stat. Troop disediakan game (T10) kecuali Radiant Spire (troop sendiri).</p>
+       <div class="lbl" style="margin:10px 0 2px">Jadwal mingguan</div>${week}
+       <div class="lbl" style="margin:12px 0 2px">Aturan semua zona</div>${rules}`,null,true)
+    +card('Detail per Zona','▦',
+      `<div class="seg" style="flex-wrap:wrap;margin-bottom:8px">${zoneBtns}</div><div id="mt_detail"></div>`)
+    +card('Kalkulator Formasi','◆',
+      `<div class="row"><div style="flex:1"><label class="fl">Kapasitas march</label><input id="mt_cap" type="number" value="100000" min="0" step="1000"></div>
+       <div style="flex:1"><label class="fl">Zona / preset</label><select id="mt_zone">${calcOpts}</select></div></div>
+       <div class="stats" style="margin-top:10px">
+        <div class="stat"><div class="sl" style="color:${_MTC.inf}">Infantry</div><div class="sv" id="mt_inf">—</div></div>
+        <div class="stat"><div class="sl" style="color:${_MTC.cav}">Cavalry</div><div class="sv" id="mt_cav">—</div></div>
+        <div class="stat"><div class="sl" style="color:${_MTC.arc}">Archer</div><div class="sv" id="mt_arc">—</div></div></div>
+       <p class="muted small" style="margin-top:8px">Angka presisi 5% = wisdom-of-the-crowds + testing kreator (directionally accurate), bukan rumus resmi.</p>`)
+    +card('Ringkasan 6 Zona','▤',
+      `<div class="scrollx"><table><thead><tr><th>Zona</th><th>Hari</th><th>Stat</th><th>I/C/A</th><th>Unlock</th></tr></thead><tbody>${tableRows}</tbody></table></div>`)
+    +card('Taktik Lanjutan','♟',tactics)
+    +card('Shop & Catatan','🎁',
+      `<div class="alert inf small">${esc(M.shop)}</div><p class="muted small">${esc(M.note)}</p>`);
+}
+function _mtZoneDetail(z){
+  const tag=(on,txt)=>`<span class="tag" style="${on?'color:var(--profit)':'opacity:.7'}">${txt}</span>`;
+  return `<div class="kv"><b style="font-size:15px">${esc(z.name)}</b><span class="mono small" style="color:var(--accent)">⏱ ${esc(z.days)}</span></div>
+    <div class="small" style="margin:4px 0">Stat dihitung: <b>${esc(z.stat)}</b></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">${tag(true,'Unlock: '+esc(z.unlock))} ${tag(true,esc(z.teams))} ${tag(z.heroes,z.heroes?'Hero dihitung ✓':'Hero tidak dihitung')} ${tag(z.ownTroops,z.ownTroops?'Troop sendiri':'Troop game (T10)')}</div>
+    ${_mtBar(z.ratio)}<div class="mono small">Rekomendasi: <b style="color:${_MTC.inf}">${z.ratio[0]}</b> / <b style="color:${_MTC.cav}">${z.ratio[1]}</b> / <b style="color:${_MTC.arc}">${z.ratio[2]}</b> (Inf/Cav/Arc)</div>
+    <ul class="mtul" style="margin-top:8px">${z.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
+}
+function wireMystic(el){
+  const M=MYSTIC_TRIAL;
+  const det=$('#mt_detail',el); let cur=M.zones[0];
+  const show=z=>{ cur=z; if(det) det.innerHTML=_mtZoneDetail(z);
+    $$('.mzbtn',el).forEach(b=>b.classList.toggle('active',b.dataset.mz===z.key)); };
+  $$('.mzbtn',el).forEach(b=>b.onclick=()=>{ const z=M.zones.find(x=>x.key===b.dataset.mz); if(z) show(z); });
+  show(M.zones[0]);
+  const cap=$('#mt_cap',el),zo=$('#mt_zone',el);
+  const calc=()=>{ const tot=Math.max(0,parseInt(cap.value)||0); const [pi,pc]=zo.value.split(',').map(Number);
+    const inf=Math.round(tot*pi/100),cav=Math.round(tot*pc/100),arc=tot-inf-cav;
+    const f=n=>n.toLocaleString('id-ID'); $('#mt_inf',el).textContent=f(inf); $('#mt_cav',el).textContent=f(cav); $('#mt_arc',el).textContent=f(arc<0?0:arc); };
+  if(cap&&zo){ cap.addEventListener('input',calc); zo.addEventListener('change',calc); calc(); }
 }
 
 /* ============ BANGUN (build + progres) ============ */
