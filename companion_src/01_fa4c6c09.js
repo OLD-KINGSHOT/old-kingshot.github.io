@@ -185,7 +185,9 @@ function renderEvent(){
        <div class="alert inf small">\ud83c\udfe5 ${esc(KVK_PREP.revive)}</div>`),
     roi: card('Nilai Item & Speedup (ROI)','\u25c6',roi+'<h3>Pakai / Tahan / Bebas</h3>'+itemGuide),
     ency: card('Ensiklopedia Event','\u25a4',`<p class="muted small">Cara main F2P tiap event. Jadwal = perkiraan; tab Events di game = acuan final.</p>${ency}`),
-    anti: card('Kesalahan F2P (Anti-P2W)','\u26a0',MISTAKES.map((m,i)=>`<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">${pad(i+1)}</span> &nbsp;${esc(m)}</div></div>`).join('')),
+    anti: card('Kesalahan F2P (Anti-P2W)','\u26a0',MISTAKES.map((m,i)=>`<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">${pad(i+1)}</span> &nbsp;${esc(m)}</div></div>`).join(''))
+      +card('Trik Lawan P2W','\ud83e\udd77',`<p class="muted small">Cara F2P/low-spender bersaing & mengungguli whale. Sumber: kingshotmastery, kingshotguide, lootbar, kingshotoptimizer, komunitas (Jun 2026).</p>`
+        +(typeof F2P_TRICKS!=='undefined'?F2P_TRICKS.map(([g,arr])=>`<div class="lbl" style="color:var(--accent);margin:14px 0 4px">${esc(g)}</div>`+arr.map(t=>`<div class="check note"><div class="d" style="color:var(--fg)">${esc(t)}</div></div>`).join('')).join(''):'')),
     ally: card('Alliance \u2014 leverage F2P terbesar','\ud83e\udd1d',
       `<div class="lbl" style="margin-bottom:4px">Pilih alliance yang benar</div>
        <div class="small muted">Cari <b>top-2/3 aktif</b>: tech tinggi (buff diwarisi INSTAN), KvK/territory terorganisir, bukan akun mati. Pakai <b>Alliance Teleport</b> (Alliance Shop) pindah ke hive. Alliance dengan <b>NAP</b> = kota lebih aman.</div>

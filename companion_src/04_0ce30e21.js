@@ -486,3 +486,38 @@ const MISTAKES=[
   'Lupa buff sebelum KvK D1 (Gray Wolf, Double Time, Chief Minister).',
   'Coba jadi rally leader F2P \u2014 Attack Widget itu mahal P2W. Jadilah joiner/defender.',
 ];
+const F2P_TRICKS=[
+ ['⚔ Perang / KvK / Castle',[
+  'Serang TURRET bukan castle — tiap turret musuh = 2% korban/siklus ke garrison (4 turret = 8%, tak bisa di-heal). Rebut 4 turret = aliansi menengah bisa tahan lawan yang lebih kuat.',
+  'Rebut ULANG turret musuh untuk "reset" — attack-speed turret naik makin lama dipegang; 1 retake mematahkannya & beri waktu garrison heal.',
+  'Castle menang by TOTAL WAKTU tahan (dihitung per-ALIANSI), bukan 1 timer — 90 menit kalah dari 2 jam; jangan pecah hold antar aliansi.',
+  'Shield di "dead zone" antara Prep selesai & Battle mulai — sering dipukul walau ada NAP/aturan.',
+  'Heal pakai slider ~30 menit + spam Help (BUKAN speedup) — heal nyaris terus-menerus, 0 speedup. Speedup heal hanya saat hospital overflow.',
+ ]],
+ ['▲ Pertumbuhan akun (ungguli whale seiring waktu)',[
+  'Pet unlock by UMUR SERVER (bukan TC/spend) — whale Day-50 mustahil punya Lion; F2P Day-200 punya semua. Equalizer F2P terbesar.',
+  'JANGAN buang pet food ke Gen-1 (Gray Wolf/Bison/Lynx) — food sama di Lion (~Day 113) ~3x stat. Gen-1 cukup fungsional, sisanya TABUNG.',
+  'Rencanakan 1 pet ke depan — pet bagus di-gate level pet sebelumnya (Lion butuh Moose Lv15; Mighty Bison butuh Giant Rhino Lv30).',
+  'Master Academy: UNLOCK master lebih awal, ADVANCE belakangan. Pan = pilihan F2P pertama (ekonomi harian, tak perlu jadi rally lead).',
+  'Master/Journey supply 40 gratis/hari (jam UTC tetap: 00:00 +20, 08:00 +10, 16:00 +10) — jangan overflow, hangus permanen.',
+ ]],
+ ['◆ Event / ROI',[
+  'Event build/riset skor by POWER NAIK, bukan lama speedup — 1 upgrade tier tinggi > banyak kecil.',
+  'Pre-antri upgrade TC TERBESAR ke ~99% SEBELUM event, selesaikan DI window = lonjakan poin.',
+  'PROMOTE troop (bukan train baru) saat event training — poin per jam-speedup lebih besar. Masuk hari training dgn army 1 tier di bawah max.',
+  'Edict combo: nyalakan "Productivity Day" (x2 produksi) DULU, baru "Rush Job" (instan 5 hari) = ~10 hari resource sekali klik.',
+ ]],
+ ['✷ Di mana stat F2P BERARTI',[
+  'Bear Hunt ABAIKAN semua stat defensif (def/HP) — beruang tak balas. Cuma Attack & Lethality berlaku, jadi defense = sia-sia di sini.',
+  'Pompa Lethality > Attack — kebanyakan over-invest Attack, jadi Lethality multiplier-nya lebih rendah = ROI lebih tinggi.',
+  'Joiner cuma sumbang skill Expedition #1 hero pertama + troop mentah — joiner skill bagus SETARA whale joiner; ukuran akun joiner nyaris tak penting.',
+  'Joiner Lethality (Chenko/Amadeus/Yeonwoo +25% flat) ADITIF & menumpuk (4 Chenko compound). Game cuma pakai 4 skill joiner tertinggi/rally — koordinasi 4 slot teratas jadi Lethality.',
+  'Kirim joiner SALAH lebih buruk dari tanpa hero — skill defensif/ekonomi (Diana/Gordon/Jabel) blokir slot. Kalau tak ada hero Lethality, kirim troop-only.',
+ ]],
+ ['🤝 Aliansi / disiplin troop',[
+  'Rally lebih SEDIKIT tapi PENUH > banyak tipis — tiap rally pecah pool joiner; 3 rally x5 joiner >> 5 rally x3. Suruh R4/R5 batasi jumlah rally vs anggota aktif.',
+  'Naikkan level gedung Bear Trap/Forgehammer — tiap level = +5% Attack SEMUA troop se-aliansi (ROI aliansi teratas).',
+  '1 pengecualian gem selain Roulette: sewa builder ke-2 (1.000 gem/2 hari) saat build besar — clear Saul 2-bintang dulu (~6% speed konstruksi permanen).',
+  'Mulai FARM ACCOUNT sebelum tembok TC28-30 (bracket rakus resource) — stok farm bikin mulus + suplai main saat KvK.',
+ ]],
+];
