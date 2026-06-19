@@ -842,6 +842,29 @@ function truegoldAlert(age,tc){
   if(d>0&&tc>0){ const per=d/(30-tc); return `<div class="alert ${per<3?'bad':per<6?'warn':'ok'} small">Menuju Age of Truegold (butuh TC30) sisa <b>${d} hari</b>. Kamu TC${tc} \u2192 ~${per.toFixed(1)} hari/level. ${per<3?'Ketat! Jangan biarkan antrian kosong.':per<6?'Jaga ritme upgrade.':'On-track.'}</div>`; }
   return '';
 }
+/* Selaraskan koneksi Player ID dgn multi-profil: perbarui entri ks_profiles
+   (nama/kingdom/TC/server), jadikan ID itu profil AKTIF (slot = ID yg dipakai),
+   lalu simpan objek profile di bawah slot itu. */
+function connectProfileTo(fid,d,openDate){
+  try{
+    let profs=store.get('profiles',[]); let e=profs.find(p=>p.pid===fid);
+    const meta={pid:fid,nick:(d&&d.nickname)||(e&&e.nick)||'',kingdom:String((d&&d.kid)||(e&&e.kingdom)||''),tc:String((d&&d.stove_lv)||(e&&e.tc)||''),start:openDate||(e&&e.start)||''};
+    if(e) Object.assign(e,meta); else profs.push(meta);
+    store.set('profiles',profs);
+    localStorage.setItem('ks_activePid',JSON.stringify(fid));
+  }catch(err){}
+  const oldP=store.get('profile',{});
+  store.set('profile',Object.assign({},oldP,{pid:fid,nick:(d&&d.nickname)||oldP.nick||'',kingdom:String((d&&d.kid)||oldP.kingdom||''),tc:String((d&&d.stove_lv)||oldP.tc||''),start:openDate||oldP.start||''}));
+}
+/* Auto-deteksi nama/Kingdom/TC untuk profil yg belum ber-nama (saat load, non-blok). */
+async function autoDetectProfiles(){
+  const profs=store.get('profiles',[]); let changed=false;
+  for(const p of profs){ if(p.nick) continue;
+    try{ const j=await ksPlayerLookup(p.pid);
+      if(j&&j.code===0&&j.data){ p.nick=j.data.nickname||''; p.kingdom=String(j.data.kid||''); p.tc=String(j.data.stove_lv||''); changed=true; } }catch(e){} }
+  if(changed){ store.set('profiles',profs); if(typeof updateSideProf==='function') updateSideProf();
+    if(store.get('lastTab','sekarang')==='profil'&&typeof renderProfil==='function') renderProfil(); }
+}
 function saveProfile(){
   const old=store.get('profile',{});
   const v=(id,prop)=>{ const e=$(id); return e?(e.value||'').trim():(old[prop]||''); };
@@ -860,9 +883,8 @@ async function autoDetectUI(){
     const openDate=await fetchKingdomDate(d.kid);
     if(openDate) dateMsg=' \u00b7 server buka '+esc(openDate)+(window._kdateEst?' <span style="color:var(--warn)">(perkiraan \u00b12-3 hari \u2014 offline)</span>':'');
     else dateMsg=' \u00b7 <span style="color:var(--warn)">tanggal buka tak ketemu, isi manual</span>';
-    /* save straight to the store (renderProfil() would wipe #pf_status if we set it first) */
-    const old=store.get('profile',{});
-    store.set('profile',Object.assign({},old,{pid:fid,nick:d.nickname||old.nick||'',kingdom:String(d.kid),tc:String(d.stove_lv||old.tc||''),start:openDate||old.start||''}));
+    /* save via multi-profil helper (sejajarkan slot aktif = ID ini + isi nama) */
+    connectProfileTo(fid,d,openDate);
     renderProfil(); renderTopClock();
     const st2=$('#pf_status'); if(st2) st2.innerHTML='<div class="alert ok small">\u2705 <b>'+esc(d.nickname)+'</b> \u00b7 Kingdom #'+esc(d.kid)+' \u00b7 TC '+esc(d.stove_lv)+dateMsg+'</div>';
   }catch(e){ const stE=$('#pf_status'); if(stE) stE.innerHTML='<div class="alert bad small">Gagal menghubungi server (offline/diblokir). Isi manual saja.</div>'; }
@@ -882,6 +904,7 @@ function init(){
   activate(['sekarang','hero','event','bangun','pets','island','kode','profil'].includes(last)?last:'sekarang');
   renderTopClock();
   _lastGameDay=ksClock.now().toISOString().slice(0,10);
+  if(typeof autoDetectProfiles==='function') autoDetectProfiles(); /* isi nama/Kingdom/TC profil (non-blok) */
   setInterval(tickClock,1000);
   ksClock.sync().then(ok=>{ if(ok){ const nd=ksClock.now().toISOString().slice(0,10); const changed=nd!==_lastGameDay; _lastGameDay=nd; renderTopClock();
     /* only force a re-render if the sync actually moved us to a different game day — otherwise it would wipe in-progress typing */
@@ -960,8 +983,7 @@ function showOnboard(){
       if(j.code!==0||!j.data) throw new Error('notfound');
       const dd=j.data;
       const openDate=await fetchKingdomDate(dd.kid);
-      const old=store.get('profile',{});
-      store.set('profile',Object.assign({},old,{pid:fid,nick:dd.nickname||old.nick||'',kingdom:String(dd.kid),tc:String(dd.stove_lv||old.tc||''),start:openDate||old.start||''}));
+      connectProfileTo(fid,dd,openDate);
       finish();
     }catch(e){
       go.disabled=false; go.textContent=lbl;
