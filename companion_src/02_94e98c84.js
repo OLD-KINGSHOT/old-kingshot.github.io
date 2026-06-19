@@ -187,7 +187,8 @@ function renderSekarang(){
        <div class="lbl" style="margin:16px 0 4px">Lineup hari ini \u2014 ikut event aktif</div>${lineHTML}`,'auto \u00b7 reset '+tzInfo().reset,true)
     +card('Fokus fase ini','\u25c8',plan.slice(0,4).map(x=>`<div class="check note"><div class="d" style="color:var(--fg)">${x}</div></div>`).join(''))
     +card('Checklist Harian','\u2713',
-      `<p class="muted small">Reset otomatis tiap 07:00 WIB. Selesai <b id="dc_count" class="num">${doneCount}</b>/${DAILY_TASKS.length}. <button class="btn ghost sm" id="dc_reset">reset</button></p><div id="dc_list"></div>
+      `<p class="muted small">Reset otomatis tiap 07:00 WIB. Selesai <b id="dc_count" class="num">${doneCount}</b>/${DAILY_TASKS.length}. <button class="btn ghost sm" id="dc_reset">reset</button></p>
+       <div class="cdbar" style="margin:0 0 12px"><span class="cdfill" id="dc_bar" style="width:${Math.round(100*doneCount/(DAILY_TASKS.length||1))}%"></span></div><div id="dc_list"></div>
        <div class="lbl" style="margin:18px 0 4px">Mingguan / event</div>${WEEKLY_TASKS.map(([t,d])=>`<div class="check note"><div><div class="t">${t}</div><div class="d">${d}</div></div></div>`).join('')}`)
     +`<div class="card"><div class="card-b"><div class="lbl" style="margin-bottom:8px">Buka cepat</div><div class="qgrid">
         <div class="qbtn" data-go="hero"><span class="qi">\u25ce</span><span class="ql">Hero & Lineup</span></div>
@@ -202,7 +203,9 @@ function renderSekarang(){
     const id='d'+i,on=!!stD.checked[id];
     const div=document.createElement('label'); div.className='check'+(on?' done':'');
     div.innerHTML=`<input type="checkbox" ${on?'checked':''}><div><div class="t">${esc(t)}</div><div class="d">${esc(d)}</div></div>`;
-    div.querySelector('input').onchange=e=>{ stD.checked[id]=e.target.checked; store.set('daily',stD); div.classList.toggle('done',e.target.checked); $('#dc_count').textContent=Object.values(stD.checked).filter(Boolean).length; };
+    div.querySelector('input').onchange=e=>{ stD.checked[id]=e.target.checked; store.set('daily',stD); div.classList.toggle('done',e.target.checked);
+      const dc=Object.values(stD.checked).filter(Boolean).length; $('#dc_count').textContent=dc;
+      const bar=$('#dc_bar'); if(bar) bar.style.width=Math.round(100*dc/(DAILY_TASKS.length||1))+'%'; };
     list.appendChild(div);
   });
   $('#dc_reset',el).onclick=()=>{ store.set('daily',{date:today,checked:{}}); renderSekarang(); };
