@@ -17,6 +17,16 @@ function updateSideProf(){
   const p=store.get('profile',{});
   sub.textContent=p.pid?('#'+(p.kingdom||'?')+' · '+p.pid):'belum terhubung';
   const b=$('#sideprof'); if(b) b.classList.toggle('on',!!p.pid);
+  /* Multi-profil: dropdown switcher (tampil bila ≥2 profil) */
+  const sel=$('#profSwitch'); if(sel){
+    const profs=(typeof store.get==='function')?store.get('profiles',[]):[];
+    const ap=(typeof _ksActivePid==='function')?_ksActivePid():'';
+    if(profs.length>1){
+      sel.style.display='';
+      sel.innerHTML=profs.map(pr=>`<option value="${esc(pr.pid)}"${pr.pid===ap?' selected':''}>${esc(pr.nick||'(tanpa nama)')} · ${esc(pr.pid)}</option>`).join('');
+      sel.onchange=()=>{ if(typeof setActiveProfile==='function') setActiveProfile(sel.value); };
+    } else { sel.style.display='none'; }
+  }
 }
 function buildNav(){
   $('#navlist').innerHTML=NAV.map(n=>navBtnHTML(n)).join('');

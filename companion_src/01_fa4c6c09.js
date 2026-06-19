@@ -592,7 +592,15 @@ function renderProfil(){
   const el=$('[data-tab=profil]');
   const p=store.get('profile',{kingdom:'',pid:'',start:'',tc:''});
   const {age,tc}=profileAge();
+  const _profs=store.get('profiles',[]); const _ap=_ksActivePid();
+  const _profListHtml=(_profs.map(pr=>{ const isA=pr.pid===_ap;
+    return `<div class="kv" style="align-items:center"><span>${isA?'<b style="color:var(--accent)">\u25cf </b>':''}<b>${esc(pr.nick||'(tanpa nama)')}</b> <span class="muted small">#${esc(pr.kingdom||'?')} \u00b7 ${esc(pr.pid)}</span></span>`
+      +`<span class="row" style="gap:6px">${isA?'<span class="muted small">aktif</span>':`<button class="btn sec sm" data-sw="${esc(pr.pid)}">Pakai</button>`}`
+      +`${_profs.length>1?`<button class="btn ghost sm" data-rm="${esc(pr.pid)}" style="color:var(--loss);border-color:rgba(255,70,85,.45)">Hapus</button>`:''}</span></div>`;
+    }).join(''))
+    +`<label class="fl" style="margin-top:10px">Tambah Player ID</label><div class="row"><input id="pf_add" inputmode="numeric" placeholder="mis. 12345678" style="flex:1"><button class="btn sec sm" id="pf_addbtn">\uff0b Tambah</button></div><div id="pf_addstatus" class="muted small"></div>`;
   el.innerHTML=pageHead('Profil & Koneksi','Hubungkan Player ID sekali \u2014 app baca Kingdom, TC & tanggal server otomatis dan mengingatnya.')
+    +card('Profil Tersimpan (multi-akun)','\ud83d\udc65',_profListHtml)
     +card('Player ID (login)','\u25c9',
       `<label class="fl">Player ID</label><input id="pf_id" value="${esc(p.pid||'')}" inputmode="numeric" placeholder="mis. 12345678">
        <div class="row" style="margin-top:12px"><button class="btn" id="pf_detect">\u26a1 Hubungkan & Deteksi</button>${p.pid?'<button class="btn ghost sm" id="pf_logout" style="color:var(--loss);border-color:rgba(255,70,85,.45)">\u23fb Logout</button>':''}</div>
@@ -631,6 +639,23 @@ function renderProfil(){
        <div class="row"><button class="btn sec sm" id="bk_export">⬇ Export data</button><button class="btn sec sm" id="bk_import">⬆ Import data</button><input type="file" id="bk_file" accept=".json" style="display:none"></div>
        <div id="bk_status"></div>`);
 
+  /* multi-profil: switch / hapus / tambah */
+  $$('[data-sw]',el).forEach(b=>b.onclick=()=>setActiveProfile(b.dataset.sw));
+  $$('[data-rm]',el).forEach(b=>b.onclick=()=>{
+    if(!confirm('Hapus profil '+b.dataset.rm+' dari daftar? Data tersimpan untuk ID ini tetap ada di perangkat (bisa ditambahkan lagi).')) return;
+    let ps=store.get('profiles',[]).filter(p=>p.pid!==b.dataset.rm); store.set('profiles',ps);
+    if(_ksActivePid()===b.dataset.rm&&ps[0]) setActiveProfile(ps[0].pid);
+    else { renderProfil(); if(typeof updateSideProf==='function') updateSideProf(); }
+  });
+  const _ab=$('#pf_addbtn',el); if(_ab) _ab.onclick=async()=>{
+    const v=($('#pf_add',el).value||'').trim(); const st=$('#pf_addstatus',el);
+    if(!v){ st.textContent='Isi Player ID.'; return; }
+    if(store.get('profiles',[]).some(p=>p.pid===v)){ st.textContent='ID sudah ada di daftar.'; return; }
+    st.textContent='⏳ Cek ke server…'; let meta={pid:v,nick:'',kingdom:'',tc:'',start:''};
+    try{ const j=await ksPlayerLookup(v); if(j&&j.code===0&&j.data){ const d=j.data; meta.nick=d.nickname||''; meta.kingdom=String(d.kid||''); meta.tc=String(d.stove_lv||''); } }catch(e){}
+    const ps=store.get('profiles',[]); ps.push(meta); store.set('profiles',ps);
+    renderProfil(); if(typeof updateSideProf==='function') updateSideProf();
+  };
   $('#pf_detect',el).onclick=()=>autoDetectUI();
   const lo=$('#pf_logout',el); if(lo) lo.onclick=()=>{
     if(!confirm('Logout? Player ID dihapus dari perangkat ini. (Jam event alliance & checklist tetap tersimpan.)')) return;
