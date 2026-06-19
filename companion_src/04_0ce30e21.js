@@ -8,7 +8,7 @@ const BUILD_ORDER=[
   {t:'Wall = level TC',d:'Wall wajib sama dengan level TC tiap mau naik TC. Naikkan duluan.'},
   {t:'Academy (riset)',d:'Prasyarat TC + pengali pertumbuhan. Fokus Growth (kecepatan konstruksi/riset) > Economy.'},
   {t:'Bangunan militer (Barracks/Range/Stable)',d:'Naikkan sesuai prasyarat TC berikutnya.'},
-  {t:'Hospital / Clinic',d:'Murah & penting \u2014 kapasitas penyembuhan. Cap Lv10.'},
+  {t:'Hospital / Clinic',d:'Murah & penting \u2014 kapasitas wounded. JANGAN cap Lv10 — jaga ~1 level di bawah TC (juga prasyarat upgrade TC).'},
   {t:'Kitchen & Houses',d:'Murah, kasih Gold gratis untuk riset & populasi. Worth dinaikkan.'},
   {t:'\u26d4 Produksi (Mill/Sawmill/Quarry/Iron Mine)',d:'SKIP! Gathering di map 10-100\u00d7 lebih untung. Naikkan HANYA jika jadi prasyarat TC.',warn:true},
   {t:'\u26d4 Embassy / Scout Camp / Command Center',d:'Prioritas rendah untuk solo. Command Center hanya jika kamu MEMIMPIN rally.',warn:true},
@@ -45,9 +45,9 @@ const VIP_LEVELS=[
   ['VIP10+','\u2014','Whale territory, diminishing returns'],
 ];
 const TROOP_INFO={
-  tiers:[['T1-T9','Gate per level TC (angka pasti cek game)'],['T10','Town Center 30'],['T11 (Truegold)','War Academy + Truegold Lv5 (TG5): umur ~220 + TC30'],['T12 (Tempered Truegold)','TC27+ · ~hari 323 (Truegold Lv8). Semua tipe ke T11 DULU baru push 1 ke T12']],
+  tiers:[['T1-T9','Gate per level TC (angka pasti cek game)'],['T10','Town Center 30'],['T11 (Truegold)','War Academy (buka Age of Truegold ~hari 70); riset T11 di umur ~220 + TC30'],['T12 (Tempered Truegold)','TC27+ (Truegold lanjutan; timing pasti verif in-game). Semua tipe ke T11 DULU baru push 1 ke T12']],
   tips:[
-    'Promote naik (T9\u2192T10\u2192T11) > train massal tier rendah \u2014 lebih banyak poin event per speedup.',
+    'Promote naik (T9\u2192T10\u2192T11) > train massal tier rendah \u2014 lebih banyak poin event per speedup. TAPI di tier rendah VOLUME menang (banyak T9 > sedikit T10) — bangun volume dulu, promote saat event skor.',
     'Stage troop T9 SEBELUM event, promote DI DALAM window skor (KvK D4, Strongest Governor combat day).',
     'Jaga queue training selalu jalan (durasi panjang sebelum tidur).',
     'JANGAN biarkan hospital penuh \u2192 pasukan mati permanen. Batch-heal pakai slider, bukan speedup.',
