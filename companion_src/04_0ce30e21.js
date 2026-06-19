@@ -77,7 +77,7 @@ const CHARM_INFO=[
 /* ── Pets ── */
 const PETS=[
   {n:'Gray Wolf',w:1,day:'~55',role:'Ekonomi',skill:'Construction Aide: +5-15% kecepatan konstruksi (pakai SEBELUM upgrade besar)',f2p:'Lv15-20 saja, jangan over-invest',pri:'C'},
-  {n:'Lynx',w:1,day:'~55',role:'Utility',skill:'Comforting Embrace: +60 stamina (instan)',f2p:'CAP Lv20 (pas 4 Pet Adventure/hari). Lebih = boros',pri:'B'},
+  {n:'Lynx',w:1,day:'~55',role:'Utility',skill:'Comforting Embrace: pulihkan stamina (~40 di Lv20 cap, 60 di skill maks)',f2p:'CAP Lv20 (pas 4 Pet Adventure/hari). Lebih = boros',pri:'B'},
   {n:'Bison',w:1,day:'~55',role:'Utility',skill:'Grip of the Titan: 1 gather tile selesai instan',f2p:'Lv15-20 (ROI primer Gen2 terbaik)',pri:'A'},
   {n:'Cheetah',w:2,day:'~72-80',role:'Ekonomi',skill:'Scent Mastery: cari 500 Pet Food',f2p:'Lv25-30 (mendanai pet food sendiri)',pri:'A'},
   {n:'Moose',w:2,day:'~72-80',role:'Combat',skill:'Horror Stare: \u22125% enemy squad HP',f2p:'WAJIB Lv15 \u2192 gate menangkap Lion',pri:'C'},
@@ -89,6 +89,7 @@ const PETS=[
   {n:'Alpha Black Panther',w:5,day:'~270',role:'Combat',skill:'Deadly Bite: +10% Troop Lethality',f2p:'Late-game',pri:'A'},
   {n:'Regal White Lion',w:6,day:'~350',role:'Combat',skill:'Territorial Power: +10% Squad Defense 2 jam',f2p:'Late-game (Gen6)',pri:'A'},
   {n:'Ironclad War Elephant',w:6,day:'~350',role:'Combat',skill:'Elephant’s Guard: +10% Squad Health 2 jam',f2p:'Late-game (Gen6)',pri:'A'},
+  {n:'Ironclad War Bear',w:7,day:'~440',role:'Combat',skill:'Ursa’s Rage: kurangi Squad Defense musuh (% verif in-game)',f2p:'Late-game (Gen7)',pri:'A'},
 ];
 
 /* ── Daily / Weekly ── */

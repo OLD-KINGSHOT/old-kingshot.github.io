@@ -373,7 +373,7 @@ function renderPets(){
        <div class="scrollx"><table><thead><tr><th>Pet</th><th>Skill & F2P</th></tr></thead><tbody>
        ${PETS.map(p=>`<tr><td><b>${esc(p.n)}</b> <span class="pill ${pc[p.pri]}">${esc(p.pri)}</span><div class="dim small">${esc(p.role)}</div><div class="num dim small" style="white-space:nowrap">W${p.w} · ${esc(p.day)}</div></td><td class="small">${esc(p.skill)}<div class="muted small" style="margin-top:3px">${esc(p.f2p)}</div></td></tr>`).join('')}</tbody></table></div>`,null,true)
     +card('Taming Marks (refine)','\u25c6',
-      `<div class="small muted">Common\u2192Rare pakai <b>Common Mark</b>. SIMPAN <b>Advanced Mark</b> untuk tier tinggi. Refine prioritas: <b>Infantry Health</b> & <b>Archer Lethality</b>. Common-tier Mighty Bison > Mythic Gray Wolf.</div>
+      `<div class="small muted">Common\u2192Rare pakai <b>Common Mark</b>. SIMPAN <b>Advanced Mark</b> untuk tier tinggi. Refine sesuai <b>troop utamamu</b> (umumnya <b>Infantry Health</b> & <b>Archer Lethality</b>). Common-tier Mighty Bison > Mythic Gray Wolf.</div>
        <div class="small muted" style="margin-top:6px">\ud83d\udcca Tier refine di-gate level pet (6 tingkat): Lv10=Common \u00b7 Lv20=Uncommon \u00b7 Lv30=Rare \u00b7 Lv40=Epic \u00b7 Lv50=Mythic/Legendary. Naikkan level pet dulu sebelum bisa refine ke tier lebih tinggi. Terima reroll hanya kalau <b>net power naik</b>.</div>
        <div class="alert inf small">Event Pet Training (KvK D3 / Brawl D3): 1 Advanced Taming Mark = <b>15.000 poin</b>.</div>`);
 }
