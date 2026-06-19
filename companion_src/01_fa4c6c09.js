@@ -270,12 +270,13 @@ function _mtPhases(z){
     else if(p>=6) rows.push({p,type:'Berat',ai:'~33/33/33',r:shift(5)});
     else rows.push({p,type:p>=4?'Menengah':'Pemanasan',ai:'~33/33/33',r:b});
   }
-  return `<div class="lbl" style="margin:14px 0 4px">Tabel per-phase (X-1 … X-10) — adjust formasi</div>
+  return `<div class="lbl" style="margin:14px 0 4px">Tabel per-phase (Phase 1–10 dalam tiap Stage) — adjust formasi</div>
     <div class="scrollx"><table><thead><tr><th>Phase</th><th>Tipe</th><th>Musuh</th><th>I/C/A</th></tr></thead><tbody>`
-    +rows.map(o=>`<tr${o.p===10?' style="background:rgba(255,90,31,.10)"':''}><td><b>X-${o.p}</b></td><td class="small">${o.type}</td><td class="mono small">${o.ai}</td><td class="mono"><b style="color:${_MTC.inf}">${o.r[0]}</b>/<b style="color:${_MTC.cav}">${o.r[1]}</b>/<b style="color:${_MTC.arc}">${o.r[2]}</b></td></tr>`).join('')
+    +rows.map(o=>`<tr${o.p===10?' style="background:rgba(255,90,31,.10)"':''}><td><b>Phase ${o.p}</b></td><td class="small">${o.type}</td><td class="mono small">${o.ai}</td><td class="mono"><b style="color:${_MTC.inf}">${o.r[0]}</b>/<b style="color:${_MTC.cav}">${o.r[1]}</b>/<b style="color:${_MTC.arc}">${o.r[2]}</b></td></tr>`).join('')
     +`</tbody></table></div>
     <div class="alert inf small">Phase 1-5 = baseline zona. Phase 6-9 makin berat → archer +5%. Phase 10 = BOSS infantry-heavy → archer +10% (archer counter infantry). Masih mentok? +5% archer lagi & ULANG (variansi RNG besar).</div>
-    <p class="muted small">⚠ Komposisi musuh persis tiap phase TIDAK dipublikasikan game — ini POLA adjust berbasis mekanik terverifikasi (boss X-10 ≈ 53/27/20), bukan angka resmi per-phase.</p>`;
+    <div class="alert warn small">Pola rasio ini <b>SAMA untuk semua Stage</b> (Stage 1, 2, 3, …). Yang naik tiap Stage = <b>POWER musuh</b> → kamu butuh <b>STAT lebih tinggi</b> (gear/charm/pet/riset sesuai zona), <b>BUKAN rasio berbeda</b>. Jadi rasio per-phase tetap; kekuatan akun yang harus naik.</div>
+    <p class="muted small">⚠ Komposisi musuh persis tiap phase TIDAK dipublikasikan game — ini POLA adjust berbasis mekanik terverifikasi (boss phase-10 ≈ 53/27/20), bukan angka resmi per-phase. Kalau kamu punya data battle-report asli per phase, kirim → saya ganti dgn angka pasti.</p>`;
 }
 function _mtZoneDetail(z){
   const tag=(on,txt)=>`<span class="tag" style="${on?'color:var(--profit)':'opacity:.7'}">${txt}</span>`;
