@@ -509,14 +509,37 @@ function renderKode(){
        <div class="row" style="margin-top:12px"><button class="btn" id="cd_go">Redeem</button></div><div id="cd_out"></div>`,null,true)
     +card('Kode Aktif (live)','\u25c9',
       `<p class="muted small">Diambil live dari kingshot.net + kingshotwiki.com. Kode baru otomatis di-redeem ke Player ID-mu.</p>
-       <div class="row" style="margin-bottom:10px"><button class="btn sec sm" id="cd_refresh">\u21bb Muat ulang</button><button class="btn sm" id="cd_all">\u26a1 Redeem semua (paksa)</button></div>
+       <div class="row" style="margin-bottom:10px"><button class="btn sec sm" id="cd_refresh">\u21bb Muat ulang</button><button class="btn sm" id="cd_all">\u26a1 Redeem semua (paksa)</button><button class="btn sm" id="cd_allprof">\ud83d\udc65 Redeem ke semua profil</button></div>
        <div id="cd_live"><div class="muted small">\u23f3 Memuat kode aktif\u2026</div></div>
        <div id="cd_auto"></div>
+       <div id="cd_allprof_out"></div>
        <p class="muted small" style="margin-top:8px">Kode resmi hanya dari Century Games. "Generator kode" = scam.</p>`);
   $('#cd_go',el).onclick=()=>redeemUI();
   $('#cd_refresh',el).onclick=()=>fetchCodesUI();
   $('#cd_all',el).onclick=()=>redeemAllUI();
+  $('#cd_allprof',el).onclick=()=>redeemAllProfilesUI();
   fetchCodesUI(); /* auto-load on open; chains into auto-redeem of new codes */
+}
+/* Redeem semua kode live ke SEMUA profil tersimpan (loop pid × code). Tidak menyentuh
+   codesDone (per-profil) — itu ditangani auto-redeem saat tiap profil aktif. */
+async function redeemAllProfilesUI(){
+  const out=$('#cd_allprof_out'); const btn=$('#cd_allprof'); if(btn&&btn.disabled) return;
+  const profs=store.get('profiles',[]).filter(p=>p&&p.pid);
+  if(!profs.length){ out.innerHTML='<div class="alert warn small">Belum ada profil tersimpan (tab Profil).</div>'; return; }
+  if(!_liveCodes.length){ await fetchCodesUI(); }
+  if(!_liveCodes.length){ out.innerHTML='<div class="alert warn small">Tidak ada kode untuk di-redeem.</div>'; return; }
+  if(_codesFallback){ out.innerHTML='<div class="alert warn small">Daftar live gagal dimuat — redeem manual dari tabel.</div>'; return; }
+  if(btn) btn.disabled=true;
+  out.innerHTML='<div class="alert inf small">⏳ Redeem '+_liveCodes.length+' kode ke '+profs.length+' profil…</div>';
+  let html='';
+  for(const pr of profs){
+    html+=`<div class="lbl" style="margin:10px 0 4px">${esc(pr.nick||'(tanpa nama)')} · ${esc(pr.pid)}</div>`;
+    for(const g of _liveCodes){ let r; try{ r=await ksRedeem(pr.pid,g.code); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+      html+=`<div class="kv"><span class="mono">${esc(g.code)}</span><b style="color:${r.cls==='ok'?'var(--profit)':r.cls==='warn'?'var(--warn)':'var(--loss)'}">${esc(r.txt)}</b></div>`;
+      out.innerHTML=html; await new Promise(s=>setTimeout(s,350)); }
+  }
+  out.innerHTML=html+'<div class="muted small" style="margin-top:6px">Hadiah masuk mail in-game tiap akun.</div>';
+  if(btn) btn.disabled=false;
 }
 async function redeemUI(){
   const out=$('#cd_out'),fid=($('#cd_fid').value||'').trim(),code=($('#cd_code').value||'').trim();
