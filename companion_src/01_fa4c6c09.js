@@ -260,23 +260,44 @@ function mysticHTML(){
     +card('Shop & Catatan','🎁',
       `<div class="alert inf small">${esc(M.shop)}</div><p class="muted small">${esc(M.note)}</p>`);
 }
-/* Tabel per-phase 1-10: pola adjust (phase 6-9 archer +5%, boss X-10 archer +10%).
-   Komposisi musuh persis per-phase tak dipublikasikan; yang terverifikasi: normal ~33/33/33, boss X-10 ~53/27/20. */
-function _mtPhases(z){
-  const b=z.ratio, shift=s=>[Math.max(0,b[0]-s),b[1],b[2]+s];
-  const rows=[];
-  for(let p=1;p<=10;p++){
-    if(p===10) rows.push({p,type:'◆ BOSS',ai:'~53/27/20',r:shift(10)});
-    else if(p>=6) rows.push({p,type:'Berat',ai:'~33/33/33',r:shift(5)});
-    else rows.push({p,type:p>=4?'Menengah':'Pemanasan',ai:'~33/33/33',r:b});
-  }
-  return `<div class="lbl" style="margin:14px 0 4px">Tabel per-phase (Phase 1–10 dalam tiap Stage) — adjust formasi</div>
-    <div class="scrollx"><table><thead><tr><th>Phase</th><th>Tipe</th><th>Musuh</th><th>I/C/A</th></tr></thead><tbody>`
-    +rows.map(o=>`<tr${o.p===10?' style="background:rgba(255,90,31,.10)"':''}><td><b>Phase ${o.p}</b></td><td class="small">${o.type}</td><td class="mono small">${o.ai}</td><td class="mono"><b style="color:${_MTC.inf}">${o.r[0]}</b>/<b style="color:${_MTC.cav}">${o.r[1]}</b>/<b style="color:${_MTC.arc}">${o.r[2]}</b></td></tr>`).join('')
-    +`</tbody></table></div>
-    <div class="alert inf small">Phase 1-5 = baseline zona. Phase 6-9 makin berat → archer +5%. Phase 10 = BOSS infantry-heavy → archer +10% (archer counter infantry). Masih mentok? +5% archer lagi & ULANG (variansi RNG besar).</div>
-    <div class="alert warn small">Pola rasio ini <b>SAMA untuk semua Stage</b> (Stage 1, 2, 3, …). Yang naik tiap Stage = <b>POWER musuh</b> → kamu butuh <b>STAT lebih tinggi</b> (gear/charm/pet/riset sesuai zona), <b>BUKAN rasio berbeda</b>. Jadi rasio per-phase tetap; kekuatan akun yang harus naik.</div>
-    <p class="muted small">⚠ Komposisi musuh persis tiap phase TIDAK dipublikasikan game — ini POLA adjust berbasis mekanik terverifikasi (boss phase-10 ≈ 53/27/20), bukan angka resmi per-phase. Kalau kamu punya data battle-report asli per phase, kirim → saya ganti dgn angka pasti.</p>`;
+/* Metode per-phase TERVERIFIKASI: baca rasio musuh di preview lalu counter. Tidak ada
+   tabel komposisi per-phase resmi; Stage 10 = unlock Raid (bukan boss komposisi tetap). */
+function _mtCounter(ei,ec,ea){
+  ei=+ei||0; ec=+ec||0; ea=+ea||0;
+  const max=Math.max(ei,ec,ea), min=Math.min(ei,ec,ea);
+  if(max-min<=8) return {rec:[50,20,30],unit:'Seimbang',why:'Musuh seimbang — pakai 50/20/30 (infantry tank + archer DPS).'};
+  if(ei===max) return {rec:[45,15,40],unit:'ARCHER',why:'Musuh Infantry-berat → Archer counter Infantry. Naikkan archer.'};
+  if(ec===max) return {rec:[60,15,25],unit:'INFANTRY',why:'Musuh Cavalry-berat → Infantry counter Cavalry. Tebalkan infantry.'};
+  return {rec:[50,30,20],unit:'CAVALRY',why:'Musuh Archer-berat → Cavalry counter Archer. Naikkan cavalry.'};
+}
+function _mtMethod(z){
+  return `<div class="lbl" style="margin:14px 0 4px">Metode per-phase: BACA musuh → COUNTER</div>
+   <div class="alert warn small">Tidak ada tabel komposisi musuh per-phase resmi. F2P tembus stage tinggi dengan <b>membaca rasio musuh di layar preview tiap phase</b> lalu bawa counter — bukan hafal angka.</div>
+   <ul class="mtul">
+     <li><b>Set sumber stat zona dulu</b> (${esc(z.stat)}) + pakai hero SKILL TEMPUR saja.</li>
+     <li><b>Baca musuh sebelum fight</b> — di preview kelihatan rasio Inf/Cav/Archer + hero/gear-nya.</li>
+     <li><b>Counter:</b> musuh Inf-berat → +Archer · Cav-berat → +Infantry · Archer-berat → +Cavalry. Infantry tetap mayoritas; jangan ada tipe 0 (sisakan ≥5% biar skill buff hero aktif).</li>
+     <li><b>Kalah?</b> buka battle report: frontline cepat habis → +5-10% Infantry; damage kurang → +5% Archer.</li>
+     <li><b>Adjust ±5-10% & ULANG</b> (RNG besar — habiskan 5 attempt; menang = gratis).</li>
+     <li><b>Rasio mentok?</b> itu batas STAT — upgrade ${esc(z.stat.split('(')[0].trim())}, bukan formasi.</li>
+     ${z.heroes?`<li><b>Bait-march</b> (zona hero-based): lemahkan march-1 jadi umpan, tumpuk hero terbaik di march 2-3.</li>`:''}
+   </ul>
+   <div class="lbl" style="margin:14px 0 4px">Kalkulator Counter — isi rasio musuh (dari layar preview)</div>
+   <div class="row">
+     <div style="flex:1"><label class="fl">Musuh Inf %</label><input id="mtc_ei" type="number" value="40" min="0" max="100"></div>
+     <div style="flex:1"><label class="fl">Cav %</label><input id="mtc_ec" type="number" value="30" min="0" max="100"></div>
+     <div style="flex:1"><label class="fl">Archer %</label><input id="mtc_ea" type="number" value="30" min="0" max="100"></div>
+   </div>
+   <div id="mtc_out" style="margin-top:8px"></div>
+   <p class="muted small" style="margin-top:6px">Mulai dari baseline zona (${z.ratio.join('/')}), geser ke arah hasil kalkulator. Stage 10 = unlock RAID (bukan boss komposisi tetap).</p>`;
+}
+function _wireCounter(el){
+  const ei=$('#mtc_ei',el),ec=$('#mtc_ec',el),ea=$('#mtc_ea',el),out=$('#mtc_out',el);
+  if(!ei||!ec||!ea||!out) return;
+  const upd=()=>{ const s=_mtCounter(ei.value,ec.value,ea.value);
+    out.innerHTML=`<div class="mono"><b>Bawa lebih: <span style="color:var(--accent)">${s.unit}</span></b></div>`+_mtBar(s.rec)
+      +`<div class="mono small">Formasi: <b style="color:${_MTC.inf}">${s.rec[0]}</b>/<b style="color:${_MTC.cav}">${s.rec[1]}</b>/<b style="color:${_MTC.arc}">${s.rec[2]}</b></div><div class="small muted" style="margin-top:4px">${esc(s.why)}</div>`; };
+  [ei,ec,ea].forEach(i=>i.addEventListener('input',upd)); upd();
 }
 function _mtZoneDetail(z){
   const tag=(on,txt)=>`<span class="tag" style="${on?'color:var(--profit)':'opacity:.7'}">${txt}</span>`;
@@ -285,13 +306,14 @@ function _mtZoneDetail(z){
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">${tag(true,'Unlock: '+esc(z.unlock))} ${tag(true,esc(z.teams))} ${tag(z.heroes,z.heroes?'Hero dihitung ✓':'Hero tidak dihitung')} ${tag(z.ownTroops,z.ownTroops?'Troop sendiri':'Troop game (T10)')}</div>
     ${_mtBar(z.ratio)}<div class="mono small">Rekomendasi: <b style="color:${_MTC.inf}">${z.ratio[0]}</b> / <b style="color:${_MTC.cav}">${z.ratio[1]}</b> / <b style="color:${_MTC.arc}">${z.ratio[2]}</b> (Inf/Cav/Arc)</div>
     <ul class="mtul" style="margin-top:8px">${z.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
-    ${_mtPhases(z)}`;
+    ${_mtMethod(z)}`;
 }
 function wireMystic(el){
   const M=MYSTIC_TRIAL;
   const det=$('#mt_detail',el); let cur=M.zones[0];
   const show=z=>{ cur=z; if(det) det.innerHTML=_mtZoneDetail(z);
-    $$('.mzbtn',el).forEach(b=>b.classList.toggle('active',b.dataset.mz===z.key)); };
+    $$('.mzbtn',el).forEach(b=>b.classList.toggle('active',b.dataset.mz===z.key));
+    if(det) _wireCounter(det); };
   $$('.mzbtn',el).forEach(b=>b.onclick=()=>{ const z=M.zones.find(x=>x.key===b.dataset.mz); if(z) show(z); });
   show(M.zones[0]);
   const cap=$('#mt_cap',el),zo=$('#mt_zone',el);
