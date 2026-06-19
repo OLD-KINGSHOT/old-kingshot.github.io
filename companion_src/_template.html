@@ -925,6 +925,13 @@ html{scrollbar-width:thin;scrollbar-color:var(--bg-4) transparent}
 .sideprofile .spt b{display:block;font-size:13.5px;font-weight:700}
 .sideprofile .spt small{display:block;font-family:var(--font-mono);font-size:10.5px;color:var(--fg-dim);margin-top:2px}
 .sideprofile.on .spt small{color:var(--profit)}
+.profswitch{margin:0 8px 8px;width:calc(100% - 16px);background:var(--bg-3);color:var(--fg);
+  border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-family:var(--font-mono);font-size:11px;cursor:pointer}
+.profswitch:hover{border-color:var(--accent)}
+.mtul{list-style:none;padding:0;margin:0;font-size:13px;color:var(--fg-dim)}
+.mtul li{padding:4px 0 4px 18px;position:relative}
+.mtul li::before{content:"▸";position:absolute;left:0;color:var(--accent)}
+.mtul b{color:var(--fg)}
 /* respect reduced motion */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
@@ -980,6 +987,7 @@ html{scrollbar-width:thin;scrollbar-color:var(--bg-4) transparent}
       <span class="spi">👤</span>
       <span class="spt"><b>Profil & Login</b><small id="sp_sub">belum terhubung</small></span>
     </button>
+    <select id="profSwitch" class="profswitch" title="Ganti profil aktif" style="display:none"></select>
     <div class="sidefoot">
       DATA KOMUNITAS · 2026-06<br>LAYAR IN-GAME = ACUAN FINAL<br>OFFLINE · LOCAL STORAGE
     </div>

@@ -167,7 +167,7 @@ function renderEvent(){
 
   el.innerHTML=pageHead('Event & Kalender','Advisory otomatis: kapan TAHAN item, kapan PAKAI, dan jam berapa \u2014 digerakkan umur server.')
     +`<div class="seg" id="ev_sub" style="flex-wrap:wrap;margin:4px 0 10px">
-        <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="cal">\u2691 Kalender</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
+        <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="cal">\u2691 Kalender</button><button data-s="mystic">\ud83d\udd2e Mystic Trial</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
       </div><div id="ev_subc"></div>`;
 
   /* SEMUA bagian jadi sub-tab \u2014 satu bagian tampil pada satu waktu, tanpa scroll panjang */
@@ -176,6 +176,7 @@ function renderEvent(){
     live: card('Jadwal Kingdom (live)','\ud83d\udce1','<div id="evlive"></div>'),
     cal: card('Kalender Server','\u2691',
       `<p class="muted small">Event PERTUMBUHAN berbasis umur server (HoG \u00b7 KvK \u00b7 SG \u00b7 Burst \u00b7 Milestone). Event mingguan aliansi ada di sub-tab "\ud83d\udce1 Jadwal Live".</p><div id="evcal"></div>`),
+    mystic: mysticHTML(),
     kvk: card('KvK Prep','\u2620',
       `<div class="alert ok small">${esc(KVK_PREP.target)}</div>
        <h3>Hitung mundur</h3>${KVK_PREP.stockpile.map(s=>`<div class="check note"><div class="d" style="color:var(--fg)">${esc(s)}</div></div>`).join('')}
@@ -206,6 +207,7 @@ function renderEvent(){
       /* make sure weekly markers appear even if the Live sub-tab was never opened */
       if(typeof ksLiveEvents==='function') ksLiveEvents().then(()=>{ const ec=$('#evcal',el); if(ec&&store.get('evSub','adv')==='cal') renderCalendar(ec); }); }
     if(k==='live') fillLiveEvents();
+    if(k==='mystic') wireMystic(el);
     if(k==='adv'&&age!=null){
       const add=$('#sch_add',el); if(add) add.onclick=()=>{ const date=$('#sch_date').value; if(!date){$('#sch_date').focus();return;} const arr=store.get('events',[]); const ty=$('#sch_type').value; const i=arr.findIndex(x=>x.type===ty); if(i>=0)arr[i]={type:ty,date}; else arr.push({type:ty,date}); store.set('events',arr); renderEvent(); };
       $$('.del',el).forEach(b=>b.onclick=()=>{ const arr=store.get('events',[]); arr.splice(+b.dataset.idx,1); store.set('events',arr); renderEvent(); });
@@ -213,6 +215,69 @@ function renderEvent(){
     if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
   $$('#ev_sub button',el).forEach(b=>b.onclick=()=>showSub(b.dataset.s));
   showSub(store.get('evSub','adv'));
+}
+
+/* ── Mystic Trial sub-tab (data: MYSTIC_TRIAL) ── */
+const _MTC={inf:'#6fa8d6',cav:'#e8a23a',arc:'#ff5a1f'};
+function _mtBar(r){ return `<div style="display:flex;height:9px;border-radius:5px;overflow:hidden;border:1px solid var(--border);margin:6px 0">
+  <i style="width:${r[0]}%;background:${_MTC.inf}"></i><i style="width:${r[1]}%;background:${_MTC.cav}"></i><i style="width:${r[2]}%;background:${_MTC.arc}"></i></div>`; }
+function mysticHTML(){
+  const M=MYSTIC_TRIAL;
+  const week=[['Sen','Sel'],['Rab','Kam'],['Jum','Sab'],['Min']].map(grp=>{
+    const names=M.zones.filter(z=>grp.some(d=>z.days.indexOf(d)>=0)).map(z=>z.name);
+    return `<div class="kv"><span class="mono small">${grp.join('/')}</span><span class="small">${names.join(' · ')||'—'}</span></div>`;
+  }).join('');
+  const rules=`<ul class="mtul">
+    <li><b>Counter:</b> ${esc(M.common.counter)}</li>
+    <li><b>AI musuh:</b> ${esc(M.common.aiNormal)}; ${esc(M.common.aiBoss)}.</li>
+    <li><b>Attempt:</b> ${esc(M.common.attempts)}</li>
+    <li><b>Raid:</b> ${esc(M.common.raid)}</li>
+    <li style="color:var(--warn)">${esc(M.common.deploy)}</li>
+    <li>${esc(M.common.rng)}</li></ul>`;
+  const zoneBtns=M.zones.map((z,i)=>`<button class="btn ghost sm mzbtn${i===0?' active':''}" data-mz="${z.key}">${esc(z.name)}</button>`).join(' ');
+  const calcOpts=M.zones.map(z=>`<option value="${z.ratio.join(',')}"${z.key==='molten'?' selected':''}>${esc(z.name)} — ${z.ratio.join('/')}</option>`).join('');
+  const tableRows=M.zones.map(z=>`<tr><td><b>${esc(z.name)}</b></td><td class="small">${esc(z.days)}</td><td class="small">${esc(z.stat)}</td><td class="mono">${z.ratio.join('/')}</td><td class="small">${esc(z.unlock)}</td></tr>`).join('');
+  const tactics=M.tactics.map(t=>`<div class="check note"><div class="d" style="color:var(--fg)"><b>${esc(t[0])}</b><div class="muted small">${esc(t[1])}</div></div></div>`).join('');
+  return card('Mystic Trial — 6 Zona','🔮',
+      `<p class="muted small">PvE permanen, unlock TC ${M.unlockTC}. Total power TIDAK berlaku — tiap zona hanya menghitung SATU sumber stat. Troop disediakan game (T10) kecuali Radiant Spire (troop sendiri).</p>
+       <div class="lbl" style="margin:10px 0 2px">Jadwal mingguan</div>${week}
+       <div class="lbl" style="margin:12px 0 2px">Aturan semua zona</div>${rules}`,null,true)
+    +card('Detail per Zona','▦',
+      `<div class="seg" style="flex-wrap:wrap;margin-bottom:8px">${zoneBtns}</div><div id="mt_detail"></div>`)
+    +card('Kalkulator Formasi','◆',
+      `<div class="row"><div style="flex:1"><label class="fl">Kapasitas march</label><input id="mt_cap" type="number" value="100000" min="0" step="1000"></div>
+       <div style="flex:1"><label class="fl">Zona / preset</label><select id="mt_zone">${calcOpts}</select></div></div>
+       <div class="stats" style="margin-top:10px">
+        <div class="stat"><div class="sl" style="color:${_MTC.inf}">Infantry</div><div class="sv" id="mt_inf">—</div></div>
+        <div class="stat"><div class="sl" style="color:${_MTC.cav}">Cavalry</div><div class="sv" id="mt_cav">—</div></div>
+        <div class="stat"><div class="sl" style="color:${_MTC.arc}">Archer</div><div class="sv" id="mt_arc">—</div></div></div>
+       <p class="muted small" style="margin-top:8px">Angka presisi 5% = wisdom-of-the-crowds + testing kreator (directionally accurate), bukan rumus resmi.</p>`)
+    +card('Ringkasan 6 Zona','▤',
+      `<div class="scrollx"><table><thead><tr><th>Zona</th><th>Hari</th><th>Stat</th><th>I/C/A</th><th>Unlock</th></tr></thead><tbody>${tableRows}</tbody></table></div>`)
+    +card('Taktik Lanjutan','♟',tactics)
+    +card('Shop & Catatan','🎁',
+      `<div class="alert inf small">${esc(M.shop)}</div><p class="muted small">${esc(M.note)}</p>`);
+}
+function _mtZoneDetail(z){
+  const tag=(on,txt)=>`<span class="tag" style="${on?'color:var(--profit)':'opacity:.7'}">${txt}</span>`;
+  return `<div class="kv"><b style="font-size:15px">${esc(z.name)}</b><span class="mono small" style="color:var(--accent)">⏱ ${esc(z.days)}</span></div>
+    <div class="small" style="margin:4px 0">Stat dihitung: <b>${esc(z.stat)}</b></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">${tag(true,'Unlock: '+esc(z.unlock))} ${tag(true,esc(z.teams))} ${tag(z.heroes,z.heroes?'Hero dihitung ✓':'Hero tidak dihitung')} ${tag(z.ownTroops,z.ownTroops?'Troop sendiri':'Troop game (T10)')}</div>
+    ${_mtBar(z.ratio)}<div class="mono small">Rekomendasi: <b style="color:${_MTC.inf}">${z.ratio[0]}</b> / <b style="color:${_MTC.cav}">${z.ratio[1]}</b> / <b style="color:${_MTC.arc}">${z.ratio[2]}</b> (Inf/Cav/Arc)</div>
+    <ul class="mtul" style="margin-top:8px">${z.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
+}
+function wireMystic(el){
+  const M=MYSTIC_TRIAL;
+  const det=$('#mt_detail',el); let cur=M.zones[0];
+  const show=z=>{ cur=z; if(det) det.innerHTML=_mtZoneDetail(z);
+    $$('.mzbtn',el).forEach(b=>b.classList.toggle('active',b.dataset.mz===z.key)); };
+  $$('.mzbtn',el).forEach(b=>b.onclick=()=>{ const z=M.zones.find(x=>x.key===b.dataset.mz); if(z) show(z); });
+  show(M.zones[0]);
+  const cap=$('#mt_cap',el),zo=$('#mt_zone',el);
+  const calc=()=>{ const tot=Math.max(0,parseInt(cap.value)||0); const [pi,pc]=zo.value.split(',').map(Number);
+    const inf=Math.round(tot*pi/100),cav=Math.round(tot*pc/100),arc=tot-inf-cav;
+    const f=n=>n.toLocaleString('id-ID'); $('#mt_inf',el).textContent=f(inf); $('#mt_cav',el).textContent=f(cav); $('#mt_arc',el).textContent=f(arc<0?0:arc); };
+  if(cap&&zo){ cap.addEventListener('input',calc); zo.addEventListener('change',calc); calc(); }
 }
 
 /* ============ BANGUN (build + progres) ============ */
@@ -324,12 +389,11 @@ function islWire(el){
   const cv=$('#isl_cv',el); if(!cv) return;
   /* coordinates match the community map: origin "1" at BOTTOM-LEFT, x along the bottom, y rises upward */
   const ctx=cv.getContext('2d'); const N=(typeof ISLAND_N!=='undefined')?ISLAND_N:60, L=28,R=30,T=20,B=26;
+  /* PER-PROFIL: tiap profil punya island sendiri (store sudah sadar-profil). Profil yang
+     belum punya data di-seed template komunitas (titik merah/peti) sebagai DASAR — jadi
+     mark merah selalu ada di tiap ID; editmu (collected/cactus/path) tersimpan per-ID. */
   let marks=store.get('islandMarks',null);
-  /* migrate: v1/v2 templates were digitized on a wrong 70×70 grid (real map = 60×60) and
-     missed 17 chests. If the stored map is an UNTOUCHED auto-template (42 chests, nothing
-     else), refresh it to the corrected 59-point seed. */
   const looksUntouchedOld=marks&&store.get('islandSeedV',1)<3&&Object.keys(marks).length===42&&Object.values(marks).every(v=>v===1);
-  /* default = the community chest template (user asked the dots to be there out of the box) */
   if(!marks||Object.keys(marks).length===0||looksUntouchedOld){
     marks={};
     if(typeof ISLAND_SEED!=='undefined') ISLAND_SEED.forEach(p=>{ marks[p[0]+','+p[1]]=1; });
@@ -509,14 +573,37 @@ function renderKode(){
        <div class="row" style="margin-top:12px"><button class="btn" id="cd_go">Redeem</button></div><div id="cd_out"></div>`,null,true)
     +card('Kode Aktif (live)','\u25c9',
       `<p class="muted small">Diambil live dari kingshot.net + kingshotwiki.com. Kode baru otomatis di-redeem ke Player ID-mu.</p>
-       <div class="row" style="margin-bottom:10px"><button class="btn sec sm" id="cd_refresh">\u21bb Muat ulang</button><button class="btn sm" id="cd_all">\u26a1 Redeem semua (paksa)</button></div>
+       <div class="row" style="margin-bottom:10px"><button class="btn sec sm" id="cd_refresh">\u21bb Muat ulang</button><button class="btn sm" id="cd_all">\u26a1 Redeem semua (paksa)</button><button class="btn sm" id="cd_allprof">\ud83d\udc65 Redeem ke semua profil</button></div>
        <div id="cd_live"><div class="muted small">\u23f3 Memuat kode aktif\u2026</div></div>
        <div id="cd_auto"></div>
+       <div id="cd_allprof_out"></div>
        <p class="muted small" style="margin-top:8px">Kode resmi hanya dari Century Games. "Generator kode" = scam.</p>`);
   $('#cd_go',el).onclick=()=>redeemUI();
   $('#cd_refresh',el).onclick=()=>fetchCodesUI();
   $('#cd_all',el).onclick=()=>redeemAllUI();
+  $('#cd_allprof',el).onclick=()=>redeemAllProfilesUI();
   fetchCodesUI(); /* auto-load on open; chains into auto-redeem of new codes */
+}
+/* Redeem semua kode live ke SEMUA profil tersimpan (loop pid × code). Tidak menyentuh
+   codesDone (per-profil) — itu ditangani auto-redeem saat tiap profil aktif. */
+async function redeemAllProfilesUI(){
+  const out=$('#cd_allprof_out'); const btn=$('#cd_allprof'); if(btn&&btn.disabled) return;
+  const profs=store.get('profiles',[]).filter(p=>p&&p.pid);
+  if(!profs.length){ out.innerHTML='<div class="alert warn small">Belum ada profil tersimpan (tab Profil).</div>'; return; }
+  if(!_liveCodes.length){ await fetchCodesUI(); }
+  if(!_liveCodes.length){ out.innerHTML='<div class="alert warn small">Tidak ada kode untuk di-redeem.</div>'; return; }
+  if(_codesFallback){ out.innerHTML='<div class="alert warn small">Daftar live gagal dimuat — redeem manual dari tabel.</div>'; return; }
+  if(btn) btn.disabled=true;
+  out.innerHTML='<div class="alert inf small">⏳ Redeem '+_liveCodes.length+' kode ke '+profs.length+' profil…</div>';
+  let html='';
+  for(const pr of profs){
+    html+=`<div class="lbl" style="margin:10px 0 4px">${esc(pr.nick||'(tanpa nama)')} · ${esc(pr.pid)}</div>`;
+    for(const g of _liveCodes){ let r; try{ r=await ksRedeem(pr.pid,g.code); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+      html+=`<div class="kv"><span class="mono">${esc(g.code)}</span><b style="color:${r.cls==='ok'?'var(--profit)':r.cls==='warn'?'var(--warn)':'var(--loss)'}">${esc(r.txt)}</b></div>`;
+      out.innerHTML=html; await new Promise(s=>setTimeout(s,350)); }
+  }
+  out.innerHTML=html+'<div class="muted small" style="margin-top:6px">Hadiah masuk mail in-game tiap akun.</div>';
+  if(btn) btn.disabled=false;
 }
 async function redeemUI(){
   const out=$('#cd_out'),fid=($('#cd_fid').value||'').trim(),code=($('#cd_code').value||'').trim();
@@ -592,7 +679,15 @@ function renderProfil(){
   const el=$('[data-tab=profil]');
   const p=store.get('profile',{kingdom:'',pid:'',start:'',tc:''});
   const {age,tc}=profileAge();
+  const _profs=store.get('profiles',[]); const _ap=_ksActivePid();
+  const _profListHtml=(_profs.map(pr=>{ const isA=pr.pid===_ap;
+    return `<div class="kv" style="align-items:center"><span>${isA?'<b style="color:var(--accent)">\u25cf </b>':''}<b>${esc(pr.nick||'(tanpa nama)')}</b> <span class="muted small">#${esc(pr.kingdom||'?')} \u00b7 ${esc(pr.pid)}</span></span>`
+      +`<span class="row" style="gap:6px">${isA?'<span class="muted small">aktif</span>':`<button class="btn sec sm" data-sw="${esc(pr.pid)}">Pakai</button>`}`
+      +`${_profs.length>1?`<button class="btn ghost sm" data-rm="${esc(pr.pid)}" style="color:var(--loss);border-color:rgba(255,70,85,.45)">Hapus</button>`:''}</span></div>`;
+    }).join(''))
+    +`<label class="fl" style="margin-top:10px">Tambah Player ID</label><div class="row"><input id="pf_add" inputmode="numeric" placeholder="mis. 12345678" style="flex:1"><button class="btn sec sm" id="pf_addbtn">\uff0b Tambah</button></div><div id="pf_addstatus" class="muted small"></div>`;
   el.innerHTML=pageHead('Profil & Koneksi','Hubungkan Player ID sekali \u2014 app baca Kingdom, TC & tanggal server otomatis dan mengingatnya.')
+    +card('Profil Tersimpan (multi-akun)','\ud83d\udc65',_profListHtml)
     +card('Player ID (login)','\u25c9',
       `<label class="fl">Player ID</label><input id="pf_id" value="${esc(p.pid||'')}" inputmode="numeric" placeholder="mis. 12345678">
        <div class="row" style="margin-top:12px"><button class="btn" id="pf_detect">\u26a1 Hubungkan & Deteksi</button>${p.pid?'<button class="btn ghost sm" id="pf_logout" style="color:var(--loss);border-color:rgba(255,70,85,.45)">\u23fb Logout</button>':''}</div>
@@ -631,6 +726,23 @@ function renderProfil(){
        <div class="row"><button class="btn sec sm" id="bk_export">⬇ Export data</button><button class="btn sec sm" id="bk_import">⬆ Import data</button><input type="file" id="bk_file" accept=".json" style="display:none"></div>
        <div id="bk_status"></div>`);
 
+  /* multi-profil: switch / hapus / tambah */
+  $$('[data-sw]',el).forEach(b=>b.onclick=()=>setActiveProfile(b.dataset.sw));
+  $$('[data-rm]',el).forEach(b=>b.onclick=()=>{
+    if(!confirm('Hapus profil '+b.dataset.rm+' dari daftar? Data tersimpan untuk ID ini tetap ada di perangkat (bisa ditambahkan lagi).')) return;
+    let ps=store.get('profiles',[]).filter(p=>p.pid!==b.dataset.rm); store.set('profiles',ps);
+    if(_ksActivePid()===b.dataset.rm&&ps[0]) setActiveProfile(ps[0].pid);
+    else { renderProfil(); if(typeof updateSideProf==='function') updateSideProf(); }
+  });
+  const _ab=$('#pf_addbtn',el); if(_ab) _ab.onclick=async()=>{
+    const v=($('#pf_add',el).value||'').trim(); const st=$('#pf_addstatus',el);
+    if(!v){ st.textContent='Isi Player ID.'; return; }
+    if(store.get('profiles',[]).some(p=>p.pid===v)){ st.textContent='ID sudah ada di daftar.'; return; }
+    st.textContent='⏳ Cek ke server…'; let meta={pid:v,nick:'',kingdom:'',tc:'',start:''};
+    try{ const j=await ksPlayerLookup(v); if(j&&j.code===0&&j.data){ const d=j.data; meta.nick=d.nickname||''; meta.kingdom=String(d.kid||''); meta.tc=String(d.stove_lv||''); } }catch(e){}
+    const ps=store.get('profiles',[]); ps.push(meta); store.set('profiles',ps);
+    renderProfil(); if(typeof updateSideProf==='function') updateSideProf();
+  };
   $('#pf_detect',el).onclick=()=>autoDetectUI();
   const lo=$('#pf_logout',el); if(lo) lo.onclick=()=>{
     if(!confirm('Logout? Player ID dihapus dari perangkat ini. (Jam event alliance & checklist tetap tersimpan.)')) return;
@@ -730,6 +842,29 @@ function truegoldAlert(age,tc){
   if(d>0&&tc>0){ const per=d/(30-tc); return `<div class="alert ${per<3?'bad':per<6?'warn':'ok'} small">Menuju Age of Truegold (butuh TC30) sisa <b>${d} hari</b>. Kamu TC${tc} \u2192 ~${per.toFixed(1)} hari/level. ${per<3?'Ketat! Jangan biarkan antrian kosong.':per<6?'Jaga ritme upgrade.':'On-track.'}</div>`; }
   return '';
 }
+/* Selaraskan koneksi Player ID dgn multi-profil: perbarui entri ks_profiles
+   (nama/kingdom/TC/server), jadikan ID itu profil AKTIF (slot = ID yg dipakai),
+   lalu simpan objek profile di bawah slot itu. */
+function connectProfileTo(fid,d,openDate){
+  try{
+    let profs=store.get('profiles',[]); let e=profs.find(p=>p.pid===fid);
+    const meta={pid:fid,nick:(d&&d.nickname)||(e&&e.nick)||'',kingdom:String((d&&d.kid)||(e&&e.kingdom)||''),tc:String((d&&d.stove_lv)||(e&&e.tc)||''),start:openDate||(e&&e.start)||''};
+    if(e) Object.assign(e,meta); else profs.push(meta);
+    store.set('profiles',profs);
+    localStorage.setItem('ks_activePid',JSON.stringify(fid));
+  }catch(err){}
+  const oldP=store.get('profile',{});
+  store.set('profile',Object.assign({},oldP,{pid:fid,nick:(d&&d.nickname)||oldP.nick||'',kingdom:String((d&&d.kid)||oldP.kingdom||''),tc:String((d&&d.stove_lv)||oldP.tc||''),start:openDate||oldP.start||''}));
+}
+/* Auto-deteksi nama/Kingdom/TC untuk profil yg belum ber-nama (saat load, non-blok). */
+async function autoDetectProfiles(){
+  const profs=store.get('profiles',[]); let changed=false;
+  for(const p of profs){ if(p.nick) continue;
+    try{ const j=await ksPlayerLookup(p.pid);
+      if(j&&j.code===0&&j.data){ p.nick=j.data.nickname||''; p.kingdom=String(j.data.kid||''); p.tc=String(j.data.stove_lv||''); changed=true; } }catch(e){} }
+  if(changed){ store.set('profiles',profs); if(typeof updateSideProf==='function') updateSideProf();
+    if(store.get('lastTab','sekarang')==='profil'&&typeof renderProfil==='function') renderProfil(); }
+}
 function saveProfile(){
   const old=store.get('profile',{});
   const v=(id,prop)=>{ const e=$(id); return e?(e.value||'').trim():(old[prop]||''); };
@@ -748,9 +883,8 @@ async function autoDetectUI(){
     const openDate=await fetchKingdomDate(d.kid);
     if(openDate) dateMsg=' \u00b7 server buka '+esc(openDate)+(window._kdateEst?' <span style="color:var(--warn)">(perkiraan \u00b12-3 hari \u2014 offline)</span>':'');
     else dateMsg=' \u00b7 <span style="color:var(--warn)">tanggal buka tak ketemu, isi manual</span>';
-    /* save straight to the store (renderProfil() would wipe #pf_status if we set it first) */
-    const old=store.get('profile',{});
-    store.set('profile',Object.assign({},old,{pid:fid,nick:d.nickname||old.nick||'',kingdom:String(d.kid),tc:String(d.stove_lv||old.tc||''),start:openDate||old.start||''}));
+    /* save via multi-profil helper (sejajarkan slot aktif = ID ini + isi nama) */
+    connectProfileTo(fid,d,openDate);
     renderProfil(); renderTopClock();
     const st2=$('#pf_status'); if(st2) st2.innerHTML='<div class="alert ok small">\u2705 <b>'+esc(d.nickname)+'</b> \u00b7 Kingdom #'+esc(d.kid)+' \u00b7 TC '+esc(d.stove_lv)+dateMsg+'</div>';
   }catch(e){ const stE=$('#pf_status'); if(stE) stE.innerHTML='<div class="alert bad small">Gagal menghubungi server (offline/diblokir). Isi manual saja.</div>'; }
@@ -759,6 +893,7 @@ async function autoDetectUI(){
 
 /* ============ INIT ============ */
 function init(){
+  migrateProfiles();
   ksClock.load();
   Object.assign(KINGDOM_DATES,store.get('kdates',{}));
   buildNav();
@@ -769,6 +904,7 @@ function init(){
   activate(['sekarang','hero','event','bangun','pets','island','kode','profil'].includes(last)?last:'sekarang');
   renderTopClock();
   _lastGameDay=ksClock.now().toISOString().slice(0,10);
+  if(typeof autoDetectProfiles==='function') autoDetectProfiles(); /* isi nama/Kingdom/TC profil (non-blok) */
   setInterval(tickClock,1000);
   ksClock.sync().then(ok=>{ if(ok){ const nd=ksClock.now().toISOString().slice(0,10); const changed=nd!==_lastGameDay; _lastGameDay=nd; renderTopClock();
     /* only force a re-render if the sync actually moved us to a different game day — otherwise it would wipe in-progress typing */
@@ -847,8 +983,7 @@ function showOnboard(){
       if(j.code!==0||!j.data) throw new Error('notfound');
       const dd=j.data;
       const openDate=await fetchKingdomDate(dd.kid);
-      const old=store.get('profile',{});
-      store.set('profile',Object.assign({},old,{pid:fid,nick:dd.nickname||old.nick||'',kingdom:String(dd.kid),tc:String(dd.stove_lv||old.tc||''),start:openDate||old.start||''}));
+      connectProfileTo(fid,dd,openDate);
       finish();
     }catch(e){
       go.disabled=false; go.textContent=lbl;

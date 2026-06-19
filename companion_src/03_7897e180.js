@@ -8,11 +8,46 @@ const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
 const fmt=n=>{n=Number(n)||0;return n.toLocaleString('id-ID');};
 const esc=v=>(''+(v==null?'':v)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const parseNum=v=>{ if(v==null) return 0; v=(''+v).replace(/[.\s]/g,'').replace(/,/g,'.'); const n=parseFloat(v); return isNaN(n)?0:n; };
+/* ── Multi-profil: kunci per-profil disimpan ks_p_<pid>_<key>; sisanya global.
+   (lastSit sengaja TIDAK per-profil — ephemeral & ada di ksSync._skip.) ── */
+const PROFILE_KEYS=new Set(['profile','roster','trackProg','buildDone','codesDone',
+  'islandMarks','islandSeedV','daily','events','notifFlags']);
+function _ksActivePid(){ try{ return JSON.parse(localStorage.getItem('ks_activePid'))||''; }catch(e){ return ''; } }
+function _ksRealKey(k){ return PROFILE_KEYS.has(k) ? ('p_'+_ksActivePid()+'_'+k) : k; }
 const store={
-  get(k,d){ try{const v=localStorage.getItem('ks_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;} },
-  set(k,v){ try{localStorage.setItem('ks_'+k,JSON.stringify(v));}catch(e){}
-    if(typeof ksSync!=='undefined'&&ksSync._skip.indexOf('ks_'+k)<0) ksSync.schedule(); }
+  get(k,d){ try{const v=localStorage.getItem('ks_'+_ksRealKey(k));return v==null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ const rk=_ksRealKey(k); try{localStorage.setItem('ks_'+rk,JSON.stringify(v));}catch(e){}
+    if(typeof ksSync!=='undefined'&&ksSync._skip.indexOf('ks_'+rk)<0) ksSync.schedule(); }
 };
+/* Profil aktif & migrasi sekali-jalan (idempotent). */
+function setActiveProfile(pid){ try{ localStorage.setItem('ks_activePid',JSON.stringify(String(pid))); }catch(e){}
+  if(typeof activate==='function') activate(store.get('lastTab','sekarang')); }
+function migrateProfiles(){
+  try{
+    if(localStorage.getItem('ks_profilesV')) return;            /* sudah migrasi */
+    /* profil sudah ada (mis. datang via sync di perangkat baru) → jangan clobber */
+    if(localStorage.getItem('ks_profiles')){ localStorage.setItem('ks_profilesV','1'); return; }
+    let oldProfile={}; try{ oldProfile=JSON.parse(localStorage.getItem('ks_profile')||'{}')||{}; }catch(e){}
+    const pid0=String(oldProfile.pid||'330300846');
+    /* pindahkan data per-profil lama → slot pid0 (jika belum ada) */
+    PROFILE_KEYS.forEach(k=>{ const oldK='ks_'+k, newK='ks_p_'+pid0+'_'+k;
+      const ov=localStorage.getItem(oldK);
+      if(ov!=null && localStorage.getItem(newK)==null){ localStorage.setItem(newK,ov); localStorage.removeItem(oldK); }
+    });
+    /* daftar profil: pid0 (pakai meta lama) + 3 seed unik */
+    const seeds=['343522603','344771670','330300846'];
+    const order=[pid0].concat(seeds.filter(s=>s!==pid0));
+    const profiles=order.map(p=>p===pid0
+      ? {pid:pid0,nick:oldProfile.nick||'',kingdom:oldProfile.kingdom||'',tc:oldProfile.tc||'',start:oldProfile.start||''}
+      : {pid:p,nick:'',kingdom:'',tc:'',start:''});
+    localStorage.setItem('ks_profiles',JSON.stringify(profiles));
+    if(localStorage.getItem('ks_activePid')==null) localStorage.setItem('ks_activePid',JSON.stringify(pid0));
+    localStorage.setItem('ks_profilesV','1');
+  }catch(e){ console.warn('migrateProfiles',e); }
+}
+/* Island TERPISAH PER PROFIL: tiap profil auto-seed template komunitas (titik merah/peti)
+   sebagai dasar, lalu edit (collected/cactus/path) tersimpan khusus profil itu via store
+   yang sudah sadar-profil. Tidak ada base bersama / penyatuan (hindari kehilangan data). */
 
 /* ── Sinkron otomatis antar perangkat ──
    Backend: textdb.online (gratis, tanpa daftar, CORS penuh) — satu "kode sinkron"
@@ -21,7 +56,7 @@ const store={
    Strategi konflik: last-write-wins per snapshot (cukup untuk 1 pemain multi-HP).
    Kunci volatil (cache yang bisa diambil ulang / preferensi per-perangkat) di-skip. */
 const ksSync={
-  _skip:['ks_syncMeta','ks_liveEvents','ks_kdates','ks_clockOffset','ks_clockSyncAt','ks_clockNudge','ks_islandZoom','ks_lang','ks_lastTab','ks_evSub','ks_lastSit','ks_onboard','ks_tz','ks_visitPing'],
+  _skip:['ks_syncMeta','ks_liveEvents','ks_kdates','ks_clockOffset','ks_clockSyncAt','ks_clockNudge','ks_islandZoom','ks_lang','ks_lastTab','ks_evSub','ks_lastSit','ks_onboard','ks_tz','ks_visitPing','ks_activePid','ks_profilesV'],
   _t:null,
   meta(){ try{ return JSON.parse(localStorage.getItem('ks_syncMeta')||'null'); }catch(e){ return null; } },
   _saveMeta(m){ try{ localStorage.setItem('ks_syncMeta',JSON.stringify(m)); }catch(e){} },
