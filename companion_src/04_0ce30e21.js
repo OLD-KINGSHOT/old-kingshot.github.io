@@ -251,11 +251,11 @@ const EVENTS_INFO=[
    {n:'Treasure Cove',cat:'PACK berbayar',freq:'5 hari',what:'⚠ BUKAN grind poin gratis — event peta 5 hari, fragmennya dibuka dengan BELI "Treasure Cove Pack" (spender). F2P: klaim HANYA chest login harian GRATIS (ikon terpisah, ada titik merah), selain itu SKIP. Trap: jangan kejar progress bar (butuh pack); grand prize via mail bisa hadiah default, bukan pilihanmu.'},
    {n:'Top Governor — Governor Gear',cat:'poin · gear · ranking',freq:'rotasi (live)',what:'Varian Top/Strongest Governor bertema Governor Gear (ranking 7-hari). F2P: jadwalkan SATU upgrade Governor Gear/charm yang DITAHAN agar selesai DI window → poin ranking + milestone. Hold mat gear (Satin/Gilded/Artisan), spend breakpoint di window. Trap: jangan buang mat premium ke upgrade marginal. [tema/hari verifikasi]'},
    {n:'Governor Gear Enhancement / Enhance Gear',cat:'poin · hero gear',freq:'rotasi (live)',what:'Poin dari pakai Forgehammer/mat enhance ke Hero Gear (keluarga Stand of Arms ~800 poin/Forgehammer). F2P: TABUNG Forgehammer, pakai HANYA saat event; fokus 1 hero rally utama; kejar Tier 6+ (Tier 1-5 = sia-sia). ⛔ jangan buang speedup. [verifikasi]'},
-   {n:'Custom Arms Set',cat:'PACK berbayar',freq:'rotasi (live)',what:'Event PACK (set gear kustom). F2P: SKIP — klaim tier gratis saja, jangan beli. Trap: jangan beli karena FOMO; cek isi & harga pack in-game dulu. [belum terverifikasi — kemungkinan spend-only]'},
-   {n:'Tech Storm',cat:'poin · riset',freq:'rotasi (live)',what:'Poin dari MENYELESAIKAN research (power dari riset). F2P: mulai 1 riset TERPANJANG SEBELUM event, lalu selesaikan dgn research speedup yang ditahan DI window. Hold research speedup (~30-50 jam). Trap: jangan biarkan riset selesai sebelum event; 1 riset besar > banyak riset kecil. [verifikasi nama->mekanik]'},
-   {n:'Conqueror',cat:'poin · troop',freq:'rotasi (live)',what:'Poin dari aktivitas tempur — kemungkinan TRAINING/PROMOTE troop (power dari troop). F2P: pre-train troop ~99% & antri promote, selesaikan dgn training speedup di window. Hold training speedup + gem (gem simpan utk Roulette). Trap: jangan spam T1 murah kalau bisa promote tier tinggi. [verifikasi]'},
-   {n:'World Traveler',cat:'tema jelajah',freq:'rotasi (live)',what:'Tema jelajah/perjalanan — TIDAK ADA dokumentasi publik (belum terverifikasi). F2P: buka in-game, BACA daftar task, kerjakan yang GRATIS saja; jangan spend sebelum lihat task. [belum terverifikasi]'},
-   {n:'Wishful Emporium',cat:'toko/exchange',freq:'rotasi (live)',what:'Event TOKO/EXCHANGE — tukar currency event / shard duplikat di toko kurasi (mekanik sama Whiteout Survival). F2P: belanja HANYA token GRATIS yang kamu dapat; ambil mat charm/gear langka. Trap: jangan beli filler demi mengosongkan toko; jangan cash kecuali atasi bottleneck nyata. [Kingshot spesifik belum terverifikasi]'},
+   {n:'Custom Arms Set',cat:'PACK berbayar',freq:'~2 hari',what:'PACK uang asli (di-tag PACK di kingshot.net) untuk material HERO GEAR — pilih mat dari menu. F2P: SKIP. Kalau low-spender: pilih Enhancement XP vs Lucky Hero Gear Chest sesuai yang kurang. Trap: terlihat "custom/F2P-friendly" tapi pack uang asli; jangan beli mat yang salah.'},
+   {n:'Tech Storm',cat:'PACK berbayar',freq:'buka ~hari 3-4',what:'PACK uang asli berisi research speedup/resource — BUKAN kompetisi poin riset. F2P: SKIP pack; tahan riset & dump di hari scoring riset (HoG/SG D5) untuk poin event yang SEBENARNYA. Trap: mengira "Tech Storm" itu event scoring lalu riset di waktu salah.'},
+   {n:'Conqueror',cat:'PACK berbayar',freq:'Kam-Sab',what:'PACK uang asli bertema tempur/troop (di-tag PACK di kingshot.net) — BUKAN event kill/training berpoin. F2P: SKIP. Lakukan training/kill untuk event scoring lain (SG/Swordland/KvK), bukan "untuk Conqueror". Trap: namanya seperti kompetisi PvP — padahal cuma bundle toko.'},
+   {n:'World Traveler',cat:'PACK berbayar',freq:'saat migrasi/All-Out',what:'PACK uang asli berisi Advanced Teleporter + healing speedup (muncul saat event migrasi/relokasi). F2P: SKIP kecuali kamu memang sedang relokasi state & butuh Advanced Teleporter. Trap: di-drop pas event bikin "butuh teleporter sekarang" = FOMO rekayasa.'},
+   {n:'Wishful Emporium',cat:'PACK berbayar',freq:'24 jam (setelah event besar)',what:'PACK bundle uang asli yang bisa dikustom (3 slot pilih item + bonus tetap), muncul ~24 jam setelah event besar. F2P: SKIP (uang asli). Low-spender: salah satu pack terbaik — tumpuk slot ke 1 bottleneck (Forgehammer/Charm Design/gear chest). Trap: JANGAN keliru dgn "Emporium of Enigma" (toko key GRATIS) — ini beda & berbayar.'},
  ]},
  {g:'Berkala / khusus', items:[
    {n:'Alliance Tech (riset aliansi)',cat:'fitur · aliansi',freq:'permanen (bukan rotasi event)',what:'Riset aliansi dari donasi: Regimentation (naikkan cap member) · Cooperative Protocols (potong waktu tiap Alliance Help) · Adaptive Tools (speed konstruksi aliansi) · Treaties (naikkan cap assist help). F2P: spam Help All harian + donasi ke tech ber-flag "preferred" R4 (+20% reward). Growth dulu, lalu Battle (rally cap), lalu Territory.'},
@@ -364,11 +364,11 @@ const WEEKLY_GUIDE={
   treasureCove:'Event chest + daily task. Kerjakan daily efisien, berhenti sebelum milestone mahal.',
   governorGearEnhancement:'Poin dari enhance/upgrade gear. Pakai Forgehammer/Mithril/Artisan Vision di window; JANGAN buang speedup.',
   enhanceGear:'Poin dari enhance/upgrade gear. Pakai material gear di window; jangan buang speedup.',
-  customArmsSet:'Poin dari craft/upgrade Custom Mythic Hero Gear. Pakai Forgehammer/Mithril terencana.',
-  techStorm:'Poin dari research. TAHAN research speedup → pakai di window (barengkan hari riset HoG/SG).',
-  conqueror:'Poin dari tempur/kill. Skor dari aktivitas normal; hati-hati barengan All-Out (shield offline).',
-  worldTraveler:'Poin dari gather/eksplorasi. Jalankan gather rutin & habiskan stamina; tak perlu spend.',
-  wishfulEmporium:'Peti/toko undian. Pakai kunci GRATIS dari task, klaim milestone gratis, jangan judi.',
+  customArmsSet:'PACK berbayar (mat Hero Gear). F2P: SKIP — bukan event poin.',
+  techStorm:'PACK berbayar riset. F2P: SKIP; tahan riset utk hari scoring (HoG/SG D5).',
+  conqueror:'PACK berbayar (bukan event kill/training). F2P: SKIP.',
+  worldTraveler:'PACK berbayar (teleporter + heal). F2P: SKIP kecuali sedang relokasi.',
+  wishfulEmporium:'PACK bundle berbayar (kustom 3 slot). F2P: SKIP; beda dari Emporium of Enigma gratis.',
   topGovernor:'Varian Top Governor bertema (gear/dll). TAHAN material tema → selesaikan di window.'
 };
 const WEEKLY_GUIDE_DEFAULT='Cek detail di tab Events in-game. Aturan F2P: pakai attempt/reward gratis, jangan beli pack.';
