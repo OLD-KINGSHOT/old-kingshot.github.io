@@ -759,6 +759,7 @@ async function autoDetectUI(){
 
 /* ============ INIT ============ */
 function init(){
+  migrateProfiles();
   ksClock.load();
   Object.assign(KINGDOM_DATES,store.get('kdates',{}));
   buildNav();
