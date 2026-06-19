@@ -260,13 +260,31 @@ function mysticHTML(){
     +card('Shop & Catatan','🎁',
       `<div class="alert inf small">${esc(M.shop)}</div><p class="muted small">${esc(M.note)}</p>`);
 }
+/* Tabel per-phase 1-10: pola adjust (phase 6-9 archer +5%, boss X-10 archer +10%).
+   Komposisi musuh persis per-phase tak dipublikasikan; yang terverifikasi: normal ~33/33/33, boss X-10 ~53/27/20. */
+function _mtPhases(z){
+  const b=z.ratio, shift=s=>[Math.max(0,b[0]-s),b[1],b[2]+s];
+  const rows=[];
+  for(let p=1;p<=10;p++){
+    if(p===10) rows.push({p,type:'◆ BOSS',ai:'~53/27/20',r:shift(10)});
+    else if(p>=6) rows.push({p,type:'Berat',ai:'~33/33/33',r:shift(5)});
+    else rows.push({p,type:p>=4?'Menengah':'Pemanasan',ai:'~33/33/33',r:b});
+  }
+  return `<div class="lbl" style="margin:14px 0 4px">Tabel per-phase (X-1 … X-10) — adjust formasi</div>
+    <div class="scrollx"><table><thead><tr><th>Phase</th><th>Tipe</th><th>Musuh</th><th>I/C/A</th></tr></thead><tbody>`
+    +rows.map(o=>`<tr${o.p===10?' style="background:rgba(255,90,31,.10)"':''}><td><b>X-${o.p}</b></td><td class="small">${o.type}</td><td class="mono small">${o.ai}</td><td class="mono"><b style="color:${_MTC.inf}">${o.r[0]}</b>/<b style="color:${_MTC.cav}">${o.r[1]}</b>/<b style="color:${_MTC.arc}">${o.r[2]}</b></td></tr>`).join('')
+    +`</tbody></table></div>
+    <div class="alert inf small">Phase 1-5 = baseline zona. Phase 6-9 makin berat → archer +5%. Phase 10 = BOSS infantry-heavy → archer +10% (archer counter infantry). Masih mentok? +5% archer lagi & ULANG (variansi RNG besar).</div>
+    <p class="muted small">⚠ Komposisi musuh persis tiap phase TIDAK dipublikasikan game — ini POLA adjust berbasis mekanik terverifikasi (boss X-10 ≈ 53/27/20), bukan angka resmi per-phase.</p>`;
+}
 function _mtZoneDetail(z){
   const tag=(on,txt)=>`<span class="tag" style="${on?'color:var(--profit)':'opacity:.7'}">${txt}</span>`;
   return `<div class="kv"><b style="font-size:15px">${esc(z.name)}</b><span class="mono small" style="color:var(--accent)">⏱ ${esc(z.days)}</span></div>
     <div class="small" style="margin:4px 0">Stat dihitung: <b>${esc(z.stat)}</b></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">${tag(true,'Unlock: '+esc(z.unlock))} ${tag(true,esc(z.teams))} ${tag(z.heroes,z.heroes?'Hero dihitung ✓':'Hero tidak dihitung')} ${tag(z.ownTroops,z.ownTroops?'Troop sendiri':'Troop game (T10)')}</div>
     ${_mtBar(z.ratio)}<div class="mono small">Rekomendasi: <b style="color:${_MTC.inf}">${z.ratio[0]}</b> / <b style="color:${_MTC.cav}">${z.ratio[1]}</b> / <b style="color:${_MTC.arc}">${z.ratio[2]}</b> (Inf/Cav/Arc)</div>
-    <ul class="mtul" style="margin-top:8px">${z.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
+    <ul class="mtul" style="margin-top:8px">${z.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+    ${_mtPhases(z)}`;
 }
 function wireMystic(el){
   const M=MYSTIC_TRIAL;
