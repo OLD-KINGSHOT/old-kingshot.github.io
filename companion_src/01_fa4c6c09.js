@@ -260,36 +260,38 @@ function mysticHTML(){
     +card('Shop & Catatan','🎁',
       `<div class="alert inf small">${esc(M.shop)}</div><p class="muted small">${esc(M.note)}</p>`);
 }
-/* Metode per-phase TERVERIFIKASI: baca rasio musuh di preview lalu counter. Tidak ada
-   tabel komposisi per-phase resmi; Stage 10 = unlock Raid (bukan boss komposisi tetap). */
+/* Metode TERVERIFIKASI: % musuh TIDAK tampil sebelum fight — baca dari Battle Report
+   setelah kalah, lalu counter saat ulang. Komposisi musuh predictable (bukan acak):
+   stage 1-9 ~33/33/33–40/30/30, STAGE 10 tiap set = 53/27/20 (infantry-berat). */
 function _mtCounter(ei,ec,ea){
   ei=+ei||0; ec=+ec||0; ea=+ea||0;
   const max=Math.max(ei,ec,ea), min=Math.min(ei,ec,ea);
-  if(max-min<=8) return {rec:[50,20,30],unit:'Seimbang',why:'Musuh seimbang — pakai 50/20/30 (infantry tank + archer DPS).'};
-  if(ei===max) return {rec:[45,15,40],unit:'ARCHER',why:'Musuh Infantry-berat → Archer counter Infantry. Naikkan archer.'};
+  if(max-min<=8) return {rec:[50,20,30],unit:'Seimbang',why:'Musuh seimbang (~33/33/33–40/30/30) — pakai 50/20/30 (infantry tank + archer DPS).'};
+  if(ei===max) return {rec:[55,15,30],unit:'INFANTRY (tahan) + ARCHER (DPS)',why:'Musuh Infantry-berat (mis. stage 10 = 53/27/20) → TEBALKAN infantry-mu ke 55-60% jadi meat-shield + archer tetap tinggi utk bunuh infantry musuh. JANGAN archer-only (mati tanpa frontline).'};
   if(ec===max) return {rec:[60,15,25],unit:'INFANTRY',why:'Musuh Cavalry-berat → Infantry counter Cavalry. Tebalkan infantry.'};
   return {rec:[50,30,20],unit:'CAVALRY',why:'Musuh Archer-berat → Cavalry counter Archer. Naikkan cavalry.'};
 }
 function _mtMethod(z){
-  return `<div class="lbl" style="margin:14px 0 4px">Metode per-phase: BACA musuh → COUNTER</div>
-   <div class="alert warn small">Tidak ada tabel komposisi musuh per-phase resmi. F2P tembus stage tinggi dengan <b>membaca rasio musuh di layar preview tiap phase</b> lalu bawa counter — bukan hafal angka.</div>
+  const s10=Math.min(60,z.ratio[0]+10), s10a=Math.max(0,100-s10-z.ratio[1]);
+  return `<div class="lbl" style="margin:14px 0 4px">Stage 5-10: pakai troop apa</div>
+   <div class="alert warn small">⚠ % musuh TIDAK kelihatan sebelum fight — cuma di <b>Battle Report SETELAH kalah</b>. Tapi komposisinya <b>TETAP (bukan acak)</b>: stage 1-9 ~<b>33/33/33–40/30/30</b> (seimbang), <b>STAGE 10 tiap set = 53/27/20</b> (infantry-berat).</div>
    <ul class="mtul">
-     <li><b>Set sumber stat zona dulu</b> (${esc(z.stat)}) + pakai hero SKILL TEMPUR saja.</li>
-     <li><b>Baca musuh sebelum fight</b> — di preview kelihatan rasio Inf/Cav/Archer + hero/gear-nya.</li>
-     <li><b>Counter:</b> musuh Inf-berat → +Archer · Cav-berat → +Infantry · Archer-berat → +Cavalry. Infantry tetap mayoritas; jangan ada tipe 0 (sisakan ≥5% biar skill buff hero aktif).</li>
-     <li><b>Kalah?</b> buka battle report: frontline cepat habis → +5-10% Infantry; damage kurang → +5% Archer.</li>
-     <li><b>Adjust ±5-10% & ULANG</b> (RNG besar — habiskan 5 attempt; menang = gratis).</li>
-     <li><b>Rasio mentok?</b> itu batas STAT — upgrade ${esc(z.stat.split('(')[0].trim())}, bukan formasi.</li>
-     ${z.heroes?`<li><b>Bait-march</b> (zona hero-based): lemahkan march-1 jadi umpan, tumpuk hero terbaik di march 2-3.</li>`:''}
+     <li><b>Stage 5-9:</b> pakai baseline zona <b>${z.ratio.join('/')}</b> (musuh seimbang).</li>
+     <li><b>Stage 10 (tembok):</b> musuh 53/27/20 → <b>tebalkan INFANTRY-mu jadi ${s10}/${z.ratio[1]}/${s10a}</b> (meat-shield), archer tetap DPS. Jangan archer-only (mati tanpa frontline).</li>
+     <li><b>Set sumber stat zona</b> (${esc(z.stat)}) + hero SKILL TEMPUR saja; jangan ada tipe troop = 0 (sisakan ≥5% biar skill buff hero aktif).</li>
+     <li><b>Kalah?</b> baca Battle Report → frontline cepat habis: +5-10% Infantry; damage kurang: +5% Archer. Lalu ULANG.</li>
+     <li><b>RNG besar — habiskan 5 attempt</b> (komposisi musuh tetap, hasil-nya yang RNG; menang = gratis lanjut).</li>
+     <li><b>Tetap mentok?</b> itu batas STAT — upgrade ${esc(z.stat.split('(')[0].trim())}, bukan formasi.</li>
+     ${z.heroes?`<li><b>Bait-march</b> (zona hero-based): lemahkan march-1 jadi umpan (AI kirim army terkuat duluan), tumpuk hero terbaik di march 2-3.</li>`:''}
    </ul>
-   <div class="lbl" style="margin:14px 0 4px">Kalkulator Counter — isi rasio musuh (dari layar preview)</div>
+   <div class="lbl" style="margin:14px 0 4px">Kalkulator Counter — isi rasio musuh (dari Battle Report setelah kalah)</div>
    <div class="row">
-     <div style="flex:1"><label class="fl">Musuh Inf %</label><input id="mtc_ei" type="number" value="40" min="0" max="100"></div>
-     <div style="flex:1"><label class="fl">Cav %</label><input id="mtc_ec" type="number" value="30" min="0" max="100"></div>
-     <div style="flex:1"><label class="fl">Archer %</label><input id="mtc_ea" type="number" value="30" min="0" max="100"></div>
+     <div style="flex:1"><label class="fl">Musuh Inf %</label><input id="mtc_ei" type="number" value="53" min="0" max="100"></div>
+     <div style="flex:1"><label class="fl">Cav %</label><input id="mtc_ec" type="number" value="27" min="0" max="100"></div>
+     <div style="flex:1"><label class="fl">Archer %</label><input id="mtc_ea" type="number" value="20" min="0" max="100"></div>
    </div>
    <div id="mtc_out" style="margin-top:8px"></div>
-   <p class="muted small" style="margin-top:6px">Mulai dari baseline zona (${z.ratio.join('/')}), geser ke arah hasil kalkulator. Stage 10 = unlock RAID (bukan boss komposisi tetap).</p>`;
+   <p class="muted small" style="margin-top:6px">Default terisi pola stage-10 (53/27/20). Stage 10 = juga syarat unlock Raid.</p>`;
 }
 function _wireCounter(el){
   const ei=$('#mtc_ei',el),ec=$('#mtc_ec',el),ea=$('#mtc_ea',el),out=$('#mtc_out',el);
