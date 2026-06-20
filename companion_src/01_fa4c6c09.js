@@ -327,42 +327,61 @@ function wireMystic(el){
 function renderBangun(){
   const el=$('[data-tab=bangun]');
   const done=store.get('buildDone',{});
-  el.innerHTML=pageHead('Bangun & Progres','Urutan upgrade F2P (rush TC30), research, VIP, troop, gear & tracker progres pribadi.')
-    +buildTrackerCard()
-    +card('Urutan Upgrade F2P','\u25a3',
+  const cUrut=card('Urutan Upgrade F2P','▣',
       `<div class="alert warn small">Sebelum upgrade: aktifkan Double Time Decree + skill pet Gray Wolf, dan tahan upgrade besar untuk hari City Construction (KvK D1/D5, SG D1).</div><div id="up_list"></div>`,null,true)
-    +card('City Decrees (Court of Justice \u2014 TC6)','\u2696',
+    +card('City Decrees (Court of Justice — TC6)','⚖',
       `<p class="muted small">Decree dibeli pakai poin Contentment (dari Resident bekerja). Double Time WAJIB tiap upgrade besar.</p>
        <div class="scrollx"><table><thead><tr><th>Decree</th><th>Efek</th><th>Catatan</th></tr></thead><tbody>${DECREES.map(([n,e,c])=>`<tr><td><b>${esc(n)}</b></td><td class="small">${esc(e)}</td><td class="small muted">${esc(c)}</td></tr>`).join('')}</tbody></table></div>
-       <div class="alert ok small">\u23f1\ufe0f Double Time: aktifkan SEBELUM mulai upgrade (window 5 mnt). Dihitung dari base time DULU, baru buff lain (VIP/research/Chief Minister) menumpuk \u2014 bukan stack flat. Stack dgn pet Gray Wolf + Chief Minister. Lewat TC25: tunggu cooldown daripada mulai tanpa Double Time.</div>`)
-    +card('Prasyarat Town Center','\u25cb',
-      `<div class="scrollx"><table><thead><tr><th>Target</th><th>Butuh</th></tr></thead><tbody>${TC_PREREQ.map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join('')}</tbody></table></div><p class="muted small">Angka bisa beda tipis per versi \u2014 cek layar upgrade di game.</p>`)
-    +card('Urutan Research (Academy)','\u25a4',RESEARCH_ORDER.map(([t,d])=>`<div class="check note"><div><div class="t">${esc(t)}</div><div class="d">${esc(d)}</div></div></div>`).join(''))
-    +card('VIP \u2014 Target F2P','\u25c9',
-      `<div class="scrollx"><table><thead><tr><th>VIP</th><th>Manfaat</th><th>Catatan</th></tr></thead><tbody>${VIP_LEVELS.map(([v,b,n])=>`<tr><td><b>${esc(v)}</b></td><td class="small">${esc(b)}</td><td class="small muted">${esc(n)}</td></tr>`).join('')}</tbody></table></div><div class="muted small">XP gratis ~200-500/hari. Ambang VIP9 beda antar sumber.</div>`)
-    +card('Troop Tier & Training','\u2694',
-      `<div class="scrollx"><table><tbody>${TROOP_INFO.tiers.map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td class="small muted">${esc(b)}</td></tr>`).join('')}</tbody></table></div>${TROOP_INFO.tips.map(t=>`<div class="check note"><div class="d" style="color:var(--fg)">\u2022 ${esc(t)}</div></div>`).join('')}`)
-    +card('Item/Gear Hero \u2014 siapa dulu & sampai Lv berapa','\u25c8',
-      `<div class="alert ok small"><b>Unlock TC15.</b> Gear hero HANYA aktif saat kamu JADI rally leader/garrison \u2014 <b>joiner = SIA-SIA</b>. Jadi gear cuma untuk 3 hero leader-mu (1 Inf + 1 Cav + 1 Archer).</div>
+       <div class="alert ok small">⏱️ Double Time: aktifkan SEBELUM mulai upgrade (window 5 mnt). Dihitung dari base time DULU, baru buff lain (VIP/research/Chief Minister) menumpuk — bukan stack flat. Stack dgn pet Gray Wolf + Chief Minister. Lewat TC25: tunggu cooldown daripada mulai tanpa Double Time.</div>`)
+    +card('Prasyarat Town Center','○',
+      `<div class="scrollx"><table><thead><tr><th>Target</th><th>Butuh</th></tr></thead><tbody>${TC_PREREQ.map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join('')}</tbody></table></div><p class="muted small">Angka bisa beda tipis per versi — cek layar upgrade di game.</p>`);
+  const cRiset=card('Urutan Research (Academy)','▤',RESEARCH_ORDER.map(([t,d])=>`<div class="check note"><div><div class="t">${esc(t)}</div><div class="d">${esc(d)}</div></div></div>`).join(''))
+    +card('VIP — Target F2P','◉',
+      `<div class="scrollx"><table><thead><tr><th>VIP</th><th>Manfaat</th><th>Catatan</th></tr></thead><tbody>${VIP_LEVELS.map(([v,b,n])=>`<tr><td><b>${esc(v)}</b></td><td class="small">${esc(b)}</td><td class="small muted">${esc(n)}</td></tr>`).join('')}</tbody></table></div><div class="muted small">XP gratis ~200-500/hari. Ambang VIP9 beda antar sumber.</div>`);
+  const cTroop=card('Troop Tier & Training','⚔',
+      `<div class="scrollx"><table><tbody>${TROOP_INFO.tiers.map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td class="small muted">${esc(b)}</td></tr>`).join('')}</tbody></table></div>${TROOP_INFO.tips.map(t=>`<div class="check note"><div class="d" style="color:var(--fg)">• ${esc(t)}</div></div>`).join('')}`);
+  const cGub=card('🏛️ Prioritas Gubernur #1','★',
+      `<div class="alert ok small"><b>#1 mutlak: Town Center</b> — rush ke TC30 (buka T10 + Age of Truegold). Semua hal lain di-gate level TC; jangan biarkan antrian bangun kosong.</div>
+       <div class="lbl" style="margin:10px 0 4px">Power tempur gubernur (buff SELURUH army)</div>
+       <ul class="mtul">
+         <li><b>INFANTRY dulu (Health → Defense)</b> — frontline harus bertahan agar archer di belakang terus nembak. Urutan tipe: <b>Infantry → Archer → Cavalry</b> (cavalry terakhir).</li>
+         <li><b>Charm > Gear (dari segi dampak)</b> — Charm beri <b>Lethality + Health</b> (scaling lebih bagus); Gear beri <b>Attack + Defense</b>. Jalan paralel, material beda — kerjakan keduanya.</li>
+         <li><b>Bottleneck yang dikejar:</b> Governor Gear → <b>Artisan Vision</b> · Governor Charm → <b>Charm Design</b> (beli di Mystic Trial shop).</li>
+         <li><b>Charm efisien:</b> lompat <b>Level 3 → 5</b> (+9% stat, hemat material). Urutan Inf → Arc → Cav.</li>
+       </ul>
+       <div class="alert warn small">Governor Gear/Charm = buff SELURUH pasukan (joiner pun kepakai). BEDA dari Hero Gear (cuma aktif saat kamu rally leader/garrison).</div>`)
+    +card('Item/Gear Hero — siapa dulu & sampai Lv berapa','◈',
+      `<div class="alert ok small"><b>Unlock TC15.</b> Gear hero HANYA aktif saat kamu JADI rally leader/garrison — <b>joiner = SIA-SIA</b>. Jadi gear cuma untuk 3 hero leader-mu (1 Inf + 1 Cav + 1 Archer).</div>
        <div class="scrollx"><table><thead><tr><th>#</th><th>Hero</th><th>2 Piece</th><th>Target</th></tr></thead><tbody>
        ${HERO_GEAR.map((g,i)=>`<tr><td><b>${i+1}</b></td><td><b>${esc(g[0])}</b><div class="dim small">${esc(g[1])}</div></td><td class="small">${esc(g[2])}</td><td class="small"><b>${esc(g[3])}</b></td></tr>`).join('')}
        </tbody></table></div>
-       <div class="small muted" style="margin-top:6px">\u2022 <b>2-piece:</b> pasang HANYA 2 piece sesuai fokus hero. DPS/leader \u2192 Helmet+Boots (Lethality). Tank/garrison \u2192 Gloves+Belt (Health).<br>\u2022 <b>Target Lv20</b> = breakpoint <b>Mastery Forging</b> (pakai Forgehammer).<br>\u2022 Exclusive Gear/Widget = Mythic saja \u2014 prioritas paling AKHIR (mahal).</div>
-       <div class="alert bad small">\u26d4 JANGAN gear hero JOINER (Chenko/Amane/Yeonwoo/Gordon/Howard/Quinn) \u2014 tak terhitung saat join. Jangan gear hero Gen 1 yang bakal diganti.</div>`)
-    +card('Gear & Charm (TC25+)','\u25c8',
+       <div class="small muted" style="margin-top:6px">• <b>2-piece:</b> pasang HANYA 2 piece sesuai fokus hero. DPS/leader → Helmet+Boots (Lethality). Tank/garrison → Gloves+Belt (Health).<br>• <b>Target Lv20</b> = breakpoint <b>Mastery Forging</b> (pakai Forgehammer).<br>• Exclusive Gear/Widget = Mythic saja — prioritas paling AKHIR (mahal).</div>
+       <div class="alert bad small">⛔ JANGAN gear hero JOINER (Chenko/Amane/Yeonwoo/Gordon/Howard/Quinn) — tak terhitung saat join. Jangan gear hero Gen 1 yang bakal diganti.</div>`)
+    +card('Gear & Charm Governor (TC25+)','◈',
       `${GEAR_INFO.map(([t,d])=>`<details><summary>${esc(t)}</summary><div class="dt"><div class="small muted">${esc(d)}</div></div></details>`).join('')}
-       <details><summary>Governor Charms</summary><div class="dt"><div class="small muted">${CHARM_INFO.map(c=>'\u2022 '+esc(c)).join('<br>')}</div></div></details>
+       <details><summary>Governor Charms</summary><div class="dt"><div class="small muted">${CHARM_INFO.map(c=>'• '+esc(c)).join('<br>')}</div></div></details>
        <div class="alert warn small">Governor Gear TIDAK pakai Forgehammer/Mithril (itu Hero Gear). Jangan gear hero joiner.</div>`);
-  const list=$('#up_list',el);
-  BUILD_ORDER.forEach((b,idx)=>{ const id='bo'+idx,isDone=!!done[id];
-    const div=document.createElement('label'); div.className='check'+(isDone?' done':'');
-    div.innerHTML=`<input type="checkbox" ${isDone?'checked':''}><div><div class="t" style="${b.warn?'color:var(--loss)':''}">${esc(b.t)}</div><div class="d">${esc(b.d)}</div></div>`;
-    div.querySelector('input').onchange=e=>{ done[id]=e.target.checked; store.set('buildDone',done); div.classList.toggle('done',e.target.checked); };
-    list.appendChild(div);
-  });
-  wireTracker(el);
+  el.innerHTML=pageHead('Bangun & Progres','Urutan upgrade F2P (rush TC30), research, VIP, troop, gear & prioritas gubernur.')
+    +`<div class="seg" id="bg_sub" style="flex-wrap:wrap;margin:4px 0 10px">
+        <button data-s="urut">▣ Urutan</button><button data-s="riset">▤ Riset/VIP</button><button data-s="troop">⚔ Troop</button><button data-s="gear">◈ Gear & Gubernur</button><button data-s="track">✓ Tracker</button>
+      </div><div id="bg_subc"></div>`;
+  const BG_SUBS={ urut:cUrut, riset:cRiset, troop:cTroop, gear:cGub, track:buildTrackerCard() };
+  const wireUp=()=>{ const list=$('#up_list',el); if(!list) return;
+    BUILD_ORDER.forEach((b,idx)=>{ const id='bo'+idx,isDone=!!done[id];
+      const div=document.createElement('label'); div.className='check'+(isDone?' done':'');
+      div.innerHTML=`<input type="checkbox" ${isDone?'checked':''}><div><div class="t" style="${b.warn?'color:var(--loss)':''}">${esc(b.t)}</div><div class="d">${esc(b.d)}</div></div>`;
+      div.querySelector('input').onchange=e=>{ done[id]=e.target.checked; store.set('buildDone',done); div.classList.toggle('done',e.target.checked); };
+      list.appendChild(div); }); };
+  const showSub=k=>{ if(!BG_SUBS[k]) k='urut'; const c=$('#bg_subc',el); if(!c) return;
+    c.innerHTML=BG_SUBS[k];
+    $$('#bg_sub button',el).forEach(b=>b.classList.toggle('active',b.dataset.s===k));
+    store.set('bgSub',k);
+    if(k==='urut') wireUp();
+    if(k==='track') wireTracker(el);
+    if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
+  $$('#bg_sub button',el).forEach(b=>b.onclick=()=>showSub(b.dataset.s));
+  showSub(store.get('bgSub','urut'));
 }
-
 /* ============ PETS ============ */
 function renderPets(){
   const el=$('[data-tab=pets]');
