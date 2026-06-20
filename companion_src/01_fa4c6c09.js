@@ -340,16 +340,29 @@ function renderBangun(){
       `<div class="scrollx"><table><thead><tr><th>VIP</th><th>Manfaat</th><th>Catatan</th></tr></thead><tbody>${VIP_LEVELS.map(([v,b,n])=>`<tr><td><b>${esc(v)}</b></td><td class="small">${esc(b)}</td><td class="small muted">${esc(n)}</td></tr>`).join('')}</tbody></table></div><div class="muted small">XP gratis ~200-500/hari. Ambang VIP9 beda antar sumber.</div>`);
   const cTroop=card('Troop Tier & Training','⚔',
       `<div class="scrollx"><table><tbody>${TROOP_INFO.tiers.map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td class="small muted">${esc(b)}</td></tr>`).join('')}</tbody></table></div>${TROOP_INFO.tips.map(t=>`<div class="check note"><div class="d" style="color:var(--fg)">• ${esc(t)}</div></div>`).join('')}`);
-  const cGub=card('🏛️ Prioritas Gubernur #1','★',
-      `<div class="alert ok small"><b>#1 mutlak: Town Center</b> — rush ke TC30 (buka T10 + Age of Truegold). Semua hal lain di-gate level TC; jangan biarkan antrian bangun kosong.</div>
-       <div class="lbl" style="margin:10px 0 4px">Power tempur gubernur (buff SELURUH army)</div>
-       <ul class="mtul">
-         <li><b>INFANTRY dulu (Health → Defense)</b> — frontline harus bertahan agar archer di belakang terus nembak. Urutan tipe: <b>Infantry → Archer → Cavalry</b> (cavalry terakhir).</li>
-         <li><b>Charm > Gear (dari segi dampak)</b> — Charm beri <b>Lethality + Health</b> (scaling lebih bagus); Gear beri <b>Attack + Defense</b>. Jalan paralel, material beda — kerjakan keduanya.</li>
-         <li><b>Bottleneck yang dikejar:</b> Governor Gear → <b>Artisan Vision</b> · Governor Charm → <b>Charm Design</b> (beli di Mystic Trial shop).</li>
-         <li><b>Charm efisien:</b> lompat <b>Level 3 → 5</b> (+9% stat, hemat material). Urutan Inf → Arc → Cav.</li>
-       </ul>
-       <div class="alert warn small">Governor Gear/Charm = buff SELURUH pasukan (joiner pun kepakai). BEDA dari Hero Gear (cuma aktif saat kamu rally leader/garrison).</div>`)
+  const cGub=card('🏛️ Prioritas Gubernur — item yang dinaikkan','★',
+      `<div class="alert ok small"><b>#1 mutlak: Town Center (TC)</b> — rush ke TC30 (buka T10 + Age of Truegold). Semua di-gate level TC; jangan biarkan antrian bangun kosong.</div>
+       <p class="muted small">Governor Gear (unlock TC22) & Charm (TC25) = buff <b>SELURUH pasukan</b> (joiner pun kepakai). Urutan tipe selalu <b>Infantry → Archer → Cavalry</b>.</p>
+       <div class="lbl" style="margin:12px 0 4px">A. GOVERNOR GEAR — 6 item (beri Attack + Defense)</div>
+       <p class="muted small">Material: <b>Satin</b> + <b>Gilded Threads</b>, lalu <b>Artisan's Vision</b> (bottleneck, mulai tier Blue 2★). Naikkan berurutan:</p>
+       <div class="scrollx"><table><thead><tr><th>#</th><th>Item</th><th>Untuk</th></tr></thead><tbody>
+         <tr><td>1</td><td><b>Cloak</b></td><td class="small">Infantry Atk/Def</td></tr>
+         <tr><td>2</td><td><b>Breeches</b></td><td class="small">Infantry Atk/Def</td></tr>
+         <tr><td>3</td><td><b>Ring</b></td><td class="small">Archer Atk/Def</td></tr>
+         <tr><td>4</td><td><b>Staff</b></td><td class="small">Archer Atk/Def</td></tr>
+         <tr><td>5</td><td><b>Hood</b></td><td class="small">Cavalry Atk/Def</td></tr>
+         <tr><td>6</td><td><b>Necklace</b></td><td class="small">Cavalry Atk/Def</td></tr>
+       </tbody></table></div>
+       <div class="alert inf small">Set bonus: <b>3 item tier sama = +Defense</b>, <b>6 item tier sama = +Attack</b> → naikkan ke-6 berbarengan 1 tier. Trik F2P: dorong 3 item dulu (Cloak + Breeches + Ring) ke Purple untuk jaga set bonus saat Artisan's Vision seret.</div>
+       <div class="lbl" style="margin:12px 0 4px">B. GOVERNOR CHARM — 3 jenis (beri Lethality + Health, lebih impactful)</div>
+       <p class="muted small">Material: <b>Charm Design</b> + <b>Charm Guide</b> (beli di Mystic Trial / Alliance Brawl shop). Pasang charm di tiap item gear dulu, lalu naikkan berurutan:</p>
+       <div class="scrollx"><table><thead><tr><th>#</th><th>Charm</th><th>Untuk</th></tr></thead><tbody>
+         <tr><td>1</td><td><b>Protection Charm</b></td><td class="small">Infantry Health + Lethality</td></tr>
+         <tr><td>2</td><td><b>Vision Charm</b></td><td class="small">Archer Health + Lethality</td></tr>
+         <tr><td>3</td><td><b>Keenness Charm</b></td><td class="small">Cavalry Health + Lethality</td></tr>
+       </tbody></table></div>
+       <div class="alert ok small">⭐ Trik hemat: lompat <b>Level 3 → 5</b> per charm (= +9% stat). Biaya 1 charm L3→L5 = <b>300 Charm Design + 180 Charm Guide</b> (lebih hemat 60 Guide drpd sebar 3 charm L3→L4). Urut: Protection → Vision → Keenness, ulang.</div>
+       <div class="alert warn small">⚠ Ini <b>GOVERNOR</b> Gear/Charm (Satin/Gilded/Artisan + Charm Design) — BEDA dari <b>HERO</b> Gear (Forgehammer/Mithril, cuma untuk rally leader). Nama item dari wiki — cek nama persis di layar Avatar → Governor → Gear.</div>`)
     +card('Item/Gear Hero — siapa dulu & sampai Lv berapa','◈',
       `<div class="alert ok small"><b>Unlock TC15.</b> Gear hero HANYA aktif saat kamu JADI rally leader/garrison — <b>joiner = SIA-SIA</b>. Jadi gear cuma untuk 3 hero leader-mu (1 Inf + 1 Cav + 1 Archer).</div>
        <div class="scrollx"><table><thead><tr><th>#</th><th>Hero</th><th>2 Piece</th><th>Target</th></tr></thead><tbody>
