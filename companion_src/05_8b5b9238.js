@@ -61,7 +61,7 @@ const SITUATIONS=[
  {key:'bear-trap',name:'Bear Trap',sub:'Bear Hunt \u00b7 harian',icon:'\u25c8',kind:'rally',role:'Joiner',evType:'bear',minDay:0,daily:true,pick:1,
   heroes:[{n:'Chenko',note:'Cav'},{n:'Yeonwoo',note:'Arc'}],ratio:{inf:10,cav:30,arc:60},
   skillUp:'Max skill #1 (Lethality) \u2192 Lv5 (butuh 4\u2605).',
-  do:'Bawa 1 hero ber-Lethality di slot-1: Chenko (Cav) atau Yeonwoo (Archer). Troop: ARCHER terkuat (beruang infantry \u2192 +10%). Forgehammer #1. \u26a0 Aliansi pasang 2 TRAP (jam beda) tapi kamu hanya bisa serang SATU KALI \u2014 pilih BT 1 ATAU BT 2 yang pas jam onlinemu; sudah ikut satu = BT berikutnya baru muncul lagi siklus depan.'},
+  do:'Bawa 1 hero ber-Lethality di slot-1: Chenko (Cav) / Yeonwoo (Archer) / Amane (Attack). Cuma skill Expedition #1 hero PERTAMA yg dihitung saat join (hero 2-3 cuma nambah kapasitas troop). ⛔ JANGAN kirim hero skill defensif/ekonomi (Jabel/Gordon/Diana/Long Fei/Helga) — lebih baik TROOP-ONLY (kalau dikirim malah blokir slot joiner S+ orang lain). Troop: ARCHER terkuat (beruang infantry \u2192 +10%). Forgehammer #1. \u26a0 Aliansi pasang 2 TRAP (jam beda) tapi kamu hanya bisa serang SATU KALI \u2014 pilih BT 1 ATAU BT 2 yang pas jam onlinemu; sudah ikut satu = BT berikutnya baru muncul lagi siklus depan.'},
  {key:'viking',name:'Viking Vengeance',sub:'reinforce = skor #1',icon:'\u2694',kind:'defense',role:'Reinforce',evType:'viking',minDay:0,pick:1,
   heroes:[{n:'Chenko',note:'Cav'},{n:'Amane',note:'Arc'},{n:'Yeonwoo',note:'Arc'}],ratio:{inf:70,cav:25,arc:5},
   table:[

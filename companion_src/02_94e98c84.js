@@ -113,7 +113,7 @@ function lineupCard(s,age){
   let ratio=s.ratio, ratioNote='';
   if(s.key==='bear-trap'&&age!=null){
     ratio = age>=197?{inf:1,cav:10,arc:89} : age>=113?{inf:10,cav:10,arc:80} : age>=50?{inf:10,cav:20,arc:70} : {inf:10,cav:30,arc:60};
-    ratioNote=` <span class="dim small">(${genForAge(age)}${age>=197?' · min 5.000 infantry':''} — bergeser ke archer tiap gen)</span>`;
+    ratioNote=` <span class="dim small">(${genForAge(age)}${age>=197?' · min 5.000 infantry · tes 1/10/89 vs 10/10/80 di march preview':''} — bergeser ke archer tiap gen)</span>`;
   }
   const gate=(age!=null&&s.minDay>0&&age<s.minDay)?`<div class="alert warn small" style="margin:0 0 8px">\u23f3 Belum aktif \u2014 mulai ~hari ${s.minDay} (server hari ${age}). Simpan persiapan.</div>`:'';
   return `<div class="lcard">
