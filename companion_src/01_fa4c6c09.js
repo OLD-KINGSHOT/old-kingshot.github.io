@@ -559,6 +559,7 @@ function renderDukung(){
        <div class="row" style="gap:10px;flex-wrap:wrap">
          <a class="btn" href="https://saweria.co/indonenen13" target="_blank" rel="noopener">🇮🇩 Saweria</a>
          <a class="btn sec" href="https://ko-fi.com/indonenen13" target="_blank" rel="noopener">🌍 Ko-fi</a>
+         <a class="btn sec" href="https://www.paypal.com/donate/?business=faturochman13%40gmail.com&currency_code=USD&item_name=Kingshot+App+Support" target="_blank" rel="noopener">💳 PayPal</a>
        </div>`);
   const t=$('#fb_text',el);
   const mailAddr=function(){ return 'faturochman13'+String.fromCharCode(64)+'gmail.com'; }; /* dirakit runtime — anti-scrape */
