@@ -541,36 +541,6 @@ function renderKalender(){
   if(typeof ksLiveEvents==='function') ksLiveEvents().then(()=>{ const ec=$('#evcal_k',el); if(ec&&$('[data-tab=kalender]').classList.contains('active')) renderCalendar(ec); });
   if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
-/* ===== Tab Admin (owner-only) — Daftar Pengunjung ===== */
-function renderAdmin(){
-  const el=$('[data-tab=admin]'); if(!el) return;
-  const p=store.get('profile',{});
-  if(p.pid!=='330300846'){
-    el.innerHTML=pageHead('Admin','Khusus pemilik app.')+`<div class="alert warn small">Tab ini hanya untuk pemilik app (Player ID pemilik). Profil aktifmu bukan pemilik.</div>`;
-    return;
-  }
-  el.innerHTML=pageHead('Admin','Panel pemilik — daftar pengunjung app. Hanya kamu yang bisa melihat.')
-    +card('Daftar Pengunjung','👥',
-      `<p class="muted small">Pemain yang membuka app dengan Player ID terhubung — tercatat 1× per hari (dihitung di server, anti-manipulasi). Hanya tampil di akun pemilik.</p>
-       ${store.get('ownerKey','')?'':`<label class="fl">Kunci pemilik (sekali isi)</label><div class="row" style="margin-bottom:8px"><input id="vs_key" style="flex:1" placeholder="kunci dari Claude"><button class="btn sec sm" id="vs_keysave">Simpan</button></div>`}
-       <div class="row" style="margin-bottom:8px"><button class="btn sec sm" id="vs_load">↻ Muat daftar</button><span class="small muted" id="vs_meta"></span></div>
-       <div id="vs_out"></div>`);
-  const vk=$('#vs_keysave',el); if(vk) vk.onclick=()=>{ const v=($('#vs_key').value||'').trim(); if(!v) return; store.set('ownerKey',v); renderAdmin(); };
-  const vl=$('#vs_load',el); if(vl) vl.onclick=async()=>{
-    const out=$('#vs_out',el), meta=$('#vs_meta',el);
-    out.innerHTML='<div class="muted small">⏳ Memuat…</div>';
-    const rows=await ksVisitorList();
-    if(rows==='nokey'){ out.innerHTML='<div class="alert warn small">Isi kunci pemilik dulu di atas.</div>'; return; }
-    if(rows==='badkey'){ out.innerHTML='<div class="alert bad small">Kunci pemilik salah.</div>'; store.set('ownerKey',''); renderAdmin(); return; }
-    if(rows===null){ out.innerHTML='<div class="alert warn small">Gagal memuat (offline/diblokir).</div>'; return; }
-    if(meta) meta.textContent=rows.length+' pengunjung';
-    out.innerHTML=rows.length?('<div class="scrollx"><table><thead><tr><th>Pemain</th><th>K#</th><th>TC</th><th>Kunjungan</th><th>Terakhir</th></tr></thead><tbody>'
-      +rows.map(v=>`<tr><td><b>${esc(v.nick||'?')}</b><div class="dim small num">${esc(v.pid)}</div></td><td class="num">${esc(v.kid||'')}</td><td class="num">${esc(v.tc||'')}</td><td class="num">${esc(v.visits||0)}×<div class="dim small">sejak ${esc(v.first||'')}</div></td><td class="small num" style="white-space:nowrap">${esc(v.last||'')}</td></tr>`).join('')
-      +'</tbody></table></div>'):'<div class="muted small">Belum ada pengunjung tercatat.</div>';
-    if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
-  };
-  if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
-}
 function renderBangun(){
   const el=$('[data-tab=bangun]');
   const done=store.get('buildDone',{});
@@ -1037,7 +1007,6 @@ function renderProfil(){
       `<p class="muted small">App ikut waktu server (UTC) \u2014 reset 07:00 WIB. Sinkron otomatis saat online. Kalau meleset, geser manual (menit):</p>
        <div class="row"><input id="pf_nudge" type="number" step="1" value="${esc(ksClock.nudge)}" style="width:100px"><button class="btn sec sm" id="pf_nudgeset">Terapkan</button><span id="pf_synstat" class="muted small">${ksClock.synced?'\u2713 tersinkron server':'pakai jam perangkat'}</span></div>`)
     +card('Notifikasi otomatis','◉',notifBody())
-    +(p.pid==='330300846'?`<div class="alert inf small">👥 Daftar Pengunjung kini di tab <b>🛡 Admin</b> (khusus pemilik).</div>`:'')
     +card('Sinkron Otomatis Antar Perangkat','🔁',syncBody())
     +card('Backup & Pindah Perangkat','💾',
       `<p class="muted small">Semua data (profil, checklist, jam alliance, progres) tersimpan di browser INI saja. Ganti HP/browser = data hilang. Export dulu, lalu Import di perangkat baru.</p>
