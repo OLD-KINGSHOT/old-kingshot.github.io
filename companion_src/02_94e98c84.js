@@ -258,7 +258,7 @@ function renderSekarang(){
     +'<div class="card tile" data-go="bangun"><span class="ti">▣</span><span class="tl">Bangun & Progres</span></div>'
     +'<div class="card tile" data-go="kode"><span class="ti">🎟️</span><span class="tl">Gift Code</span></div></div>';
 
-  el.innerHTML='<div class="sk">'+header+prepSection+eventSection+todaySection+tiles+'</div>';
+  el.innerHTML='<div class="sk">'+header+prepSection+eventSection+'<div id="now_live"></div>'+todaySection+tiles+'</div>';
 
   /* ---- wiring ---- */
   /* daily checklist: render top-5, expandable to all */
@@ -297,14 +297,13 @@ async function fillNowLive(age){
   const host=$('#now_live'); if(!host) return;
   try{ if(typeof ksLiveEvents==='function') await ksLiveEvents(); }catch(e){}
   const wk=(typeof wkEventsOnDate==='function')?wkEventsOnDate(todayMidnight()):[];
-  const open=wk.filter(e=>{ const min=(typeof WEEKLY_MIN!=='undefined')?WEEKLY_MIN[e.titleKey]:null;
-    return !(min!=null&&age!=null&&age<min); });
+  const open=wk.filter(function(e){ var min=(typeof WEEKLY_MIN!=='undefined')?WEEKLY_MIN[e.titleKey]:null; return !(min!=null&&age!=null&&age<min); });
   const h2=$('#now_live'); if(!h2) return; /* tab may have changed during fetch */
   if(!open.length){ h2.innerHTML=''; return; }
-  h2.innerHTML='<div class="lbl" style="margin:14px 0 4px">Event kingdom berjalan hari ini</div>'
-    +open.map(e=>{ const g=(typeof WEEKLY_GUIDE!=='undefined'&&WEEKLY_GUIDE[e.titleKey])||WEEKLY_GUIDE_DEFAULT;
-      return `<div class="check note"><div><div class="t">${esc(e.title)}</div><div class="d">${esc(g)}</div></div></div>`; }).join('')
-    +'<div class="muted small" style="margin-top:4px">Rotasi global kingshot.net — kingdom muda bisa beda; acuan final tab Events in-game. Detail: tab Event → 📡 Jadwal Live.</div>';
+  h2.innerHTML='<div class="eyebrow"><h2>Event Kingdom Minggu Ini</h2><span class="hint">rotasi live kingshot.net · berjalan hari ini</span></div>'
+    +'<div class="cards">'+open.map(function(e){ var g=(typeof WEEKLY_GUIDE!=='undefined'&&WEEKLY_GUIDE[e.titleKey])||WEEKLY_GUIDE_DEFAULT;
+      return '<div class="card ev"><div class="top"><span class="ico">📡</span><div><div class="nm">'+esc(e.title)+'</div><div class="when">berjalan hari ini</div></div><span class="pill live">Aktif</span></div><div class="do">'+esc(g)+'</div></div>'; }).join('')+'</div>'
+    +'<div class="muted small" style="margin-top:8px">Rotasi global kingshot.net — kingdom muda bisa beda; acuan final tab Events in-game. Detail: tab Event → 📡 Jadwal Live.</div>';
   if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
 
