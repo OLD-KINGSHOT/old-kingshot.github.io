@@ -235,7 +235,7 @@ function renderSekarang(){
       +'<div class="do">Solo · leaderboard. Tahan <b>gem, Widget, troop T9</b> untuk hari temanya.</div></div>';
   }
   /* Weekly recurring (first 1-2) */
-  (typeof RECURRING_WEEKLY!=='undefined'?RECURRING_WEEKLY:[]).slice(0,2).forEach(function(r){
+  (typeof RECURRING_WEEKLY!=='undefined'?RECURRING_WEEKLY:[]).filter(function(r){return r.id!=='viking';}).slice(0,2).forEach(function(r){
     const nx=(typeof nextWibDay==='function')?nextWibDay(r.dows,r.settable?et[r.id]:null):null;
     cardsHTML+='<div class="card ev"><div class="top"><span class="ico">'+(r.gi||'◆')+'</span><div><div class="nm">'+esc(r.n)+'</div><div class="when">'+(nx?(nx.days===0?'hari ini':nx.days+' hari lagi')+' · '+esc(nx.label):esc((r.note||'').split('·')[0].trim()))+'</div></div><span class="pill next">Mingguan</span></div>'
       +'<div class="do">'+esc(r.note||'')+'</div></div>';
@@ -245,7 +245,7 @@ function renderSekarang(){
   /* ---- Hari Ini: top-5 + ring ---- */
   let stD=store.get('daily',{date:today,checked:{}}); if(stD.date!==today){ stD={date:today,checked:{}}; store.set('daily',stD); }
   const doneCount=Object.values(stD.checked).filter(Boolean).length;
-  const TOTAL=DAILY_TASKS.length; const pct=Math.round(100*doneCount/(TOTAL||1));
+  const TOTAL=DAILY_TASKS.length;
   const R=52,C=2*Math.PI*R,off=C*(1-doneCount/(TOTAL||1));
   const todaySection='<div class="eyebrow"><h2>Hari Ini</h2><span class="hint">rutinitas inti · reset 07:00</span></div>'
     +'<div class="today"><div class="card"><div id="sk_acts"></div><div class="more" id="sk_more">Lihat semua '+TOTAL+' tugas →</div></div>'
@@ -265,9 +265,9 @@ function renderSekarang(){
   const actsHost=$('#sk_acts',el); let expanded=false;
   const drawActs=()=>{ const items=expanded?DAILY_TASKS:DAILY_TASKS.slice(0,5);
     actsHost.innerHTML=items.map(([t,d],i)=>{ const id='d'+i,on=!!stD.checked[id];
-      return '<label class="act'+(on?' done':'')+'"><span class="cb"></span><div><div class="t">'+esc(t)+'</div><div class="d">'+esc(d)+'</div></div><input type="checkbox" data-i="'+i+'" '+(on?'checked':'')+' style="display:none"></label>';
+      return '<div class="act'+(on?' done':'')+'" data-i="'+i+'"><span class="cb"></span><div><div class="t">'+esc(t)+'</div><div class="d">'+esc(d)+'</div></div></div>';
     }).join('');
-    $$('.act',actsHost).forEach(a=>{ a.onclick=e=>{ if(e.target.tagName==='INPUT')return; const cb=a.querySelector('input'); cb.checked=!cb.checked; const i=cb.dataset.i; stD.checked['d'+i]=cb.checked; store.set('daily',stD); a.classList.toggle('done',cb.checked);
+    $$('.act',actsHost).forEach(a=>{ a.onclick=()=>{ const i=a.dataset.i; const now=!stD.checked['d'+i]; stD.checked['d'+i]=now; store.set('daily',stD); a.classList.toggle('done',now);
       const dc=Object.values(stD.checked).filter(Boolean).length; const ds=$('#sk_done'); if(ds)ds.textContent=dc; const rg=$('#sk_ring'); if(rg)rg.style.strokeDashoffset=(C*(1-dc/(TOTAL||1))).toFixed(1); }; });
   };
   drawActs();
@@ -275,7 +275,7 @@ function renderSekarang(){
 
   /* time inputs */
   $$('[data-set]',el).forEach(b=>b.onclick=()=>{ const id=b.dataset.set; const v=($('#ts-'+id,el)||{}).value; if(!v)return; const pr=store.get('profile',{}); const t=Object.assign({},pr.eventTimes||{}); t[id]=v; pr.eventTimes=t; if(id==='bear')pr.bearTime=v; store.set('profile',pr); renderSekarang(); });
-  $$('[data-edit]',el).forEach(b=>b.onclick=()=>{ const id=b.dataset.edit; const pr=store.get('profile',{}); const t=Object.assign({},pr.eventTimes||{}); delete t[id]; pr.eventTimes=t; store.set('profile',pr); renderSekarang(); });
+  $$('[data-edit]',el).forEach(b=>b.onclick=()=>{ const id=b.dataset.edit; const pr=store.get('profile',{}); const t=Object.assign({},pr.eventTimes||{}); delete t[id]; pr.eventTimes=t; if(id==='bear')pr.bearTime=''; store.set('profile',pr); renderSekarang(); });
   /* bear cooldown toggle */
   const bdc=$('#bear_done',el); if(bdc) bdc.onchange=()=>{ store.set('bearDone',{date:today,done:bdc.checked}); renderSekarang(); };
   /* gift copy/redeem */
