@@ -11,6 +11,7 @@ const NAV=[
   {id:'kode',gi:'\u2726',label:'Kode'},
   {id:'kalender',gi:'\u2691',label:'Kalender'},
   {id:'kalkulator',gi:'\ud83e\uddee',label:'Kalkulator'},
+  {id:'dukung',gi:'\u2764',label:'Dukung'},
 ];
 
 function navBtnHTML(n,cls){ return `<button class="navbtn" data-go="${n.id}"><span class="gi">${n.gi}</span><span class="nl">${esc(n.label)}</span></button>`; }

@@ -541,6 +541,38 @@ function renderKalender(){
   if(typeof ksLiveEvents==='function') ksLiveEvents().then(()=>{ const ec=$('#evcal_k',el); if(ec&&$('[data-tab=kalender]').classList.contains('active')) renderCalendar(ec); });
   if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
+/* ===== Tab Dukung — Saran/Request + Donasi ===== */
+function renderDukung(){
+  const el=$('[data-tab=dukung]'); if(!el) return;
+  el.innerHTML=pageHead('Saran & Donasi','Punya ide atau permintaan fitur? Kirim di sini. Suka app-nya? Dukung biar terus berkembang.')
+    +card('Saran / Request Fitur','💬',
+      `<p class="muted small">Tulis ide, bug, atau fitur yang kamu mau. Makin jelas, makin cepat dikerjakan.</p>
+       <textarea id="fb_text" rows="5" placeholder="Contoh: tambah kalkulator gear, atau event X belum ada…"></textarea>
+       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+         <button class="btn" id="fb_send">✉ Kirim via Email</button>
+         <button class="btn sec sm" id="fb_copy">📋 Salin</button>
+       </div>
+       <div id="fb_status"></div>
+       <div class="muted small" style="margin-top:8px">Bisa juga titip saran di kolom pesan saat donasi Saweria/Ko-fi di bawah.</div>`)
+    +card('Dukung / Donasi','❤',
+      `<p class="muted small">App ini gratis & F2P-friendly. Donasi sekecil apa pun membantu biaya server (sinkron, gift-code, jadwal live) & pengembangan fitur baru. Terima kasih! 🙏</p>
+       <div class="row" style="gap:10px;flex-wrap:wrap">
+         <a class="btn" href="https://saweria.co/indonenen13" target="_blank" rel="noopener">🇮🇩 Saweria</a>
+         <a class="btn sec" href="https://ko-fi.com/indonenen13" target="_blank" rel="noopener">🌍 Ko-fi</a>
+       </div>`);
+  const t=$('#fb_text',el);
+  const mailAddr=function(){ return 'faturochman13'+String.fromCharCode(64)+'gmail.com'; }; /* dirakit runtime — anti-scrape */
+  const send=$('#fb_send',el); if(send) send.onclick=()=>{
+    const v=(t&&t.value||'').trim(); if(!v){ if(t) t.focus(); return; }
+    window.location.href='mailto:'+mailAddr()+'?subject='+encodeURIComponent('Saran Kingshot App')+'&body='+encodeURIComponent(v);
+  };
+  const copy=$('#fb_copy',el); if(copy) copy.onclick=async()=>{
+    const v=(t&&t.value||'').trim(); if(!v) return; const s=$('#fb_status',el);
+    try{ await navigator.clipboard.writeText(v); if(s) s.innerHTML='<div class="alert ok small">📋 Tersalin — tempel ke email/pesan donasi.</div>'; }
+    catch(e){ if(t){ t.select(); try{ document.execCommand('copy'); if(s) s.innerHTML='<div class="alert ok small">📋 Tersalin.</div>'; }catch(e2){} } }
+  };
+  if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
+}
 function renderBangun(){
   const el=$('[data-tab=bangun]');
   const done=store.get('buildDone',{});
