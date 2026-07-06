@@ -81,6 +81,7 @@ function tickClock(){
   const eb=$('#ev_battle'); if(eb){ const bd=battleUTC()-ksClock.now().getTime(); eb.textContent=bd>0?hms(bd):'LIVE'; }
   const et=evtTimes(); const _n=ksClock.now().getTime();
   const _blink=(el,rem)=>{ if(el) el.classList.toggle('cd-hot',rem>0&&rem<60000); };
+  $$('.sk-cd').forEach(function(e){ var t=+e.dataset.t; if(!t)return; var s=Math.max(0,Math.floor((t-_n)/1000)); var d=Math.floor(s/86400); s-=d*86400; var h=Math.floor(s/3600); s-=h*3600; var m=Math.floor(s/60); var u=e.dataset.u; e.textContent=u==='d'?String(d):pad(u==='h'?h:m); });
   $$('.ev-cd').forEach(b=>{ const ev=SETTABLE_EVENTS.find(e=>e.id===b.dataset.ev); const t=ev&&et[ev.id]; const nx=t?nextRecurUTC(ev,t):null; if(nx){ b.textContent=hms(nx-_n); _blink(b,nx-_n); } });
   /* progress bars (Sekarang countdown card) */
   const fr=$('#cdf_reset'); if(fr){ const rem=nextResetUTC()-_n; fr.style.width=Math.max(0,Math.min(100,100*(86400000-rem)/86400000))+'%'; }
@@ -133,91 +134,163 @@ function card(title,gi,bodyHTML,meta,hud){
 function renderSekarang(){
   const el=$('[data-tab=sekarang]');
   let {p,start,age,tc}=profileAge();
-  if(age!=null&&age<1) age=null; /* future start date = treat as not connected */
+  if(age!=null&&age<1) age=null;
   const w=dispNow(); const clock=pad(w.getUTCHours())+':'+pad(w.getUTCMinutes())+':'+pad(w.getUTCSeconds());
   const left=nextResetUTC()-ksClock.now().getTime();
-  const hud=`<div class="nowhud">
-    <div class="wmk">${age!=null?'H'+age:'KS'}</div>
-    <span class="corner c1"></span><span class="corner c2"></span>
-    <div class="inner">
-      <div class="lbl" style="color:var(--accent);margin-bottom:8px">${age!=null?'Server Day \u00b7 Kingdom #'+esc(p.kingdom||'?'):'KINGSHOT13'}</div>
-      <div class="dayrow">
-        ${age!=null?`<div class="bigday">H${age}<small>${tc?'TC'+tc:''}</small></div>`:''}
-        <div class="bigclock" id="hud_clock">${clock}<span class="wib" style="font-size:13px;color:var(--fg-mute)"> ${tzInfo().label}</span></div>
-      </div>
-      <div class="resetline">\u23f3 Reset harian ${tzInfo().reset} ${tzInfo().label} dalam <b id="hud_reset">${hms(left)}</b>${ksClock.synced?' \u00b7 <span style="color:var(--profit)">jam server tersinkron</span>':' \u00b7 jam perangkat'}</div>
-    </div></div>`;
 
   if(age==null){
-    el.innerHTML=hud+card('Mulai di sini','\u25b6',
-      `<p class="muted">Masukkan Player ID sekali (seperti login) \u2014 app baca Kingdom, level TC & tanggal server otomatis, lalu memberi panduan "apa yang harus dilakukan sekarang".</p>
-       <button class="btn" data-go="profil">Hubungkan Player ID \u2192</button>`,null,true);
+    el.innerHTML='<div class="sk"><div class="card profile"><div style="display:flex;align-items:center;gap:12px"><div class="crest">⚔</div><div><div class="pf-name">KINGSHOT13</div><div class="pf-meta"><span class="badge">Belum terhubung</span></div></div></div></div>'
+      +'<div class="card" style="padding:18px 20px;margin-top:14px"><p style="color:var(--sk-ink-soft);margin:0 0 12px">Masukkan Player ID sekali (seperti login) — app baca Kingdom, TC & umur server otomatis, lalu memberi panduan "siapkan event".</p><button class="btn" data-go="profil">Hubungkan Player ID →</button></div></div>';
     $$('[data-go]',el).forEach(b=>b.onclick=()=>activate(b.dataset.go));
     return;
   }
 
-  /* active event advisories */
-  const adv=activeAdvisories(start,age);
-  const advHTML=adv.length? adv.map(a=>`<div class="alert ${a.cls} small"><b>${EV_EMOJI[a.type]||'\u25c6'} ${esc(a.name.split('(')[0].trim())} \u2014 ${a.status}:</b> ${a.lines[1]||a.lines[0]||''}</div>`).join('')
-    : '<div class="muted small">Tidak ada event skor aktif. Fokus rutin & bangun pondasi.</div>';
+  const gen=(typeof genForAge==='function')?genForAge(age):'';
+  const nm=esc(p.nick||p.name||'Governor');
+  const pid=esc(p.pid||p.id||'—');
 
-  /* today lineup: daily bear + active combat */
-  const by=k=>SITUATIONS.find(s=>s.key===k);
-  let lineHTML=lineupCard(by('bear-trap'),age);
-  const map={kvk:'kvk-rally'}; const seen=new Set();
-  adv.forEach(a=>{ const sk=map[a.type]; if(sk&&!seen.has(a.type)){ seen.add(a.type); lineHTML+=lineupCard(by(sk),age); } });
+  /* ---- profile header ---- */
+  const header='<div class="card profile"><div style="display:flex;align-items:center;gap:12px">'
+    +'<div class="crest">⚔</div><div>'
+    +'<div class="pf-name">'+nm+' <span class="pf-idn">ID '+pid+'</span></div>'
+    +'<div class="pf-meta"><span class="badge acc">Kingdom #'+esc(p.kingdom||'?')+'</span>'
+    +'<span class="badge">Umur server: Hari ke-'+age+'</span>'
+    +(tc?'<span class="badge">TC '+tc+'</span>':'')
+    +(gen?'<span class="badge">'+esc(gen)+'</span>':'')+'</div></div></div>'
+    +'<div class="pf-clock"><span class="clk tabular" id="hud_clock">'+clock+' <span style="color:var(--sk-ink-faint)">'+tzInfo().label+'</span></span>'
+    +'<span class="reset"><span class="dot"></span> Reset '+tzInfo().reset+' dalam <b class="tabular" id="hud_reset">'+hms(left)+'</b></span></div></div>';
 
-  const plan=phasePlan(age,tc);
-  const todayMs=MILESTONES.filter(m=>m.d===age);
+  /* ---- Siapkan Berikutnya: prep hero + gift card ---- */
+  const preds=predictedEvents(start,age).slice().sort((a,b)=>a.day-b.day);
+  const isActive=pp=>{const l=(EVENT_TEMPLATES[pp.type]&&EVENT_TEMPLATES[pp.type].len)||1; return pp.day<=age&&age<pp.day+(pp.type==='hog'?(HOG_DETAIL.iters[hogCurIdx(age)]?HOG_DETAIL.iters[hogCurIdx(age)].stages.length:l):l);};
+  let nextEv=preds.find(pp=>pp.day>age)||preds.find(isActive)||preds[0];
+  let heroHTML='';
+  if(nextEv){
+    const tpl=EVENT_TEMPLATES[nextEv.type]||{};
+    const dleft=Math.max(0,nextEv.day-age);
+    const target=new Date(nextEv.date+'T00:00:00Z').getTime();
+    let steps=[],heroLine='',nameSuffix='',durTxt=tpl.len?tpl.len+' hari':'';
+    if(nextEv.type==='hog'){
+      const idx=hogCurIdx(age),it=HOG_DETAIL.iters[idx],no=Math.floor((nextEv.day-6)/14)+1;
+      nameSuffix=' #'+no;
+      if(it){ heroLine='Hero musim <b>'+esc(it.hero)+'</b> — cukup <b>'+esc(it.rank)+'</b> untuk shard'; durTxt=it.stages.length+' hari'; }
+      steps=['<b>TAHAN gem</b> — Roulette D2 = 90.000/spin','<b>TAHAN Widget</b> — D5 = 100.000 (terbesar)','<b>Stage troop T9</b> — promote di hari Train Troops'];
+    } else { steps=[tpl.hold?('<b>TAHAN:</b> '+esc(tpl.hold)):'Siapkan item sesuai tema event.']; }
+    heroHTML='<div class="card hero"><div class="tagrow"><span class="chip prep">Prep · H-'+dleft+'</span>'+(durTxt?'<span class="chip">Durasi '+durTxt+'</span>':'')+'</div>'
+      +'<h1>'+esc((tpl.name||nextEv.type).split('(')[0].trim())+nameSuffix+'</h1>'
+      +'<div class="sub">Mulai <b>H'+nextEv.day+' · '+esc(addDaysFmt(start,nextEv.day))+'</b>'+(heroLine?' · '+heroLine:'')+'</div>'
+      +'<div class="grid"><div class="count tabular">'
+      +'<div class="u"><div class="n sk-cd" data-t="'+target+'" data-u="d">'+dleft+'</div><div class="l">hari</div></div>'
+      +'<div class="u"><div class="n sk-cd" data-t="'+target+'" data-u="h">--</div><div class="l">jam</div></div>'
+      +'<div class="u"><div class="n sk-cd" data-t="'+target+'" data-u="m">--</div><div class="l">menit</div></div></div>'
+      +'<div class="prep-list">'+steps.map((s,i)=>'<div class="p"><i>'+(i+1)+'</i><div>'+s+'</div></div>').join('')+'</div></div></div>';
+  }
+  const giftHTML='<div class="card giftcard"><div class="gc-head">🎟️ Gift Code'
+    +'<span class="gc-id">ID <b>'+pid+'</b><button class="cpy" data-c="'+pid+'">salin</button></span></div>'
+    +'<div class="gc-list" id="sk_codes"><div class="gc-note">⏳ Memuat kode aktif…</div></div>'
+    +'<div class="gc-note">Otomatis dari kingshot.net · <b>Redeem</b> menukar kode ke Player ID kamu (hadiah masuk mail in-game).</div></div>';
+  const prepSection='<div class="eyebrow"><h2>Siapkan Berikutnya</h2><span class="hint">event terdekat + tukar kode</span></div>'
+    +'<div class="prep-row">'+heroHTML+giftHTML+'</div>';
 
-  /* daily checklist */
+  /* ---- Event Kamu ---- */
+  const adv=activeAdvisories(start,age); const advTypes=new Set(adv.map(a=>a.type));
+  const ratioBarHTML=r=>{ if(!r) return ''; const seg=(w,c)=>'<i style="width:'+w+'%;background:var(--'+c+')"></i>';
+    return '<div class="ratio"><div class="rbar">'+seg(r.inf,'sk-inf')+seg(r.cav,'sk-cav')+seg(r.arc,'sk-arc')+'</div>'
+      +'<div class="rlabels"><span><b style="color:var(--sk-inf)">'+r.inf+'%</b> Inf</span><span><b style="color:var(--sk-cav)">'+r.cav+'%</b> Cav</span><span><b style="color:var(--sk-arc)">'+r.arc+'%</b> Arc</span></div></div>'; };
+  const sit=k=>SITUATIONS.find(s=>s.key===k);
+  const et=evtTimes();
+  const heroesLine=s=>s&&s.heroes?s.heroes.map(h=>esc(h.n)).join(' / '):'';
+  const bearGen=(function(){ const s=sit('bear-trap'); if(!s) return null; let r=s.ratio; if(age>=197)r={inf:1,cav:10,arc:89};else if(age>=113)r={inf:10,cav:10,arc:80};else if(age>=50)r={inf:10,cav:20,arc:70};else r={inf:10,cav:30,arc:60}; return {s,r}; })();
+  /* bear cooldown state */
   const today=ksClock.now().toISOString().slice(0,10);
+  let bd=store.get('bearDone',{date:today,done:false}); if(bd.date!==today){ bd={date:today,done:false}; store.set('bearDone',bd); }
+  const timesetHTML=(id,label)=>{ const t=et[id]; const saved=!!t;
+    return '<div class="timeset'+(saved?' saved':'')+'" data-ts="'+id+'"><div class="lbl2">⏰ '+label+' <span style="color:var(--sk-ink-faint)">(diatur aliansi)</span></div>'
+      +'<div class="row"><input type="time" value="'+esc(t||'')+'" id="ts-'+id+'"><button data-set="'+id+'">Simpan</button></div>'
+      +'<div class="saved-row">✓ <span class="cd">'+esc(t||'')+'</span><button class="edit" data-edit="'+id+'">ubah</button></div></div>'; };
+  let cardsHTML='';
+  /* Bear Trap */
+  if(bearGen){ const done=bd.done;
+    cardsHTML+='<div class="card ev"'+(done?' style="opacity:.6"':'')+'><div class="top"><span class="ico">🐻</span><div><div class="nm">Bear Trap</div><div class="when">harian · 1×/siklus</div></div>'
+      +(done?'<span class="pill next">Sudah ikut</span>':'<span class="pill '+(et.bear?'live':'set')+'">'+(et.bear?'Terjadwal':'Atur jam')+'</span>')+'</div>'
+      +'<div class="lineup"><span class="lbl">Hero</span> <b>'+heroesLine(bearGen.s)+'</b> <span class="pick">pilih 1 · slot-1</span></div>'
+      +ratioBarHTML(bearGen.r)
+      +(done?'<div class="do">✓ Sudah ikut hari ini — <b>muncul lagi siklus depan</b> (reset 07:00).</div>'
+             :timesetHTML('bear','Jam trap')+'<label class="check note" style="margin-top:8px;cursor:pointer"><input type="checkbox" id="bear_done"> <span>Tandai sudah ikut trap hari ini</span></label>')
+      +'</div>';
+  }
+  /* Viking */
+  { const s=sit('viking'); if(s){
+    cardsHTML+='<div class="card ev"><div class="top"><span class="ico">⚔️</span><div><div class="nm">Viking Vengeance</div><div class="when">tiap 2 minggu · 20 stage</div></div>'
+      +'<span class="pill '+(et.viking?'live':'set')+'">'+(et.viking?'Terjadwal':'Atur jam')+'</span></div>'
+      +'<div class="lineup"><span class="lbl">Hero</span> <b>'+heroesLine(s)+'</b> <span class="pick">kirim (kill)</span></div>'
+      +ratioBarHTML(s.ratio)
+      +'<div class="do"><b>Kosongkan rumah</b> + support anggota online. Stage 7/14/17 = skor besar.</div>'
+      +timesetHTML('viking','Jam Viking')+'</div>';
+  }}
+  /* Next HoG (solo) */
+  if(nextEv&&nextEv.type==='hog'){ const it=HOG_DETAIL.iters[hogCurIdx(age)]; const no=Math.floor((nextEv.day-6)/14)+1;
+    cardsHTML+='<div class="card ev"><div class="top"><span class="ico">🏛</span><div><div class="nm">Hall of Governors #'+no+'</div><div class="when">H'+nextEv.day+' · ~'+Math.max(0,nextEv.day-age)+' hari</div></div><span class="pill prep">Prep</span></div>'
+      +(it?'<div class="lineup"><span class="lbl">Hero musim</span> <b>'+esc(it.hero)+'</b> <span class="pick">'+esc(it.rank)+' → shard</span></div>':'')
+      +'<div class="do">Solo · leaderboard. Tahan <b>gem, Widget, troop T9</b> untuk hari temanya.</div></div>';
+  }
+  /* Weekly recurring (first 1-2) */
+  (typeof RECURRING_WEEKLY!=='undefined'?RECURRING_WEEKLY:[]).slice(0,2).forEach(function(r){
+    const nx=(typeof nextWibDay==='function')?nextWibDay(r.dows,r.settable?et[r.id]:null):null;
+    cardsHTML+='<div class="card ev"><div class="top"><span class="ico">'+(r.gi||'◆')+'</span><div><div class="nm">'+esc(r.n)+'</div><div class="when">'+(nx?(nx.days===0?'hari ini':nx.days+' hari lagi')+' · '+esc(nx.label):esc((r.note||'').split('·')[0].trim()))+'</div></div><span class="pill next">Mingguan</span></div>'
+      +'<div class="do">'+esc(r.note||'')+'</div></div>';
+  });
+  const eventSection='<div class="eyebrow"><h2>Event Kamu</h2><span class="hint">jam Bear & Viking kamu atur sendiri</span></div><div class="cards">'+cardsHTML+'</div>';
+
+  /* ---- Hari Ini: top-5 + ring ---- */
   let stD=store.get('daily',{date:today,checked:{}}); if(stD.date!==today){ stD={date:today,checked:{}}; store.set('daily',stD); }
   const doneCount=Object.values(stD.checked).filter(Boolean).length;
+  const TOTAL=DAILY_TASKS.length; const pct=Math.round(100*doneCount/(TOTAL||1));
+  const R=52,C=2*Math.PI*R,off=C*(1-doneCount/(TOTAL||1));
+  const todaySection='<div class="eyebrow"><h2>Hari Ini</h2><span class="hint">rutinitas inti · reset 07:00</span></div>'
+    +'<div class="today"><div class="card"><div id="sk_acts"></div><div class="more" id="sk_more">Lihat semua '+TOTAL+' tugas →</div></div>'
+    +'<div class="card ring-wrap"><div class="ring"><svg width="120" height="120" viewbox="0 0 120 120"><circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--sk-surface-2)" stroke-width="10"></circle><circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--sk-accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" id="sk_ring"></circle></svg><div class="val tabular"><span id="sk_done">'+doneCount+'</span><small>/ '+TOTAL+' selesai</small></div></div><div class="cap">Habiskan rutinitas sebelum reset — momentum harian F2P.</div></div></div>';
 
-  el.innerHTML=hud
-    +(todayMs.length?card('Terbuka hari ini','\u2691',todayMs.map(m=>`<div class="alert ok small"><b>${esc(m.name)}</b> \u2014 ${esc(m.note||'')}</div>`).join(''),'milestone'):'')
-    +card('Hitung Mundur Event','\u23f1',
-      `<div class="kv"><span>\u23f3 Reset harian ${tzInfo().reset}</span><b class="hot mono" id="ev_reset">${hms(left)}</b></div>
-       <div class="cdbar"><span class="cdfill" id="cdf_reset"></span></div>
-       ${(function(){const et=evtTimes();const rows=SETTABLE_EVENTS.map(ev=>{const t=et[ev.id];if(!t)return '';const nx=nextRecurUTC(ev,t);if(!nx)return '';return `<div class="kv"><span>${ev.gi} ${esc(ev.n)} ${esc(evtTimeDisp(t))}</span><b class="hot mono ev-cd" data-ev="${ev.id}">${hms(nx-ksClock.now().getTime())}</b></div><div class="cdbar"><span class="cdfill cdf-ev" data-ev="${ev.id}"></span></div>`;}).filter(Boolean);return rows.length?rows.join(''):'<div class="kv"><span>\ud83d\udc3b Jam event alliance</span><span class="small muted">set jam di tab Profil</span></div>';})()}
-       ${adv.filter(a=>a.tpl&&a.tpl.battleWIB&&a.di===a.tpl.len-1).map(a=>`<div class="kv"><span>\u2694 ${esc(a.name.split('(')[0].trim())} \u2014 battle ${tzInfo().battle}</span><b class="hot mono" id="ev_battle">${hms(battleUTC()-ksClock.now().getTime())}</b></div>`).join('')}
-       <div class="lbl" style="margin:12px 0 4px">Mingguan terjadwal</div>
-       ${RECURRING_WEEKLY.map(r=>{const nx=nextWibDay(r.dows,r.settable?evtTimes()[r.id]:null);return `<div class="kv"><span>${r.gi} ${esc(r.n)}<div class="dim small">${esc(r.note)}</div></span><b>${nx.days===0?'hari ini':nx.days+' hari lagi'} \u00b7 ${esc(nx.label)}</b></div>`;}).join('')}
-       <div class="lbl" style="margin:12px 0 4px">Harian / rotasi</div>
-       ${RECURRING_DAILY.map(r=>`<div class="kv"><span>${r.gi} ${esc(r.n)}</span><span class="small muted" style="text-align:right">${esc(r.note)}</span></div>`).join('')}
-       <div class="muted small" style="margin-top:8px">Jam pasti per-kingdom \u2014 cek tab Events di game. Tanggal mingguan = perkiraan hari berikutnya.</div>`,'live \u00b7 semua event',true)
-    +card('Lakukan SEKARANG','\u25c9',
-      `<div class="lbl" style="margin-bottom:6px">Event skor aktif</div>${advHTML}
-       <div id="now_live"></div>
-       <div class="lbl" style="margin:16px 0 4px">Lineup hari ini \u2014 ikut event aktif</div>${lineHTML}`,'auto \u00b7 reset '+tzInfo().reset,true)
-    +card('Fokus fase ini','\u25c8',plan.slice(0,4).map(x=>`<div class="check note"><div class="d" style="color:var(--fg)">${x}</div></div>`).join(''))
-    +card('Checklist Harian','\u2713',
-      `<p class="muted small">Reset otomatis tiap 07:00 WIB. Selesai <b id="dc_count" class="num">${doneCount}</b>/${DAILY_TASKS.length}. <button class="btn ghost sm" id="dc_reset">reset</button></p>
-       <div class="cdbar" style="margin:0 0 12px"><span class="cdfill" id="dc_bar" style="width:${Math.round(100*doneCount/(DAILY_TASKS.length||1))}%"></span></div><div id="dc_list"></div>
-       <div class="lbl" style="margin:18px 0 4px">Mingguan / event</div>${WEEKLY_TASKS.map(([t,d])=>`<div class="check note"><div><div class="t">${t}</div><div class="d">${d}</div></div></div>`).join('')}`)
-    +`<div class="card"><div class="card-b"><div class="lbl" style="margin-bottom:8px">Buka cepat</div><div class="qgrid">
-        <div class="qbtn" data-go="hero"><span class="qi">\u25ce</span><span class="ql">Hero & Lineup</span></div>
-        <div class="qbtn" data-go="event"><span class="qi">\u2694</span><span class="ql">Event & Kalender</span></div>
-        <div class="qbtn" data-go="bangun"><span class="qi">\u25a3</span><span class="ql">Bangun & Progres</span></div>
-        <div class="qbtn" data-go="kode"><span class="qi">\u2726</span><span class="ql">Gift Code</span></div>
-      </div></div></div>`;
+  /* ---- tiles ---- */
+  const tiles='<div class="eyebrow"><h2>Buka Cepat</h2></div><div class="tiles">'
+    +'<div class="card tile" data-go="hero"><span class="ti">◎</span><span class="tl">Hero & Lineup</span></div>'
+    +'<div class="card tile" data-go="event"><span class="ti">⚔</span><span class="tl">Event & Kalender</span></div>'
+    +'<div class="card tile" data-go="bangun"><span class="ti">▣</span><span class="tl">Bangun & Progres</span></div>'
+    +'<div class="card tile" data-go="kode"><span class="ti">🎟️</span><span class="tl">Gift Code</span></div></div>';
 
-  /* daily checklist wiring */
-  const list=$('#dc_list',el);
-  DAILY_TASKS.forEach(([t,d],i)=>{
-    const id='d'+i,on=!!stD.checked[id];
-    const div=document.createElement('label'); div.className='check'+(on?' done':'');
-    div.innerHTML=`<input type="checkbox" ${on?'checked':''}><div><div class="t">${esc(t)}</div><div class="d">${esc(d)}</div></div>`;
-    div.querySelector('input').onchange=e=>{ stD.checked[id]=e.target.checked; store.set('daily',stD); div.classList.toggle('done',e.target.checked);
-      const dc=Object.values(stD.checked).filter(Boolean).length; $('#dc_count').textContent=dc;
-      const bar=$('#dc_bar'); if(bar) bar.style.width=Math.round(100*dc/(DAILY_TASKS.length||1))+'%'; };
-    list.appendChild(div);
-  });
-  $('#dc_reset',el).onclick=()=>{ store.set('daily',{date:today,checked:{}}); renderSekarang(); };
+  el.innerHTML='<div class="sk">'+header+prepSection+eventSection+todaySection+tiles+'</div>';
+
+  /* ---- wiring ---- */
+  /* daily checklist: render top-5, expandable to all */
+  const actsHost=$('#sk_acts',el); let expanded=false;
+  const drawActs=()=>{ const items=expanded?DAILY_TASKS:DAILY_TASKS.slice(0,5);
+    actsHost.innerHTML=items.map(([t,d],i)=>{ const id='d'+i,on=!!stD.checked[id];
+      return '<label class="act'+(on?' done':'')+'"><span class="cb"></span><div><div class="t">'+esc(t)+'</div><div class="d">'+esc(d)+'</div></div><input type="checkbox" data-i="'+i+'" '+(on?'checked':'')+' style="display:none"></label>';
+    }).join('');
+    $$('.act',actsHost).forEach(a=>{ a.onclick=e=>{ if(e.target.tagName==='INPUT')return; const cb=a.querySelector('input'); cb.checked=!cb.checked; const i=cb.dataset.i; stD.checked['d'+i]=cb.checked; store.set('daily',stD); a.classList.toggle('done',cb.checked);
+      const dc=Object.values(stD.checked).filter(Boolean).length; const ds=$('#sk_done'); if(ds)ds.textContent=dc; const rg=$('#sk_ring'); if(rg)rg.style.strokeDashoffset=(C*(1-dc/(TOTAL||1))).toFixed(1); }; });
+  };
+  drawActs();
+  const moreBtn=$('#sk_more',el); if(moreBtn) moreBtn.onclick=()=>{ expanded=!expanded; moreBtn.textContent=expanded?'Tampilkan lebih sedikit ↑':('Lihat semua '+TOTAL+' tugas →'); drawActs(); };
+
+  /* time inputs */
+  $$('[data-set]',el).forEach(b=>b.onclick=()=>{ const id=b.dataset.set; const v=($('#ts-'+id,el)||{}).value; if(!v)return; const pr=store.get('profile',{}); const t=Object.assign({},pr.eventTimes||{}); t[id]=v; pr.eventTimes=t; if(id==='bear')pr.bearTime=v; store.set('profile',pr); renderSekarang(); });
+  $$('[data-edit]',el).forEach(b=>b.onclick=()=>{ const id=b.dataset.edit; const pr=store.get('profile',{}); const t=Object.assign({},pr.eventTimes||{}); delete t[id]; pr.eventTimes=t; store.set('profile',pr); renderSekarang(); });
+  /* bear cooldown toggle */
+  const bdc=$('#bear_done',el); if(bdc) bdc.onchange=()=>{ store.set('bearDone',{date:today,done:bdc.checked}); renderSekarang(); };
+  /* gift copy/redeem */
+  $$('.cpy',el).forEach(b=>b.onclick=()=>{ try{navigator.clipboard.writeText(b.dataset.c);}catch(e){} const o=b.textContent;b.textContent='ok';setTimeout(()=>b.textContent=o,1200); });
+  /* tiles + go */
   $$('[data-go]',el).forEach(b=>b.onclick=()=>activate(b.dataset.go));
+  /* async: fill gift codes */
+  (async function(){ let codes=null; try{ codes=await ksLiveCodes(); }catch(e){} const host=$('#sk_codes',el); if(!host) return;
+    if(!codes||!codes.length){ host.innerHTML='<div class="gc-note">Tak ada kode aktif / gagal memuat. Cek tab Gift Code.</div>'; return; }
+    host.innerHTML=codes.slice(0,4).map(g=>'<div class="gc-row"><code>'+esc(g.code)+'</code><span class="exp">'+(g.exp&&g.exp!=='-'?'s/d '+esc(g.exp):'')+'</span><button class="redeem" data-code="'+esc(g.code)+'">Redeem</button></div>').join('');
+    $$('.redeem',host).forEach(b=>b.onclick=async()=>{ const fid=(p.pid||p.id||'').toString(); if(!fid){ activate('kode'); return; } b.textContent='…'; b.disabled=true; try{ const r=await ksRedeem(fid,b.dataset.code); b.textContent=r&&r.cls==='ok'?'✓ ok':(r?r.txt:'gagal'); if(r&&r.cls==='ok')b.classList.add('done'); }catch(e){ b.textContent='gagal'; } setTimeout(()=>{b.textContent='Redeem';b.disabled=false;b.classList.remove('done');},2000); });
+  })();
   fillNowLive(age);
 }
+
 /* "Lakukan SEKARANG" ikut menampilkan event mingguan kingdom yang berjalan HARI INI
    (rotasi global kingshot.net, di-gate umur server) — bukan cuma event skor. */
 async function fillNowLive(age){
