@@ -18,7 +18,7 @@ function calEventsOnDay(start,d){
     const u=daysBetween(start,new Date(e.date+'T00:00:00Z'))+1; return u>=1?u:null; };
   const rec=(type,s0,per,col,tag)=>{ const ua=anchor(type); if(ua!=null) s0=ua%per||per;
     if(d<s0) return;
-    const ds=s0+Math.floor((d-s0)/per)*per; const t=EVENT_TEMPLATES[type]; const len=(t&&t.len)||1;
+    const ds=s0+Math.floor((d-s0)/per)*per; const t=EVENT_TEMPLATES[type]; let len=(t&&t.len)||1; if(type==='hog'){ var _no=ds<6?1:Math.floor((ds-6)/14)+1; if(typeof hogLen==='function') len=hogLen(_no); }
     if(d-ds<len) out.push({c:col,n:(t&&t.name)||type,type,di:d-ds,len,tag}); };
   rec('hog',6,14,'var(--accent)','HoG');
   rec('kvk',70,28,'var(--loss)','KvK');
@@ -132,7 +132,7 @@ function renderEvent(){
     predictedEvents(start,age).forEach(pp=>{ if(!userTypes.has(pp.type)) auto.push({type:pp.type,date:pp.date,pred:true,conf:pp.conf}); });
     const merged=[...user.map((e,idx)=>({...e,pred:false,idx})),...auto];
     merged.forEach(e=>e._a=evAdvisory(e));
-    const shown=merged.filter(e=>e._a&&e._a.di>=-7&&e._a.di<e._a.tpl.len).sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const shown=merged.filter(e=>e._a&&e._a.di>=-7&&e._a.di<(e._a.len||e._a.tpl.len)).sort((a,b)=>new Date(a.date)-new Date(b.date));
     schedHTML=`<div class="alert inf small"><b>Tanggal di bawah = ESTIMASI otomatis</b> dari umur server (belum kamu konfirmasi). <b>Akurasi tinggi</b> = pola pasti (HoG tiap 14 hari). <b>Akurasi sedang</b> = perkiraan kasar (KvK ~hari 70, fix setelah KvK pertama). Advisory "Hari Ini" tetap jalan otomatis — kalau tanggal asli di game beda, tekan "ralat" di bawah.</div>`
       +(shown.length? shown.map(e=>{ const a=e._a; const pc=a.cls==='ok'?'f2p':a.cls==='bad'?'crit':a.cls==='warn'?'warn':'info';
         return `<div class="lcard" style="margin:10px 0">
@@ -167,7 +167,7 @@ function renderEvent(){
 
   el.innerHTML=pageHead('Event & Kalender','Advisory otomatis: kapan TAHAN item, kapan PAKAI, dan jam berapa \u2014 digerakkan umur server.')
     +`<div class="seg" id="ev_sub" style="flex-wrap:wrap;margin:4px 0 10px">
-        <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="cal">\u2691 Kalender</button><button data-s="mystic">\ud83d\udd2e Mystic Trial</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
+        <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="cal">\u2691 Kalender</button><button data-s="hog">\ud83c\udfdb HoG</button><button data-s="mystic">\ud83d\udd2e Mystic Trial</button><button data-s="find">\ud83d\udd0e Cari Event</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
       </div><div id="ev_subc"></div>`;
 
   /* SEMUA bagian jadi sub-tab \u2014 satu bagian tampil pada satu waktu, tanpa scroll panjang */
@@ -177,6 +177,8 @@ function renderEvent(){
     cal: card('Kalender Server','\u2691',
       `<p class="muted small">Event PERTUMBUHAN berbasis umur server (HoG \u00b7 KvK \u00b7 SG \u00b7 Burst \u00b7 Milestone). Event mingguan aliansi ada di sub-tab "\ud83d\udce1 Jadwal Live".</p><div id="evcal"></div>`),
     mystic: mysticHTML(),
+    find: eventFinderHTML(),
+    hog: hogHTML(age),
     kvk: card('KvK Prep','\u2620',
       `<div class="alert ok small">${esc(KVK_PREP.target)}</div>
        <h3>Hitung mundur</h3>${KVK_PREP.stockpile.map(s=>`<div class="check note"><div class="d" style="color:var(--fg)">${esc(s)}</div></div>`).join('')}
@@ -210,6 +212,12 @@ function renderEvent(){
       if(typeof ksLiveEvents==='function') ksLiveEvents().then(()=>{ const ec=$('#evcal',el); if(ec&&store.get('evSub','adv')==='cal') renderCalendar(ec); }); }
     if(k==='live') fillLiveEvents();
     if(k==='mystic') wireMystic(el);
+    if(k==='find'){ const q=$('#evfind_q',el), cnt=$('#evfind_count',el);
+      const doFilter=()=>{ const v=(q&&q.value||'').toLowerCase().trim(); let n=0;
+        $$('.evfind',el).forEach(c=>{ const show=!v||c.dataset.k.indexOf(v)>=0; c.style.display=show?'':'none'; if(show)n++; });
+        if(cnt) cnt.textContent=n+' event'; };
+      if(q){ q.oninput=doFilter; } doFilter(); }
+    if(k==='hog'){ const c=$('#hog_st',el); if(c){ const draw=i=>{ c.innerHTML=hogStageTbl(i); $$('.hibtn',el).forEach(b=>b.classList.toggle('active',+b.dataset.hi===i)); if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); }; $$('.hibtn',el).forEach(b=>b.onclick=()=>draw(+b.dataset.hi)); draw(hogCurIdx(age)); } }
     if(k==='adv'&&age!=null){
       const add=$('#sch_add',el); if(add) add.onclick=()=>{ const date=$('#sch_date').value; if(!date){$('#sch_date').focus();return;} const arr=store.get('events',[]); const ty=$('#sch_type').value; const i=arr.findIndex(x=>x.type===ty); if(i>=0)arr[i]={type:ty,date}; else arr.push({type:ty,date}); store.set('events',arr); renderEvent(); };
       $$('.del',el).forEach(b=>b.onclick=()=>{ const arr=store.get('events',[]); arr.splice(+b.dataset.idx,1); store.set('events',arr); renderEvent(); });
@@ -217,6 +225,78 @@ function renderEvent(){
     if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
   $$('#ev_sub button',el).forEach(b=>b.onclick=()=>showSub(b.dataset.s));
   showSub(store.get('evSub','adv'));
+}
+
+/* ── Hall of Governors sub-tab (data: HOG_DETAIL) ── */
+/* Durasi tiap HoG BEDA: #1=5 hari, #2=6 hari, #3+=7 hari (=jumlah stage). Dipakai deteksi iterasi. */
+function hogLen(no){ return no<=1?5 : no===2?6 : 7; }
+function hogCurIdx(age){
+  if(age==null) return 3;
+  if(age<6) return 0;
+  var no=Math.floor((age-6)/14)+1; var di=age-(6+(no-1)*14);
+  if(di>=hogLen(no)) no++;            /* iterasi ini sudah selesai (pakai durasi asli) → berikutnya */
+  return no<=1?0 : no===2?1 : no===3?2 : 3;
+}
+/* Status: HoG apa yang AKTIF sekarang / BERIKUTNYA + hari ke-berapa dari durasinya */
+function hogStatusLine(age){
+  if(age==null) return '';
+  if(age<6) return '<div class="alert inf small"><b>📍 Berikutnya:</b> HoG #1 · H6 (~'+(6-age)+' hari)</div>';
+  var no=Math.floor((age-6)/14)+1; var di=age-(6+(no-1)*14); var len=hogLen(no);
+  var it=HOG_DETAIL.iters[hogCurIdx(age)]; var hi=it?(' · '+esc(it.hero)+' · '+esc(it.rank)):'';
+  var gen3='<div class="alert warn small"><b>📍</b> HoG kemungkinan sudah selesai (cuma Gen 1-2) — fokus KvK / Strongest Governor.</div>';
+  if(di<len) return no>5?gen3:'<div class="alert ok small"><b>📍 Sekarang:</b> HoG #'+no+' · hari '+(di+1)+'/'+len+hi+'</div>';
+  var nno=no+1, nstart=6+(nno-1)*14;
+  if(nno>5) return gen3;
+  return '<div class="alert inf small"><b>📍 Berikutnya:</b> HoG #'+nno+' · H'+nstart+' (~'+(nstart-age)+' hari)'+hi+'</div>';
+}
+function hogStageTbl(idx){
+  var it=HOG_DETAIL.iters[idx]; if(!it) return '';
+  var rows=it.stages.map(function(st){
+    var sn=st[0], tasks=st[1];
+    var base=sn.replace(/^\d+\s*·\s*/,'');
+    var mis=(typeof HOG_STAGE_MISSION!=='undefined'&&HOG_STAGE_MISSION[base])||'';
+    return '<tr><td colspan="2" style="padding-top:10px"><b style="color:var(--accent)">Stage '+esc(sn)+'</b></td></tr>'
+      + (mis?'<tr><td colspan="2" class="muted small" style="padding-bottom:4px"><b>📋 Misi:</b> '+esc(mis)+'</td></tr>':'')
+      + tasks.map(function(t){ return '<tr><td class="small">'+esc(t[0])+'</td><td class="num">'+esc(t[1])+'</td></tr>'; }).join('');
+  }).join('');
+  return '<div class="kv"><span>Hero of the Season</span><b>'+esc(it.hero)+' \u00b7 '+esc(it.rank)+'</b></div>'
+    + '<div class="kv"><span>Durasi</span><b>'+it.stages.length+' hari ('+it.stages.length+' stage)</b></div>'
+    + '<div class="kv"><span>Mulai \u00b7 Generasi</span><b>'+esc(it.day)+' \u00b7 '+esc(it.gen)+'</b></div>'
+    + '<div class="scrollx"><table><thead><tr><th>Task</th><th>Poin</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    + '<div class="alert inf small" style="margin-top:6px">'+esc(it.note)+'</div>';
+}
+function hogHTML(age){
+  var H=HOG_DETAIL; var cur=hogCurIdx(age);
+  var summary='<div class="scrollx"><table><thead><tr><th>HoG</th><th>Hero</th><th>Ambang</th><th>Durasi</th><th>Mulai</th></tr></thead><tbody>'
+    + H.iters.map(function(it,i){ return '<tr'+(i===cur?' style="outline:1px solid var(--accent);outline-offset:-1px"':'')+'><td><b>'+esc(it.no)+'</b></td><td class="small">'+esc(it.hero)+'</td><td class="small">'+esc(it.rank)+'</td><td class="small">'+it.stages.length+' hari</td><td class="small muted">'+esc(it.day)+'</td></tr>'; }).join('')
+    + '</tbody></table></div>';
+  var sel=H.iters.map(function(it,i){ return '<button class="btn ghost sm hibtn'+(i===cur?' active':'')+'" data-hi="'+i+'">HoG '+esc(it.no)+'</button>'; }).join(' ');
+  var scale='<details><summary>\u2694\ufe0f Latih Troop \u2014 poin per unit per level</summary><div class="dt"><div class="scrollx"><table><thead><tr><th>Level</th><th>Poin/unit</th></tr></thead><tbody>'+H.troop.map(function(r){return '<tr><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td></tr>';}).join('')+'</tbody></table></div><div class="muted small" style="margin-top:4px">Tier tertinggi jauh lebih berpoin \u2014 jangan spam tier rendah.</div></div></details>'
+    + '<details><summary>\ud83d\udee1\ufe0f Governor Gear \u2014 poin per Level Up</summary><div class="dt"><div class="scrollx"><table><thead><tr><th>Rarity</th><th>Level-up score</th></tr></thead><tbody>'+H.govgear.map(function(r){return '<tr><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td></tr>';}).join('')+'</tbody></table></div><div class="muted small" style="margin-top:4px">+500 poin tiap naik max score (di luar tabel).</div></div></details>'
+    + '<details><summary>\ud83d\udca0 Governor Charm \u2014 poin per Level Up (HoG #4/#5)</summary><div class="dt"><div class="scrollx"><table><thead><tr><th>Level</th><th>Level-up score</th></tr></thead><tbody>'+H.charm.map(function(r){return '<tr><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td></tr>';}).join('')+'</tbody></table></div><div class="muted small" style="margin-top:4px">+1.000 poin tiap naik max score. Level awal (L4=8.750) lompat besar.</div></div></details>';
+  var tips=H.tips.map(function(t,i){ return '<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">'+pad(i+1)+'</span> &nbsp;'+esc(t)+'</div></div>'; }).join('');
+  return card('Hall of Governors','\ud83c\udfdb',hogStatusLine(age)+'<p class="small" style="margin-top:6px">'+esc(H.intro)+'</p><div class="alert warn small" style="margin-top:6px">\u26a0\ufe0f Yang BERUBAH tiap iterasi = Hero of the Season, ambang leaderboard, durasi, & susunan stage. Poin per task SAMA. Tab Events di game = acuan final.</div><div class="lbl" style="margin:10px 0 4px">Ringkasan 4 iterasi</div>'+summary)
+    + card('Tabel Skor per Stage (seperti game)','\u25a6','<p class="muted small">Pilih iterasi \u2014 satu tabel berisi urutan Stage \u2192 Task \u2192 Poin, persis alur di game.</p><div class="seg" style="flex-wrap:wrap;margin-bottom:8px">'+sel+'</div><div id="hog_st"></div>')
+    + card('Skala Poin Detail','\u25a4',scale)
+    + card('Tips F2P','\ud83d\udca1',tips);
+}
+
+/* ── Cari Event: indeks flat semua event (biar tak terkubur di accordion) ── */
+function eventFinderHTML(){
+  var items=[]; EVENTS_INFO.forEach(function(grp){ (grp.items||[]).forEach(function(e){ items.push([e,grp.g]); }); });
+  var list=items.map(function(pair){ var e=pair[0], g=pair[1];
+    var key=((e.n||'')+' '+(e.cat||'')+' '+(g||'')+' '+(e.what||'')).toLowerCase();
+    return '<div class="lcard evfind" data-k="'+esc(key)+'" style="margin:8px 0">'
+      +'<div class="lh"><span class="nm" style="font-size:13px">'+esc(e.n)+'</span><span class="tag" style="margin-left:auto">'+esc(e.cat||'')+'</span></div>'
+      +'<div class="dim small mono" style="margin:2px 0 4px">'+esc(e.freq||'')+'</div>'
+      +(e.what?'<div class="small">'+esc(e.what)+'</div>':'')
+      +'</div>';
+  }).join('');
+  return card('Cari Event','🔎',
+    '<p class="muted small">Ketik nama event untuk cari cepat — apa yang dilakukan, poin, & tips. Semua event ada di sini (tak ada yang terkubur).</p>'
+    +'<input id="evfind_q" placeholder="mis. fishing, buccaneer, armament, viking…" autocomplete="off" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.04);color:var(--fg);margin-bottom:6px;font-size:13px">'
+    +'<div class="dim small" id="evfind_count" style="margin-bottom:8px"></div>'
+    +'<div id="evfind_list">'+list+'</div>');
 }
 
 /* ── Mystic Trial sub-tab (data: MYSTIC_TRIAL) ── */
@@ -282,7 +362,7 @@ function _mtMethod(z){
      <li><b>Kalah?</b> baca Battle Report → frontline cepat habis: +5-10% Infantry; damage kurang: +5% Archer. Lalu ULANG.</li>
      <li><b>RNG besar — habiskan 5 attempt</b> (komposisi musuh tetap, hasil-nya yang RNG; menang = gratis lanjut).</li>
      <li><b>Tetap mentok?</b> itu batas STAT — upgrade ${esc(z.stat.split('(')[0].trim())}, bukan formasi.</li>
-     ${z.heroes?`<li><b>Bait-march</b> (zona hero-based): lemahkan march-1 jadi umpan (AI kirim army terkuat duluan), tumpuk hero terbaik di march 2-3.</li>`:''}
+     ${z.heroes?`<li><b>3 team</b> (zona hero-based): stage dalam butuh 3 team berhero — beri gear minimal ke hero ke-2/3 (trik reset Armor XP). Urutan bertarung RNG, tak bisa di-"umpan".</li>`:''}
    </ul>
    <div class="lbl" style="margin:14px 0 4px">Kalkulator Counter — isi rasio musuh (dari Battle Report setelah kalah)</div>
    <div class="row">
@@ -307,6 +387,9 @@ function _mtZoneDetail(z){
     <div class="small" style="margin:4px 0">Stat dihitung: <b>${esc(z.stat)}</b></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">${tag(true,'Unlock: '+esc(z.unlock))} ${tag(true,esc(z.teams))} ${tag(z.heroes,z.heroes?'Hero dihitung ✓':'Hero tidak dihitung')} ${tag(z.ownTroops,z.ownTroops?'Troop sendiri':'Troop game (T10)')}</div>
     ${_mtBar(z.ratio)}<div class="mono small">Rekomendasi: <b style="color:${_MTC.inf}">${z.ratio[0]}</b> / <b style="color:${_MTC.cav}">${z.ratio[1]}</b> / <b style="color:${_MTC.arc}">${z.ratio[2]}</b> (Inf/Cav/Arc)</div>
+    ${z.lead?`<div class="lbl" style="margin:12px 0 4px">⭐ Andalan / Leader zona</div><div class="alert inf small">${esc(z.lead)}</div>`:''}
+    ${z.marches?`<div class="lbl" style="margin:12px 0 4px">Susunan team (stage lanjut butuh 3 team)</div>
+     <div class="scrollx"><table><thead><tr><th>Team</th><th>Hero</th><th>Catatan</th></tr></thead><tbody>${z.marches.map(m=>`<tr><td class="small"><b>${esc(m.m)}</b></td><td class="small">${esc(m.hero)}</td><td class="small muted">${esc(m.why)}</td></tr>`).join('')}</tbody></table></div>`:''}
     <ul class="mtul" style="margin-top:8px">${z.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
     ${_mtMethod(z)}`;
 }
@@ -364,13 +447,13 @@ function renderBangun(){
          <tr><td>3</td><td><b>Keenness Charm</b></td><td class="small">Cavalry Health + Lethality</td></tr>
        </tbody></table></div>
        <div class="alert ok small">⭐ Trik hemat: lompat <b>Level 3 → 5</b> per charm (= +9% stat). Biaya 1 charm L3→L5 = <b>300 Charm Design + 180 Charm Guide</b> (lebih hemat 60 Guide drpd sebar 3 charm L3→L4). Urut: Protection → Vision → Keenness, ulang.</div>
-       <div class="alert warn small">⚠ Ini <b>GOVERNOR</b> Gear/Charm (Satin/Gilded/Artisan + Charm Design) — BEDA dari <b>HERO</b> Gear (Forgehammer/Mithril, cuma untuk rally leader). Nama item dari wiki — cek nama persis di layar Avatar → Governor → Gear.</div>`)
+       <div class="alert warn small">⚠ Ini <b>GOVERNOR</b> Gear/Charm (Satin/Gilded/Artisan + Charm Design) — BEDA dari <b>HERO</b> Gear (Forgehammer/Mithril, cuma saat hero-mu MEMIMPIN — termasuk Mystic Trial/Arena, bukan saat join rally). Nama item dari wiki — cek nama persis di layar Avatar → Governor → Gear.</div>`)
     +card('Item/Gear Hero — siapa dulu & sampai Lv berapa','◈',
-      `<div class="alert ok small"><b>Unlock TC15.</b> Gear hero HANYA aktif saat kamu JADI rally leader/garrison — <b>joiner = SIA-SIA</b>. Jadi gear cuma untuk 3 hero leader-mu (1 Inf + 1 Cav + 1 Archer).</div>
+      `<div class="alert ok small"><b>Unlock TC15.</b> Gear hero aktif saat hero-mu <b>MEMIMPIN</b> march — rally leader, garrison, DAN expedition solo (<b>Mystic Trial & Arena</b> — ROI terbesar F2P justru di sini). <b>SIA-SIA hanya saat JOIN rally orang lain</b> (cuma gear si leader yang dihitung). Fokus 3 hero leader (1 Inf + 1 Cav + 1 Archer); untuk stage dalam Mystic Trial, taruh gear SISA (jangan Forgehammer) di hero ke-4/5.</div>
        <div class="scrollx"><table><thead><tr><th>#</th><th>Hero</th><th>2 Piece</th><th>Target</th></tr></thead><tbody>
        ${HERO_GEAR.map((g,i)=>`<tr><td><b>${i+1}</b></td><td><b>${esc(g[0])}</b><div class="dim small">${esc(g[1])}</div></td><td class="small">${esc(g[2])}</td><td class="small"><b>${esc(g[3])}</b></td></tr>`).join('')}
        </tbody></table></div>
-       <div class="small muted" style="margin-top:6px">• <b>2-piece:</b> pasang HANYA 2 piece sesuai fokus hero. DPS/leader → Helmet+Boots (Lethality). Tank/garrison → Gloves+Belt (Health).<br>• <b>Target Lv20</b> = breakpoint <b>Mastery Forging</b> (pakai Forgehammer).<br>• Exclusive Gear/Widget = Mythic saja — prioritas paling AKHIR (mahal).</div>
+       <div class="small muted" style="margin-top:6px">• <b>2-piece:</b> pasang HANYA 2 piece sesuai fokus hero. DPS/leader → Helmet+Boots (Lethality). Tank/garrison → Gloves+Chest (Health). <i>(Slot gear hero cuma 4: Helmet/Chest/Gloves/Boots — tak ada "Belt".)</i><br>• <b>Transfer per TIPE:</b> gear bisa dipindah antar-hero, tapi dalam tipe yang sama. 1 set Infantry → hero infantry terbaikmu (Howard→Zoe); 1 set Cavalry → Jabel→Petra; 1 set Archer → Marlin. Gear Cavalry TIDAK nyambung ke hero Infantry.<br>• <b>Target Lv20</b> = breakpoint <b>Mastery Forging</b> (pakai Forgehammer).<br>• Exclusive Gear/Widget = Mythic saja — prioritas paling AKHIR (mahal).</div>
        <div class="alert bad small">⛔ JANGAN gear hero JOINER (Chenko/Amane/Yeonwoo/Gordon/Howard/Quinn) — tak terhitung saat join. Jangan gear hero Gen 1 yang bakal diganti.</div>`)
     +card('Gear & Charm Governor (TC25+)','◈',
       `${GEAR_INFO.map(([t,d])=>`<details><summary>${esc(t)}</summary><div class="dt"><div class="small muted">${esc(d)}</div></div></details>`).join('')}

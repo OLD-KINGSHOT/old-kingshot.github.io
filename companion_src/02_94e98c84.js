@@ -52,7 +52,7 @@ function clockEventChips(){
   const {start,age}=profileAge(); if(age==null||age<1) return '';
   const chips=[]; const active=activeAdvisories(start,age); const activeTypes=new Set(active.map(a=>a.type));
   active.forEach(a=>{
-    let s=`<b>${EV_EMOJI[a.type]||'\u25c6'} ${a.tpl.name.split('(')[0].trim()} D${a.di+1}</b>`;
+    let s=`<b>${EV_EMOJI[a.type]||'\u25c6'} ${a.tpl.name.split('(')[0].trim()} D${a.di+1}/${a.len||a.tpl.len}</b>`;
     if(a.tpl.battleWIB&&a.di===a.tpl.len-1){ const bl=battleUTC()-ksClock.now().getTime(); s+=' \u00b7 <span class="hot">\u2694 battle '+(bl>0?hms(bl):'live')+'</span>'; }
     chips.push(s);
   });
@@ -122,7 +122,7 @@ function lineupCard(s,age){
     ${s.table?`<div class="scrollx" style="margin-top:9px"><table class="ltbl"><tbody>${s.table.map((row,ri)=>`<tr>${row.map((c,ci)=>ri===0?`<th>${esc(c)}</th>`:(ci===0?`<td><b>${esc(c)}</b></td>`:`<td class="small">${esc(c)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`:''}
     <div class="lrow up"><span class="lk">Skill\u2191</span>${esc(s.skillUp)}</div>
     ${rosterAny()?(function(){const inf=rosterBest('Infantry'),cav=rosterBest('Cavalry'),arc=rosterBest('Archer'),list=[inf,cav,arc].filter(Boolean),ld=list.slice().sort((a,b)=>rosterStar(b.n)-rosterStar(a.n))[0],c=(l,h)=>l+': '+(h?esc(h.n)+' '+rosterStar(h.n)+'\u2605':'\u2014');return `<div class="lrow"><span class="lk">Punyamu</span>${c('Inf',inf)} \u00b7 ${c('Cav',cav)} \u00b7 ${c('Arc',arc)}${ld?' \u00b7 \ud83d\udc51 leader '+esc(ld.n):''}</div>`;})():''}
-    <div class="lrow"><span class="lk">Lakukan</span>${esc(s.do)}</div>
+    <div class="lrow"><span class="lk">Lakukan</span>${Array.isArray(s.do)?'<ul class="doul">'+s.do.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':esc(s.do)}</div>
   </div>`;
 }
 function card(title,gi,bodyHTML,meta,hud){
@@ -142,7 +142,7 @@ function renderSekarang(){
     <div class="inner">
       <div class="lbl" style="color:var(--accent);margin-bottom:8px">${age!=null?'Server Day \u00b7 Kingdom #'+esc(p.kingdom||'?'):'KINGSHOT13'}</div>
       <div class="dayrow">
-        ${age!=null?`<div class="bigday">H-${age}<small>${tc?'TC'+tc:''}</small></div>`:''}
+        ${age!=null?`<div class="bigday">H${age}<small>${tc?'TC'+tc:''}</small></div>`:''}
         <div class="bigclock" id="hud_clock">${clock}<span class="wib" style="font-size:13px;color:var(--fg-mute)"> ${tzInfo().label}</span></div>
       </div>
       <div class="resetline">\u23f3 Reset harian ${tzInfo().reset} ${tzInfo().label} dalam <b id="hud_reset">${hms(left)}</b>${ksClock.synced?' \u00b7 <span style="color:var(--profit)">jam server tersinkron</span>':' \u00b7 jam perangkat'}</div>

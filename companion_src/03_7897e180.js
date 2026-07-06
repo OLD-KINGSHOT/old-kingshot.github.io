@@ -421,6 +421,17 @@ function predictedEvents(start,age){
   out.push({type:'kvk',day:kvk,date:addDaysISO(start,kvk),conf:'sedang'});
   return out;
 }
+/* HoG durasi & tema per-ITERASI (bukan template len=7) — biar advisory & kalender akurat lintas-server */
+function hogAdvOccurrence(start, pfStart){
+  if(!pfStart||typeof HOG_DETAIL==='undefined'||!HOG_DETAIL.iters) return null;
+  var sd=daysBetween(new Date(pfStart+'T00:00:00Z'),start)+1;
+  var no=sd<6?1:Math.floor((sd-6)/14)+1;
+  var idx=no<=1?0:no===2?1:no===3?2:3;
+  var it=HOG_DETAIL.iters[idx]; if(!it) return null;
+  var days=it.stages.map(function(st){ return st[0]; });
+  var spend=it.stages.map(function(st){ var t=st[1]||[]; return t.slice(0,2).map(function(x){ return x[0]+' ('+x[1]+')'; }).join(' + ')||'item sesuai tema'; });
+  return {no:no, len:it.stages.length, days:days, spend:spend, hero:it.hero, rank:it.rank};
+}
 function evAdvisory(ev){
   const tpl=EVENT_TEMPLATES[ev.type]; if(!tpl) return null;
   const start=new Date(ev.date+'T00:00:00Z'); const di=daysBetween(start,todayMidnight());
@@ -431,35 +442,37 @@ function evAdvisory(ev){
       lines:['Server masih baru (hari '+esd+'). '+tpl.name+' baru aktif ~hari '+tpl.minDay+'.']};
   }
   let status,cls,lines=[];
+  let effLen=tpl.len,effDays=tpl.days,effSpend=tpl.spend,hogInfo='';
+  if(ev.type==='hog'){ var _ho=hogAdvOccurrence(start,_pf.start); if(_ho){ effLen=_ho.len; effDays=_ho.days; effSpend=_ho.spend; hogInfo=' \u00b7 HoG #'+_ho.no+' ('+_ho.len+' hari) \u00b7 '+_ho.hero+' \u00b7 '+_ho.rank; } }
   if(tpl.milestone){
     if(di<0){ status='H-'+(-di); cls='inf'; lines.push('Belum mulai \u2014 '+tpl.goal); }
-    else if(di<tpl.len){ status='D'+(di+1)+(di===tpl.len-1?' (TERAKHIR)':''); cls='ok';
+    else if(di<tpl.len){ status='D'+(di+1)+'/'+effLen+(di===effLen-1?' (TERAKHIR)':''); cls='ok';
       lines.push(tpl.goal);
       lines.push('\u2705 Event MILESTONE power \u2014 SELESAIKAN upgrade/riset/training/hero SEKARANG. Di sini upgrade JANGAN ditahan.');
       if(SPEED_NOTE[ev.type]) lines.push(SPEED_NOTE[ev.type]+'.');
       if(di===tpl.len-1) lines.push('\u26a0 HARI TERAKHIR \u2014 push power maksimal sebelum reset 07:00 WIB!');
     } else { status='Selesai'; cls='inf'; lines.push('Event sudah lewat.'); }
-    return {type:ev.type,name:tpl.name,status,cls,lines,start,tpl,di};
+    return {type:ev.type,name:tpl.name,status,cls,lines,start,tpl,di,len:effLen};
   }
   if(di<0){ const h=-di; status='H-'+h+' (prep)'; cls=h<=1?'bad':h<=3?'warn':'inf';
     lines.push('\ud83d\udd12 TAHAN & siapkan: '+tpl.hold+'.');
     lines.push('\ud83d\udeab Jangan selesaikan upgrade besar \u2014 tahan untuk diselesaikan saat event.');
     if(h<=1) lines.push('\u26a0 MULAI BESOK! Pastikan upgrade hampir selesai & buff siap.');
-  } else if(di<tpl.len){ status='D'+(di+1)+' AKTIF'; cls='ok';
-    lines.push('\ud83c\udfaf '+tpl.days[di]);
-    lines.push('\u2705 Pakai SEKARANG: '+(tpl.spend[di]||'item sesuai tema')+'.');
+  } else if(di<effLen){ status='D'+(di+1)+'/'+effLen+' AKTIF'; cls='ok';
+    lines.push('\ud83c\udfaf '+effDays[di]+hogInfo);
+    lines.push('\u2705 Pakai SEKARANG: '+(effSpend[di]||'item sesuai tema')+'.');
     if(SPEED_NOTE[ev.type]) lines.push(SPEED_NOTE[ev.type]+'.');
     lines.push('\ud83d\udd50 Batas hari ini: spend/selesaikan SEBELUM reset 07:00 WIB.');
-    if(tpl.battleWIB&&di===tpl.len-1) lines.push('\u2694 Battle '+tpl.battleWIB+(ev.time?' \u00b7 jam event '+ev.time+' WIB':''));
+    if(tpl.battleWIB&&di===effLen-1) lines.push('\u2694 Battle '+tpl.battleWIB+(ev.time?' \u00b7 jam event '+ev.time+' WIB':''));
     else if(ev.time) lines.push('\u23f0 Jam event: '+ev.time+' WIB');
   } else { status='Selesai'; cls='inf'; lines.push('Event sudah lewat.'); }
-  return {type:ev.type,name:tpl.name,status,cls,lines,start,tpl,di};
+  return {type:ev.type,name:tpl.name,status,cls,lines,start,tpl,di,len:effLen};
 }
 function activeAdvisories(start,age){
-  const sched=store.get('events',[]).map(evAdvisory).filter(a=>a&&!a.notEligible&&a.di>=0&&a.di<a.tpl.len);
+  const sched=store.get('events',[]).map(evAdvisory).filter(a=>a&&!a.notEligible&&a.di>=0&&a.di<(a.len||a.tpl.len));
   const haveT=new Set(sched.map(a=>a.type));
   if(age>=1&&age<=7&&!haveT.has('burst')){ const b=evAdvisory({type:'burst',date:addDaysISO(start,1)}); if(b&&b.di>=0&&b.di<b.tpl.len){ sched.unshift(b); haveT.add('burst'); } }
-  predictedEvents(start,age).forEach(pp=>{ if(haveT.has(pp.type))return; const a=evAdvisory({type:pp.type,date:pp.date}); if(a&&a.di>=0&&a.di<a.tpl.len){ sched.push(a); haveT.add(pp.type); } });
+  predictedEvents(start,age).forEach(pp=>{ if(haveT.has(pp.type))return; const a=evAdvisory({type:pp.type,date:pp.date}); if(a&&a.di>=0&&a.di<(a.len||a.tpl.len)){ sched.push(a); haveT.add(pp.type); } });
   return sched;
 }
 

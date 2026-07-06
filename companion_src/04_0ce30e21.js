@@ -55,17 +55,17 @@ const TROOP_INFO={
   ]
 };
 const GEAR_INFO=[
-  ['Hero Gear (gear hero/char)','Cuma kepakai saat kamu LEADER rally/garrison (JOINER = sia-sia). Bangun HANYA 3 hero march utama (1 Inf + 1 Archer + 1 Cav). URUTAN PIECE F2P: 1) Infantry Gloves (Health) 2) Archer Helmet (Lethality) 3) Cavalry Helmet (Lethality) 4) Infantry Chest (Health) 5) Archer Boots 6) Cavalry Boots → sisanya stat sekunder. URUTAN TIPE: Infantry → Archer → Cavalry. Slot: Helmet/Boots = Lethality, Gloves/Chest = Health. Tier: abu→hijau→biru→ungu→Mythic(Lv100)→Red(Lv200). Mastery (Forgehammer) buka di Mythic Lv20; Red butuh Lv100+Mastery10 + 2 Mythic korban + TC30/~40 hari, lalu Mithril tiap 20 level. ⚠ reforge Forgehammer rugi 50% — anggap permanen, fokus piece prioritas. Widget/Exclusive Gear = boleh SKIP untuk F2P.'],
+  ['Hero Gear (gear hero/char)','Kepakai saat hero-mu MEMIMPIN: rally leader, garrison, DAN expedition (Mystic Trial/Arena) — SIA-SIA hanya saat JOIN rally orang lain. Bangun HANYA 3 hero march utama (1 Inf + 1 Archer + 1 Cav); gear SISA (bukan Forgehammer) boleh ditaruh di hero ke-4/5 untuk team tambahan Mystic Trial. URUTAN PIECE F2P: 1) Infantry Gloves (Health) 2) Archer Helmet (Lethality) 3) Cavalry Helmet (Lethality) 4) Infantry Chest (Health) 5) Archer Boots 6) Cavalry Boots → sisanya stat sekunder. URUTAN TIPE: Infantry → Archer → Cavalry. Slot: Helmet/Boots = Lethality, Gloves/Chest = Health. Tier: abu→hijau→biru→ungu→Mythic(Lv100)→Red(Lv200). Mastery (Forgehammer) buka di Mythic Lv20; Red butuh Lv100+Mastery10 + 2 Mythic korban + TC30/~40 hari, lalu Mithril tiap 20 level. ⚠ reforge Forgehammer rugi 50% — anggap permanen, fokus piece prioritas. Widget/Exclusive Gear = boleh SKIP untuk F2P.'],
   ['Governor/Chief Gear','Buff SELURUH army (joiner pun kepakai). Material Satin/Gilded/Artisan (BUKAN Forgehammer/Mithril). Urutan PIECE: Weapon \u2192 Chest(HP) \u2192 \u2026 \u2192 Helmet terakhir. Urutan TIPE: Inf\u2192Archer\u2192Cav. SET: samakan 6/6 ke tier sama dulu, baru naik 1.'],
   ['\u26a0 Forge \u2014 jangan judi','JANGAN gamble material. Tabung sampai cukup untuk jaminan 100% rarity, baru forge.'],
   ['\ud83d\udca1 Economy Set','Bikin set gear KEDUA murah khusus Construction + Research Speed \u2014 dipakai saat lagi bangun/riset.'],
 ];
 /* Item/Gear HERO (unlock TC15). Sumber: kingshotguide.org. [hero, peran, 2-piece, target] */
 const HERO_GEAR=[
-  ['Zoe','Garrison \u00b7 INTI','Gloves + Belt (Defense/Health)','Lv20'],
-  ['Petra','Rally leader Cav','Helmet + Boots (Attack/Lethality)','Lv20'],
-  ['Marlin','Rally leader Archer','Helmet + Boots (Attack/Lethality)','Lv20'],
-  ['Jabel','Garrison awal','Gloves + Belt','Secukupnya \u2192 ganti ke Zoe/Petra'],
+  ['Zoe','Garrison \u00b7 INTI (Infantry)','Gloves + Chest (Health)','Lv20'],
+  ['Petra','Rally leader (Cavalry)','Helmet + Boots (Attack/Lethality)','Lv20'],
+  ['Marlin','Rally leader (Archer)','Helmet + Boots (Attack/Lethality)','Lv20'],
+  ['Jabel','Garrison awal (Cavalry)','Gloves + Chest','Secukupnya \u2192 pindahkan gear ke PETRA (sama-sama Cavalry). BUKAN ke Zoe (Infantry \u2014 set beda).'],
 ];
 const CHARM_INFO=[
   'Unlock TC25 (maks Lv22). Diatur per TIPE PASUKAN (Infantry/Cavalry/Archer), beberapa slot tiap tipe. Tiap charm naikkan LETHALITY + HEALTH saja — BUKAN Attack/Defense (itu Governor Gear).',
@@ -120,7 +120,7 @@ const WEEKLY_TASKS=[
 ];
 /* Recurring events (hari-dalam-minggu WIB: 0=Min..6=Sab). Jam pasti per-kingdom — cek in-game. */
 const RECURRING_WEEKLY=[
-  {id:'viking',n:'Viking Vengeance',gi:'⚔',dows:[2,4],note:'2× per siklus 2-minggu (~30mnt; jam diatur aliansi) · defense/reinforce · pekan aktif cek game',settable:true},
+  {id:'viking',n:'Viking Vengeance',gi:'⚔',dows:[2,4],note:'Tiap 2 minggu (~30mnt; jam diatur aliansi) · kosongkan rumah + support anggota ONLINE · pekan aktif cek game',settable:true},
   {id:'triclash',n:'Tri-Alliance Clash',gi:'🛡',dows:[6],note:'Sabtu (~60mnt) · rebut titik',settable:true},
   {n:'Swordland Showdown',gi:'🗡',dows:[0],note:'Minggu (2-mingguan) · lintas-server'},
 ];
@@ -155,6 +155,7 @@ const ITEM_GUIDE=[
   ['\ud83c\udfd7\ufe0f Speedup Construction','TAHAN','Pakai di hari City Construction (KvK D1/D5, SG D1, HoG D1) untuk SELESAIKAN bangunan.'],
   ['\ud83d\udd2c Speedup Research','TAHAN','Pakai di hari Research/Skill (KvK D2, SG D3/D5).'],
   ['\u2694\ufe0f Speedup Training','TAHAN','Pakai di hari Combat/Troop (KvK D4, SG D4/D6, HoG D3). Stage T9 dulu, promote di window.'],
+  ['🪖 Training Capacity Boost','TAHAN','Aktifkan SEBELUM antri latih di hari Train Troops (HoG D3, SG D4/D6, KvK D4) → batch lebih besar = lebih banyak troop & poin. Barengkan Speedup Training biar batch SELESAI di dalam window (tepat waktu). ⛔ Jangan aktifkan di hari biasa — durasi terbuang. [verifikasi in-game]'],
   ['\u2764\ufe0f Speedup Healing','BEBAS','BUKAN item skor. Pakai saat perang/KvK. Jangan ditahan.'],
   ['\ud83d\udc8e Gem','TAHAN','Untuk Hero Roulette \u2014 terutama HoG D2 (+90.000/spin!).'],
   ['\ud83d\udd11 Kunci (Gold/Epic Keys)','TAHAN','Recruit/roulette di hari Hero Dev (HoG D2).'],
@@ -192,10 +193,10 @@ const EVENTS_INFO=[
    {n:'Hall of Heroes',cat:'PvE \u00b7 hero',freq:'~3 hari',what:'Pertarungan hero bertahap. Sumber shard Marlin (F2P) + mat progres hero.'},
  ]},
  {g:'Aliansi & PvP besar', items:[
-   {n:'Viking Vengeance',cat:'Aliansi \u00b7 defense \u00b7 PENTING',freq:'Tiap 2 minggu \u00b7 2× per siklus 2-minggu (~30mnt; jam diatur aliansi)',what:'20 wave Viking AI. Reinforce = cara skor #1 F2P: KOSONGKAN kota, kirim semua Inf+Cav reinforce ally ONLINE \u2014 kill point dihitung per-Viking yg dibunuh troop-MU. Hero DIKIRIM = DAMAGE/Lethality (Chenko/Amane/Yeonwoo), BUKAN defensif; 3 hero defensif (Jabel/Howard/Quinn) + Archer tinggal di rumah (urutan tempur Inf→Cav→Archer — archer jarang dapat kill sampai infantry menipis di wave akhir). Wave online-only 7/14/17; wave HQ 10/20 (recall 1 march, Howard shield-inf). Jangan heal/padamkan api saat event. Reward: Governor Gear (Satin+Gilded Thread).',sit:'viking'},
+   {n:'Viking Vengeance',cat:'Aliansi · defense · PENTING',freq:'Tiap 2 minggu (~30mnt; jam diatur aliansi)',what:'20 stage Viking AI menyerang semua anggota aliansi. Skor = Viking yang dibunuh troop-MU di rumah anggota lain + Viking yang dibunuh di rumah-MU oleh anggota. Cara F2P: KOSONGKAN rumahmu (3 hero terkuat di Guard Station, keluarkan/tukar sisa troop) biar supporter dapat skor penuh, lalu SUPPORT anggota lain. Stage 7/14/17 = cuma anggota ONLINE diserang (skor besar); stage 10/20 = serang HQ (shield infantry + cavalry tier tinggi, diatur R4/R5). Gagal bertahan 2x → Viking berhenti serang rumah itu. ⛔ Jangan heal troop saat event. Reward: Alliance Coin + material Governor Gear.',sit:'viking'},
    {n:'Sanctuary Battle',cat:'Aliansi \u00b7 season',freq:'Per season (8 fase)',what:'Rebut & tahan Sanctuary. F2P = JOINER rally. RPS combat.',sit:'sanctuary'},
    {n:'Fortress Battle',cat:'Aliansi \u00b7 season',freq:'Per season',what:'Rebut Fortress \u2014 bernilai 2 season point. Koordinasi aliansi penuh.',sit:'fortress'},
-   {n:'Kingdom of Power (KvK)',cat:'Aliansi \u00b7 musiman \u00b7 PENTING',freq:'~hari 70+ \u00b7 berkala (~18 hari, gantian Castle Battle)',what:'2 kerajaan berperang + Castle Battle (19:00 WIB). Combat = RPS (counter unit). Jatuhkan rally lawan secepat mungkin. Castle Battle pertama ~hari 54, lalu ~tiap 18 hari; menang = tahan castle 3 jam berturut.',sit:'kvk-rally'},
+   {n:'Kingdom of Power (KvK)',cat:'Aliansi \u00b7 musiman \u00b7 PENTING',freq:'~hari 70+ \u00b7 berkala (~28 hari; Castle Battle biweekly/Sabtu)',what:'2 kerajaan berperang + Castle Battle (19:00 WIB). Combat = RPS (counter unit). Jatuhkan rally lawan secepat mungkin. Castle Battle pertama ~hari 54, lalu ~tiap 2 minggu (Sabtu); menang = kontrol castle 2,5 jam total (atau okupasi terlama dalam event 5 jam).',sit:'kvk-rally'},
    {n:'All Out (Kill Event)',cat:'PvP \u00b7 server \u00b7 PENTING',freq:'~2 hari',what:'Seluruh server saling serang. F2P: SHIELD + farm gatherer + incar troop tier tinggi.',sit:'all-out'},
    {n:'Strongest Governor',cat:'Solo \u00b7 poin',freq:'7 hari',what:'Kompetisi poin harian per tema. TAHAN speedup \u2192 ledakkan di hari temanya.',tpl:'sg'},
    {n:'Hall of Governors (HoG)',cat:'Solo \u00b7 poin',freq:'~tiap 14 hari (mulai ~hari 6)',what:'Poin dari spending per tema. Tahan item \u2192 selesai di hari tema.',tpl:'hog'},
@@ -288,21 +289,33 @@ const MYSTIC_TRIAL={
   },
   zones:[
    {key:'coliseum',name:'Coliseum',days:'Sen-Sel',stat:'Hero + Hero Gear + Widget',ratio:[50,10,40],unlock:'Langsung',heroes:true,teams:'≤3 team',ownTroops:false,
-    tips:['Bawa hero SKILL TEMPUR (hero ekonomi spt Diana/Fahd jadi dead weight).','Pastikan semua hero punya gear minimal; fokus 1 set utama.','Makin dalam butuh 2–3 team → pakai bait-march & swap cavalry.']},
+    lead:'Hanya hitung HERO + Hero Gear + Widget. ATURAN expedition: hanya skill TEMPUR yang aktif — hero ekonomi (Diana: skill cuma −stamina & +march speed) = dead weight walau power tinggi. Leader F2P per kelas (lihat tab Hero) — Inf: Zoe (inti, Charisma +25% Atk); sebelum Zoe siap pakai Howard (tank). Archer: Marlin (carry, Wild Card); awal Quinn/Saul. Cav: Petra (leader, Gen-3); awal Jabel (garrison/leader Gen-1). Stage dalam butuh 3 team → hero ke-2 & ke-3 juga beri gear.',
+    marches:[
+     {m:'Team 1 — UTAMA',hero:'Leader combat terkuat + gear terbaik (mis. Zoe/Marlin/Petra)',why:'Power & gear utama ditaruh di sini.'},
+     {m:'Team 2 & 3 (stage dalam)',hero:'Hero combat berikutnya, beri gear minimal (purple Lv5 pun membantu)',why:'Stage lanjut butuh 3 team. Trik: reset Armor XP hero utama → pinjam ke hero 2/3 buat tembus stage, lalu reset balik.'}],
+    tips:['Bawa hero SKILL TEMPUR — hero ekonomi (cth Diana) jadi dead weight walau power tinggi.','Pastikan semua hero punya gear minimal; fokus 1 set utama.','Makin dalam butuh 2–3 team → siapkan gear di hero ke-2/3 (trik reset Armor XP).']},
    {key:'forest',name:'Forest of Life',days:'Rab-Kam',stat:'Pet (level + taming marks + combat skill)',ratio:[50,15,35],unlock:'~54 hari (Pet Gen-1)',heroes:false,teams:'tanpa hero',ownTroops:false,
+    lead:'Hanya hitung PET (level + taming marks + combat skill — aktif OTOMATIS). Hero TIDAK dihitung. Andalan F2P awal: Moose (pet combat pertama, Horror Stare −5% HP musuh); makin tinggi generasi pet combat makin kuat.',
     tips:['Tidak bawa hero — troop hanya menerima stat dari pet.','Combat pet ability AKTIF otomatis (tak perlu trigger manual).','Naikkan level pet & taming marks untuk stat dasar.']},
    {key:'crystal',name:'Crystal Cave',days:'Rab-Kam',stat:'Governor Charm (Lethality + Health)',ratio:[60,20,20],unlock:'TC 25',heroes:false,teams:'tanpa hero',ownTroops:false,
+    lead:'Hanya hitung Governor Charm (Lethality + Health). Hero/pet/gear/riset TIDAK dihitung. Prioritas naikkan charm Inf → Archer → Cav (semua Lv10 dulu, baru Design; push 1 charm ke atas, maks Lv22).',
     tips:['Hanya stat Governor Charm yang dihitung — paling "lurus".','Charm beri Lethality & Health (scaling lebih baik dari Atk/Def).','Charm Design = bottleneck utama; prioritas Inf→Arc→Cav, lompat L3→L5 efisien.']},
    {key:'nexus',name:'Knowledge Nexus',days:'Jum-Sab',stat:'Academy + War Academy (riset)',ratio:[50,20,30],unlock:'Langsung',heroes:false,teams:'tanpa hero',ownTroops:false,
+    lead:'Hanya hitung Battle Research (Academy + War Academy). Hero TIDAK dihitung. Riset beri squad capacity & tier troop — satu-satunya zona di mana tier troop dari riset benar-benar terpakai (T11 jika War Academy sudah buka).',
     tips:['Tidak bawa hero — andalan Battle Research.','Riset beri squad capacity; jika War Academy terbuka, troop T11 bisa terpakai.','Salah satu zona di mana tier troop dari riset benar-benar membantu.']},
    {key:'molten',name:'Molten Fort',days:'Jum-Sab',stat:'Governor Gear (Attack + Defense)',ratio:[60,15,25],unlock:'TC 22',heroes:false,teams:'tanpa hero',ownTroops:false,
-    tips:['Hanya Governor Gear — hero/charm/pet/riset DIABAIKAN (bait-march tidak relevan).','Prioritas upgrade Inf→Arc→Cav; bottleneck material = Artisan Vision.','Set bonus di 3 & 6 piece se-rarity. Gear beri Atk/Def; Lethality/Health dari Charm.']},
+    lead:'Hanya hitung Governor Gear (Attack + Defense). Hero/charm/pet/riset DIABAIKAN. Prioritas upgrade Inf → Archer → Cav; bottleneck material = Artisan Vision; set bonus di 3 & 6 piece se-rarity.',
+    tips:['Hanya Governor Gear — hero/charm/pet/riset DIABAIKAN (taktik hero tak berlaku).','Prioritas upgrade Inf→Arc→Cav; bottleneck material = Artisan Vision.','Set bonus di 3 & 6 piece se-rarity. Gear beri Atk/Def; Lethality/Health dari Charm.']},
    {key:'spire',name:'Radiant Spire',days:'Minggu',stat:'SEMUA stat + VIP + Skin + Oasis',ratio:[50,15,35],unlock:'Langsung',heroes:true,teams:'≤3 team',ownTroops:true,
-    tips:['Ujian pamungkas: semua sumber stat berlaku.','Pakai TROOP SENDIRI (bukan T10) → tier tinggi (True Gold+) unggul besar.','Butuh 3 team kuat → bait-march & swap cavalry sangat berguna.']}
+    lead:'Ujian pamungkas: SEMUA sumber stat berlaku (Hero + Gear + Charm + Pet + Riset + VIP + Skin + Oasis) DAN pakai TROOP SENDIRI (tier tinggi spt True Gold+ unggul besar). Hero sama seperti Coliseum — Inf Zoe (awal Howard) · Archer Marlin (awal Quinn/Saul) · Cav Petra (awal Jabel); hindari hero ekonomi (Diana). Stage dalam butuh 3 team.',
+    marches:[
+     {m:'Team 1 — UTAMA',hero:'Combat-skill terkuat + gear terbaik + troop tier tertinggi-mu',why:'Power, gear, & troop terbaik di sini (Spire pakai troop sendiri).'},
+     {m:'Team 2 & 3 (stage dalam)',hero:'Combat-skill berikutnya, beri gear minimal',why:'Stage lanjut butuh 3 team. Trik: reset Armor XP hero utama → pinjam ke hero 2/3, lalu reset balik.'}],
+    tips:['Ujian pamungkas: semua sumber stat berlaku.','Pakai TROOP SENDIRI (bukan T10) → tier tinggi (True Gold+) unggul besar.','Butuh 3 team kuat → siapkan gear & hero di team 2/3 (trik reset Armor XP).']}
   ],
   tactics:[
-   ['Bait-march (HANYA Coliseum & Radiant Spire)','Korbankan march pertama (hero lemah, formasi 2-jenis 60/40 Inf/Cav) → AI buang army terkuatnya di situ. Tumpuk hero terbaik di march 2 & 3 (50/20/30) → menang 2 pertarungan berikutnya. Tidak relevan di zona gear/charm/pet/tech.'],
-   ['Swap Cavalry (Coliseum & Spire)','Pindahkan hero cavalry terbaik ke march lain & balik formasi DPS jadi 50/40/10 (Inf/Cav/Arc) agar hero cavalry meng-cover 4× lebih banyak troop.'],
+   ['Siapkan 3 team (Coliseum & Radiant Spire)','Stage dalam butuh 3 team berhero. Beri gear minimal ke semua hero combat. Trik (lootbar): reset Armor XP hero utama yang sudah maks → pinjamkan ke hero ke-2/3 untuk tembus 1 stage, lalu reset balik. CATATAN: urutan hero bertarung RNG (Xora) — tak bisa di-"umpan"/bait-march seperti conquest.'],
+   ['Counter dari Battle Report','% troop musuh hanya kelihatan di Battle Report SETELAH kalah. Stage 1-9 seimbang (pakai rasio zona); stage 10 = 53/27/20 infantry-berat → tebalkan infantry-mu jadi meat-shield, archer tetap DPS. Ubah 5-10% tiap percobaan, habiskan 5 attempt.'],
    ['Mentok = naikkan stat, bukan formasi','Kalau rasio sudah benar tapi tetap kalah, itu batas investasi. Tingkatkan sumber stat zona tsb (gear/charm/pet/riset).']
   ],
   shop:'Mithril & Charm Design dulu (Charm Design = bottleneck F2P) → Mythic Hero Shard / Dev TP → True Gold Dust → speed-up paling akhir. Court of Knowledge (1–3% dari Trial Chest) = +20% Squad Attack permanen.',
@@ -313,16 +326,17 @@ const MYSTIC_TRIAL={
 const EVENT_TEMPLATES={
   kvk:{name:'Kingdom of Power (KvK)',len:5,battleWIB:'19:00 WIB',minDay:70,
     days:['D1 City Construction','D2 Basic Skills','D3 Pet Training','D4 Gear & Troops','D5 Combined + Battle'],
-    spend:['Pakai construction+research speedup; SELESAIKAN upgrade sekarang','Hero Roulette + Mythic shard','Advanced Taming Mark + pet','Mithril + promote troop T10\u2192T11','Buang SISA semua item (rate penuh)'],
-    hold:'speedup (semua), gem, Mythic shard, Truegold, Mithril, Forgehammer, Advanced Taming Mark, troop T9 utk promote'},
+    spend:['Pakai construction+research speedup; SELESAIKAN upgrade sekarang','Hero Roulette + Mythic shard','Advanced Taming Mark + pet','Aktifkan Training Capacity buff → Mithril + promote troop T10→T11','Buang SISA semua item (rate penuh)'],
+    hold:'speedup (semua), gem, Mythic shard, Truegold, Mithril, Forgehammer, Advanced Taming Mark, troop T9 + Training Capacity buff utk promote'},
   sg:{name:'Strongest Governor',len:7,battleWIB:null,minDay:75,
     days:['D1 City Construction','D2 Hero Dev','D3 Skill Up','D4 Combat','D5 Power Boost','D6 Combat','D7 Hero Dev'],
-    spend:['Buang SEMUA speedup (30/mnt) + selesaikan bangunan','Mithril 40k + Roulette + shard','Advanced Taming Mark (15k)','Promote troop (T11 49/unit)','Mithril + buang speedup','Governor Gear + promote troop','Tempered Truegold + Taming Mark + speedup'],
-    hold:'speedup (utk D1/D5/D7), Mithril (D2/D4/D5), Advanced Taming Mark (D3), troop T9 (D4/D6), gem'},
+    spend:['Buang SEMUA speedup (30/mnt) + selesaikan bangunan','Mithril 40k + Roulette + shard','Advanced Taming Mark (15k)','Aktifkan Training Capacity buff → promote troop (T11 49/unit)','Mithril + buang speedup','Governor Gear + Training Capacity buff → promote troop','Tempered Truegold + Taming Mark + speedup'],
+    hold:'speedup (utk D1/D5/D7), Mithril (D2/D4/D5), Advanced Taming Mark (D3), troop T9 + Training Capacity buff (D4/D6), gem'},
   hog:{name:'Hall of Governors',len:7,battleWIB:null,
-    days:['D1 Construction/Power','D2 Hero Dev','D3 Train Troops','D4 Beast/Gather','D5 Power Boost','D6 Governor Gear/Charm','D7 Hero Dev'],
-    spend:['Pakai SPEEDUP CONSTRUCTION (+research) \u2192 selesaikan bangunan. TAHAN speedup training utk D3.','\u2605 SPIN Hero Roulette (+90.000/spin!) pakai GEM/KUNCI + hero shard','Pakai SPEEDUP TRAINING \u2192 train/promote troop','Rally Terror (+90.000) / bunuh Beast','Forgehammer + Gear Widget','Naikkan Governor Gear','Hero shard + speedup'],
-    hold:'gem (utk Roulette D2 = 90k/spin!), troop T9 (D3), Forgehammer/Widget (D5)'},
+    /* Susunan terverifikasi HoG #4/#5 (Hero: Hilde, Top 100). Lihat tab HoG utk detail per-iterasi. */
+    days:['D1 Power Boost','D2 Hero Dev','D3 Train Troops','D4 Charm Upgrade','D5 Power Boost','D6 Governor Gear','D7 Hero Dev'],
+    spend:['Selesaikan upgrade/riset/promote troop naik power (Constr/Research 30, troop 20).','★ SPIN Hero Roulette (+90.000/spin!) pakai GEM/KUNCI + shard (Mythic 35rb/Epic 14rb/Rare 4rb)','Latih/promote troop tier TERTINGGI (Lv10=1.960 vs Lv1=90) + Training Capacity buff','Naikkan Governor Charm (+1.000/score, level awal lompat besar)','Widget Hero Exclusive Gear (100.000!) + Forgehammer (50.000)','Naikkan Governor Gear (+500/score; Mythic level-up 6.250)','Shard hero sisa + buang speedup (300/mnt Constr/Research/Train)'],
+    hold:'gem + Widget (utk D2 & D5 = 90rb & 100rb!), troop T9 + Training Capacity buff (D3), Charm design (D4), Forgehammer (D5), speedup (D7)'},
   armament:{name:'Armament Competition',len:2,battleWIB:null,minDay:65,
     days:['Type 1: shard + Truegold + gov gear','Type 2: hero gear (Forgehammer/Mithril)'],
     spend:['Shard + Truegold + Governor Gear score','Forgehammer + Mithril + Widget'],
@@ -330,6 +344,64 @@ const EVENT_TEMPLATES={
   burst:{name:'Burst of Life',len:7,milestone:true,battleWIB:null,oneTime:true,startDay:0,
     goal:'Kumpulkan POWER (upgrade + riset + train troop + hero) untuk 8 tier milestone: 50rb \u2192 4 juta power. Reward puncak: City Skin + 2\u00d71.000 gem.',
     days:[],spend:[],hold:''},
+};
+/* ── Hall of Governors — data PER-ITERASI per-STAGE (terverifikasi kingshotdata.com + kingshotwiki, Jul 2026) ──
+   Satu tabel per iterasi (susunan seperti game): Stage → Task → Poin.
+   Task & poin SAMA antar iterasi; yang beda = stage mana yang aktif, Hero of the Season, & ambang leaderboard. */
+const _HT={ /* baris task pakai-ulang: [label, poin] */
+  roul:['🎰 Hero Roulette (1 spin)','90.000'],
+  sM:['🦸 Mythic Hero Shard','35.000'], sE:['🦸 Epic Hero Shard','14.000'], sR:['🦸 Rare Hero Shard','4.000'],
+  gath:['🌾 Gather Bread/Wood/Stone/Iron','3 /task'],
+  troop:['⚔️ Latih troop Lv1 → Lv10','90 → 1.960'],
+  ggr:['🛡️ Governor Gear +1 max score','500'],
+  chr:['💠 Governor Charm +1 max score','1.000'],
+  wid:['🔨 Widget Hero Exclusive Gear','100.000'], ham:['🔨 Forgehammer (Hero Gear)','50.000'], gxp:['🔨 Hero Gear Enhancement XP (100)','30.000'],
+  beast:['🐺 Bunuh Beast Lv1-30','30.000'], terror:['🐉 Rally Terror','90.000'],
+  ccC:['🏗️ Power dari Construction','45'], ccR:['🔬 Power dari Research','45'],
+  pbC:['🏗️ Power dari Construction','30'], pbR:['🔬 Power dari Research','30'], pbT:['⚔️ Power dari train/promote troop','20'],
+  spC:['⏩ Speedup Construction (/mnt)','300'], spR:['⏩ Speedup Research (/mnt)','300'], spT:['⏩ Speedup Train/Promote (/mnt)','300'],
+};
+const HOG_DETAIL={
+  intro:'Event kompetitif solo tiap 14 hari (mulai H6). HANYA muncul di Generasi 1-2 kingdom. Hero of the Season + susunan stage BERUBAH tiap iterasi. Reward: 4 tier milestone (gratis, tier akhir = gem + skill book) + shard hero dari leaderboard.',
+  iters:[
+    {no:'#1', hero:'Amadeus', rank:'Top 10', gen:'Gen 1', day:'H6',
+     stages:[['1 · City Construction',[_HT.ccC,_HT.ccR]],['2 · Hero Development',[_HT.roul,_HT.sM,_HT.sE,_HT.sR,_HT.gath]],['3 · Train Troops',[_HT.troop]],['4 · Beast Slay',[_HT.terror,_HT.beast]],['5 · Power Boost',[_HT.pbC,_HT.pbR,_HT.pbT]]],
+     note:'Satu-satunya HoG dengan Beast Slay (Rally Terror + beast).'},
+    {no:'#2', hero:'Amadeus', rank:'Top 10', gen:'Gen 1', day:'H20',
+     stages:[['1 · City Construction',[_HT.ccC,_HT.ccR]],['2 · Hero Development',[_HT.roul,_HT.sM,_HT.sE,_HT.sR,_HT.gath]],['3 · Train Troops',[_HT.troop]],['4 · Gather Resources',[_HT.gath,_HT.ccR]],['5 · Power Boost',[_HT.wid,_HT.ham,_HT.gxp,_HT.pbC,_HT.pbR,_HT.pbT]],['6 · Governor Gear',[_HT.ggr,_HT.pbC,_HT.pbR,_HT.pbT]]],
+     note:'Beast Slay hilang; muncul Gather & Governor Gear.'},
+    {no:'#3', hero:'Amadeus', rank:'Top 10', gen:'Gen 1-2', day:'H34',
+     stages:[['1 · Power Boost',[_HT.pbC,_HT.pbR,_HT.pbT]],['2 · Hero Development',[_HT.roul,_HT.sM,_HT.sE,_HT.sR,_HT.gath]],['3 · Train Troops',[_HT.troop]],['4 · Gather Resources',[_HT.gath,_HT.ccR]],['5 · Power Boost',[_HT.wid,_HT.ham,_HT.pbC,_HT.pbR,_HT.pbT]],['6 · Governor Gear',[_HT.ggr]],['7 · Hero Development',[_HT.sR,_HT.sE,_HT.sM,_HT.spC,_HT.spR,_HT.spT]]],
+     note:'Sering transisi ke Gen 2. Stage akhir Hero Dev + speedup baru berpoin.'},
+    {no:'#4 & #5', hero:'🔥 Hilde', rank:'Top 100', gen:'Gen 2', day:'H48 / H62',
+     stages:[['1 · Power Boost',[_HT.pbC,_HT.pbR,_HT.pbT]],['2 · Hero Development',[_HT.roul,_HT.sM,_HT.sE,_HT.sR,_HT.gath]],['3 · Train Troops',[_HT.troop]],['4 · Charm Upgrade',[_HT.chr,_HT.gath,_HT.ccR]],['5 · Power Boost',[_HT.wid,_HT.ham,_HT.pbC,_HT.pbR,_HT.pbT]],['6 · Governor Gear',[_HT.ggr]],['7 · Hero Development',[_HT.sR,_HT.sE,_HT.sM,_HT.spC,_HT.spR,_HT.spT]]],
+     note:'Hero GANTI ke Hilde, ambang Top 100 (bukan Top 10) → peluang emas F2P. Muncul Charm Upgrade.'},
+  ],
+  /* Skala detail (collapsible di bawah tabel utama) */
+  troop:[['Lv1','90'],['Lv2','120'],['Lv3','180'],['Lv4','265'],['Lv5','385'],['Lv6','595'],['Lv7','830'],['Lv8','1.130'],['Lv9','1.485'],['Lv10','1.960']],
+  govgear:[['Uncommon','1.125'],['Uncommon ★1','1.875'],['Rare','3.000'],['Rare ★1','4.500'],['Rare ★2','5.100'],['Rare ★3','5.400'],['Epic / ★1','3.230'],['Epic ★2 / ★3','3.225'],['Epic T1 / ★1','3.440'],['Epic T1 ★2 / ★3','4.085'],['Mythic (semua ★)','6.250']],
+  charm:[['Lv1','625'],['Lv2','1.250'],['Lv3','3.125'],['Lv4','8.750'],['Lv5','11.250'],['Lv6','12.500'],['Lv7','12.500'],['Lv8','13.000'],['Lv9','14.000'],['Lv10','15.000'],['Lv11','16.000']],
+  tips:[
+    '🎯 HoG #4 (H48) & #5 (H62) = kesempatan EMAS F2P: cukup Top 100 (bukan Top 10) untuk shard Hilde. Fokus kejar leaderboard di dua iterasi ini.',
+    '💥 Poin tunggal terbesar: Widget Hero Exclusive Gear = 100.000, lalu Hero Roulette = 90.000/spin. Simpan gem + Widget untuk stage-nya.',
+    '⚔️ Troop tier tinggi JAUH lebih berpoin (Lv10 = 1.960 vs Lv1 = 90). Stage Train Troops: latih/promote troop tier TERTINGGI yang bisa, jangan spam tier rendah.',
+    '🐉 Hanya HoG #1 punya Beast Slay (Rally Terror 90rb + beast 30rb). HoG #2+ TIDAK — jangan tunggu beast day di HoG #4.',
+    '🌾 Gather resource cuma 3 poin/task — abaikan, buang-buang stamina.',
+    '⏩ Speedup baru berpoin di stage Hero Dev TERAKHIR (HoG #3/#4/#5) = 300/mnt. Selain itu speedup nyaris tak berpoin — pakai hanya untuk naikin power.',
+    '🎁 Milestone reward 4 tier bisa diraih GRATIS walau tak masuk leaderboard. Tier akhir = gem + skill book — selalu kejar.',
+    '⏳ HoG cuma ada di Gen 1-2. Setelah ~Gen 3 (KvK ~H70, Strongest Governor ~H75), HoG berhenti muncul.',
+  ],
+};
+/* Misi jelas per-stage HoG (key = nama stage tanpa nomor). Dipakai render tabel HoG. */
+const HOG_STAGE_MISSION={
+  'City Construction':'Naikkan POWER dari upgrade bangunan & riset — selesaikan di dalam window (pakai speedup construction).',
+  'Hero Development':'Spin Hero Roulette (gem/kunci) & pakai shard untuk naik bintang hero. Roulette = poin terbesar.',
+  'Train Troops':'Latih/promote troop — tier makin tinggi makin berpoin. Aktifkan Training Capacity buff dulu.',
+  'Beast Slay':'Bunuh beast di peta & rally Terror. Rally Terror = 90.000 (terbesar).',
+  'Gather Resources':'Kumpulkan resource di wilderness + sedikit power dari riset. Poin gather kecil — jangan diandalkan.',
+  'Power Boost':'Kumpulkan POWER (bangunan/riset/troop) + pakai Forgehammer/Widget ke gear hero. Widget = 100.000.',
+  'Governor Gear':'Naikkan skor Governor Gear (level-up gear) — +500 poin tiap max score naik.',
+  'Charm Upgrade':'Naikkan Governor Charm — level awal lompatan poin besar (+1.000/score).',
 };
 /* SUMBER KANONIK ROI speedup per event (dipakai render encyclopedia + roi card). */
 const SPEED_NOTE={kvk:'\u2705 PAKAI speedup (30/mnt) sesuai tema hari',sg:'\u2705 PAKAI speedup (30/mnt) di D1/D5/D7 \u2014 buang bank speedup di sini',hog:'\u26d4 Speedup nyaris tak ber-poin di HoG \u2014 pakai hanya untuk selesaikan upgrade (naik power)',armament:'\u26d4 JANGAN buang speedup di Armament (1 poin/menit)',burst:'\u2705 PAKAI speedup untuk selesaikan upgrade (naik power)'};
@@ -353,7 +425,7 @@ const WEEKLY_GUIDE={
   goldenGlaives:'Event poin kombat ringan \u2014 ikut dari aktivitas normal, jangan spend khusus.',
   eternitysReach:'Progres solo \u2014 reward bertahap dari aktivitas normal, tak perlu spend.',
   defeatBeasts:'Bunuh beast di map \u2014 habiskan semua stamina di hari ini (hemat: hero Diana).',
-  vikingsVengeance:'Kosongkan kota, reinforce ally ONLINE. Lineup: tab Hero \u2192 Viking Vengeance.',
+  vikingsVengeance:'Kosongkan rumah + support anggota ONLINE (stage 7/14/17 = skor besar; 10/20 = HQ). Lineup: tab Hero → Viking Vengeance.',
   strongestGovernor:'Event skor 7 hari \u2014 ikuti tema harian (lihat Advisory & Ensiklopedia SG).',
   kingsCastle:'Castle Battle: serang TURRET (bukan castle), masuk Forbidden Zone <1 jam sebelum mulai.',
   castleBattle:'Serang TURRET (bukan castle); TP masuk <1 jam sebelum mulai; batch-heal.',

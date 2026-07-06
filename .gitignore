@@ -12,3 +12,4 @@
 /server/.v.json
 /server/node_modules
 /server/.wrangler
+.firecrawl/
