@@ -546,31 +546,62 @@ function renderDukung(){
   const el=$('[data-tab=dukung]'); if(!el) return;
   el.innerHTML=pageHead('Saran & Donasi','Punya ide atau permintaan fitur? Kirim di sini. Suka app-nya? Dukung biar terus berkembang.')
     +card('Saran / Request Fitur','💬',
-      `<p class="muted small">Tulis ide, bug, atau fitur yang kamu mau. Makin jelas, makin cepat dikerjakan.</p>
+      `<p class="muted small">Tulis ide, bug, atau fitur yang kamu mau. Terkirim langsung dari sini — tak perlu buka aplikasi email.</p>
        <textarea id="fb_text" rows="5" placeholder="Contoh: tambah kalkulator gear, atau event X belum ada…"></textarea>
        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
-         <button class="btn" id="fb_send">✉ Kirim via Email</button>
+         <button class="btn" id="fb_send">📨 Kirim</button>
          <button class="btn sec sm" id="fb_copy">📋 Salin</button>
        </div>
-       <div id="fb_status"></div>
-       <div class="muted small" style="margin-top:8px">Bisa juga titip saran di kolom pesan saat donasi Saweria/Ko-fi di bawah.</div>`)
+       <div id="fb_status"></div>`)
     +card('Dukung / Donasi','❤',
       `<p class="muted small">App ini gratis & F2P-friendly. Donasi sekecil apa pun membantu biaya server (sinkron, gift-code, jadwal live) & pengembangan fitur baru. Terima kasih! 🙏</p>
        <div class="row" style="gap:10px;flex-wrap:wrap">
          <a class="btn" href="https://saweria.co/indonenen13" target="_blank" rel="noopener">🇮🇩 Saweria</a>
          <a class="btn sec" href="https://ko-fi.com/indonenen13" target="_blank" rel="noopener">🌍 Ko-fi</a>
-         <a class="btn sec" href="https://www.paypal.com/donate/?business=faturochman13%40gmail.com&currency_code=USD&item_name=Kingshot+App+Support" target="_blank" rel="noopener">💳 PayPal</a>
+       </div>
+       <div class="alert inf small" style="margin-top:12px">💳 <b>PayPal</b> — kirim via <b>Send Money</b> (Friends & Family) ke email berikut:
+         <div class="row" style="margin-top:8px;gap:8px;align-items:center;flex-wrap:wrap">
+           <code id="pp_mail" class="num" style="background:var(--bg-2);border:1px solid var(--bd);border-radius:8px;padding:6px 10px">memuat…</code>
+           <button class="btn sec sm" id="pp_copy">📋 Salin email</button>
+           <a class="btn ghost sm" href="https://www.paypal.com/myaccount/transfer/send" target="_blank" rel="noopener">Buka PayPal</a>
+         </div>
+         <span class="dim small">Tombol Donate PayPal tak tersedia utk akun Indonesia — jadi pakai Send Money manual.</span>
        </div>`);
   const t=$('#fb_text',el);
-  const mailAddr=function(){ return 'faturochman13'+String.fromCharCode(64)+'gmail.com'; }; /* dirakit runtime — anti-scrape */
-  const send=$('#fb_send',el); if(send) send.onclick=()=>{
+  const mailAddr=function(){ return 'faturochman13'+String.fromCharCode(64)+'gmail.com'; }; /* dirakit runtime */
+  const en=()=>(window.__getLang&&window.__getLang()==='en');
+  const st=()=>$('#fb_status',el);
+  /* Kirim langsung via FormSubmit.co (AJAX, tanpa buka email). Aktivasi 1× di inbox pemilik. */
+  const send=$('#fb_send',el); if(send) send.onclick=async()=>{
     const v=(t&&t.value||'').trim(); if(!v){ if(t) t.focus(); return; }
-    window.location.href='mailto:'+mailAddr()+'?subject='+encodeURIComponent('Saran Kingshot App')+'&body='+encodeURIComponent(v);
+    const s=st(); if(s) s.innerHTML='<div class="alert inf small">'+(en()?'⏳ Sending…':'⏳ Mengirim…')+'</div>';
+    send.disabled=true;
+    try{
+      const p=store.get('profile',{});
+      const r=await fetch('https://formsubmit.co/ajax/'+mailAddr(),{
+        method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({ message:v, _subject:'Saran Kingshot App', _captcha:'false', _template:'table',
+          dari:(p.nick||'?')+' · ID '+(p.pid||'-')+' · Kingdom '+(p.kingdom||'-'), bahasa:(window.__getLang&&window.__getLang())||'id' }) });
+      const j=await r.json().catch(()=>({}));
+      if(j&&(j.success==='true'||j.success===true)){
+        if(s) s.innerHTML='<div class="alert ok small">'+(en()?'✅ Sent! Thanks for the feedback.':'✅ Terkirim! Terima kasih atas masukannya.')+'</div>'; if(t) t.value='';
+      } else if(j&&/activ/i.test(j.message||'')){
+        if(s) s.innerHTML='<div class="alert warn small">'+(en()?'Form is being activated by the owner — please try again shortly, or use Copy below.':'Form sedang diaktifkan pemilik — coba lagi sebentar, atau pakai Salin di bawah.')+'</div>';
+      } else { throw new Error('fail'); }
+    }catch(e){
+      if(s) s.innerHTML='<div class="alert bad small">'+(en()?'Failed to send (network). Copy the text and send manually.':'Gagal kirim (jaringan). Salin teks lalu kirim manual.')+'</div>';
+    }
+    send.disabled=false;
   };
   const copy=$('#fb_copy',el); if(copy) copy.onclick=async()=>{
-    const v=(t&&t.value||'').trim(); if(!v) return; const s=$('#fb_status',el);
-    try{ await navigator.clipboard.writeText(v); if(s) s.innerHTML='<div class="alert ok small">📋 Tersalin — tempel ke email/pesan donasi.</div>'; }
-    catch(e){ if(t){ t.select(); try{ document.execCommand('copy'); if(s) s.innerHTML='<div class="alert ok small">📋 Tersalin.</div>'; }catch(e2){} } }
+    const v=(t&&t.value||'').trim(); if(!v) return; const s=st();
+    try{ await navigator.clipboard.writeText(v); if(s) s.innerHTML='<div class="alert ok small">'+(en()?'📋 Copied.':'📋 Tersalin.')+'</div>'; }
+    catch(e){ if(t){ t.select(); try{ document.execCommand('copy'); }catch(e2){} } }
+  };
+  /* PayPal email — inject runtime + copy */
+  const ppm=$('#pp_mail',el); if(ppm) ppm.textContent=mailAddr();
+  const ppc=$('#pp_copy',el); if(ppc) ppc.onclick=async()=>{
+    try{ await navigator.clipboard.writeText(mailAddr()); ppc.textContent=en()?'✅ Copied':'✅ Tersalin'; setTimeout(()=>{ ppc.textContent=en()?'📋 Copy email':'📋 Salin email'; },1500); }catch(e){}
   };
   if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
