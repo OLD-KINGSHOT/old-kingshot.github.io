@@ -1131,57 +1131,82 @@ html{scrollbar-width:thin;scrollbar-color:var(--bg-4) transparent}
 </style>
 <script>window.__splashT0=Date.now();setTimeout(function(){var s=document.getElementById('splash');if(s){s.classList.add('off');setTimeout(function(){s.remove();},600);}},6000);</script>
 <div class="app">
-  <!-- Sidebar (desktop) -->
-  <aside class="side">
-    <div class="brand" id="brand" style="cursor:pointer">
-      <span class="a"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M2 8.2l4.3 3.4L12 3l5.7 8.6L22 8.2l-2 10.4H4L2 8.2z"/><rect x="4" y="19.4" width="16" height="2.2" rx=".4" fill="currentColor"/></svg></span>
-      <span class="wm">KINGSHOT13<small>powered by indonen13</small></span>
-    </div>
-    <nav class="navlist" id="navlist"></nav>
-    <button class="sideprofile" id="sideprof" title="Profil &amp; koneksi">
-      <span class="spi">👤</span>
-      <span class="spt"><b>Profil & Login</b><small id="sp_sub">belum terhubung</small></span>
-    </button>
-    <select id="profSwitch" class="profswitch" title="Ganti profil aktif" style="display:none"></select>
-    <div class="sidefoot">
-      DATA KOMUNITAS · 2026-06<br>LAYAR IN-GAME = ACUAN FINAL<br>OFFLINE · LOCAL STORAGE
-    </div>
-  </aside>
-
-  <!-- Main -->
-  <div class="main">
+  <div class="apphead">
     <header class="topbar">
+      <div class="brand" id="brand" style="cursor:pointer">
+        <span class="a"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M2 8.2l4.3 3.4L12 3l5.7 8.6L22 8.2l-2 10.4H4L2 8.2z"/><rect x="4" y="19.4" width="16" height="2.2" rx=".4" fill="currentColor"/></svg></span>
+        <span class="wm">KINGSHOT13<small>powered by indonen13</small></span>
+      </div>
       <div class="clockwrap">
         <span class="clk num" id="clk">--:--:--</span>
         <span class="clkmeta" id="clkmeta"></span>
       </div>
       <span class="tb-spacer"></span>
       <span class="engine off" id="engine">LIVE</span>
+      <button class="topprofile" id="sideprof" title="Profil &amp; koneksi"><span class="spi">👤</span><span class="spt"><b>Profil</b><small id="sp_sub">belum terhubung</small></span></button>
+      <select id="profSwitch" class="profswitch" title="Ganti profil aktif" style="display:none"></select>
       <button class="iconbtn" id="tztoggle" title="Zona waktu / Timezone (WIB ⇄ UTC)" style="font:700 11px/1 var(--font-mono);letter-spacing:.08em">WIB</button><button class="iconbtn" id="langtoggle" title="Language / Bahasa" style="font:700 11px/1 var(--font-mono);letter-spacing:.08em">EN</button>
     </header>
-
-    <main class="content">
-      <section class="tab" data-tab="sekarang" data-screen-label="Sekarang"></section>
-      <section class="tab" data-tab="hero" data-screen-label="Hero"></section>
-      <section class="tab" data-tab="event" data-screen-label="Event"></section>
-      <section class="tab" data-tab="bangun" data-screen-label="Bangun"></section>
-      <section class="tab" data-tab="pets" data-screen-label="Pets"></section>
-      <section class="tab" data-tab="island" data-screen-label="Island"></section>
-      <section class="tab" data-tab="kode" data-screen-label="Kode"></section>
-      <section class="tab" data-tab="profil" data-screen-label="Profil"></section>
-    </main>
-
-    <!-- ── Donate footer ── -->
-    <footer id="donatebar">
-      <span class="dn-txt">Kalau terbantu, dukung pengembangannya:</span>
-      <a class="dn-btn" href="https://saweria.co/indonenen13" target="_blank" rel="noopener">🇮🇩 Saweria</a>
-      <a class="dn-btn" href="https://ko-fi.com/indonenen13" target="_blank" rel="noopener">🌍 Ko-fi</a>
-    </footer>
+    <nav class="topnav" id="navlist"></nav>
   </div>
 
-  <!-- Bottom nav (mobile) -->
+  <main class="content">
+    <section class="tab" data-tab="sekarang" data-screen-label="Sekarang"></section>
+    <section class="tab" data-tab="hero" data-screen-label="Hero"></section>
+    <section class="tab" data-tab="event" data-screen-label="Event"></section>
+    <section class="tab" data-tab="bangun" data-screen-label="Bangun"></section>
+    <section class="tab" data-tab="pets" data-screen-label="Pets"></section>
+    <section class="tab" data-tab="island" data-screen-label="Island"></section>
+    <section class="tab" data-tab="kode" data-screen-label="Kode"></section>
+    <section class="tab" data-tab="profil" data-screen-label="Profil"></section>
+  </main>
+
+  <footer id="donatebar">
+    <span class="dn-txt">Kalau terbantu, dukung pengembangannya:</span>
+    <a class="dn-btn" href="https://saweria.co/indonenen13" target="_blank" rel="noopener">🇮🇩 Saweria</a>
+    <a class="dn-btn" href="https://ko-fi.com/indonenen13" target="_blank" rel="noopener">🌍 Ko-fi</a>
+  </footer>
+
   <nav class="mobnav" id="mobnav"></nav>
 </div>
+<style>
+/* ===== Top-nav layout (desktop): remove left sidebar, header holds nav ===== */
+.app{display:block;min-height:100vh;position:relative;z-index:1}
+.side{display:none!important}
+.apphead{position:sticky;top:0;z-index:35;background:rgba(13,18,25,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--bd)}
+.apphead .topbar{position:static;background:transparent;backdrop-filter:none;border-bottom:1px solid var(--bd);padding:11px 26px;min-height:0}
+.apphead .brand{display:flex;align-items:center;gap:10px;border:0;padding:0;margin-right:6px}
+.apphead .brand .a{width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--accent);border:1px solid rgba(107,147,242,.3);background:rgba(107,147,242,.12);border-radius:10px;flex:0 0 auto}
+.apphead .brand .wm{font-weight:800;font-size:15px;letter-spacing:-.01em;line-height:1.05}
+.apphead .brand .wm small{display:block;font-family:var(--font-mono);font-size:8.5px;font-weight:600;letter-spacing:.12em;color:var(--fg-dim);text-transform:uppercase;margin-top:2px}
+.topprofile{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-3);border:1px solid var(--bd);border-radius:10px;color:var(--fg-mute);cursor:pointer;transition:.14s var(--ease)}
+.topprofile:hover{border-color:rgba(107,147,242,.4);color:var(--fg)}
+.topprofile.on{border-color:rgba(107,147,242,.4)}
+.topprofile .spi{font-size:16px;flex:0 0 auto}
+.topprofile .spt{display:flex;flex-direction:column;line-height:1.12;text-align:left}
+.topprofile .spt b{font-size:12.5px;color:var(--fg);font-weight:700}
+.topprofile .spt small{font-size:10px;color:var(--fg-dim)}
+.topnav{display:flex;gap:6px;padding:8px 26px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.topnav .navbtn{flex:0 0 auto;flex-direction:row;width:auto;gap:8px;padding:9px 16px;margin:0;border-radius:11px;border:1px solid transparent;font-size:13.5px;font-weight:600;box-shadow:none;color:var(--fg-mute)}
+.topnav .navbtn .gi{width:auto;font-size:15px}
+.topnav .navbtn:hover{background:var(--bg-3);color:var(--fg)}
+.topnav .navbtn.active{background:var(--accent);color:#0b1220;font-weight:700;box-shadow:0 3px 12px rgba(107,147,242,.30)}
+.main{margin-left:0}
+.content{max-width:1160px;margin:0 auto;padding:30px 28px;width:100%}
+/* mobile: hide the desktop top-nav row, keep status row; bottom nav (.mobnav) takes over */
+@media(max-width:860px){
+  .topnav{display:none}
+  .apphead .topbar{padding:9px 16px}
+  .apphead .brand .wm small{display:none}
+  .topprofile .spt{display:none}
+  .topprofile{padding:7px 10px}
+  .content{padding:18px 14px 76px}
+}
+@media(max-width:560px){
+  .apphead .brand .wm{font-size:13px}
+  .clkmeta{display:none}
+}
+</style>
 <style>
 #donatebar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;padding:16px 14px 18px;border-top:1px solid var(--bd);margin-top:18px;font-family:var(--font-mono);font-size:11px;color:var(--fg-mute);letter-spacing:.02em}
 #donatebar .dn-btn{display:inline-block;padding:6px 12px;border:1px solid var(--bd-strong);color:var(--accent);text-decoration:none;font-weight:700;border-radius:4px}
