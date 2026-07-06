@@ -12,7 +12,18 @@ const NAV=[
 ];
 
 function navBtnHTML(n,cls){ return `<button class="navbtn" data-go="${n.id}"><span class="gi">${n.gi}</span><span class="nl">${esc(n.label)}</span></button>`; }
+function updateBrandCredit(){
+  /* Auto-update kredit brand dari profil aktif — ganti nama in-game = brand ikut berubah.
+     Fallback ke kredit statis pembuat kalau profil kosong. */
+  const by=$('#brandby'); if(!by) return;
+  const p=store.get('profile',{});
+  const nm=(p.nick||p.name||'').trim()||'indonenen#13';
+  const pid=(''+(p.pid||p.id||'')).trim()||'33030846';
+  const kd=(''+(p.kingdom||'')).trim()||'2114';
+  by.textContent='powered by '+nm+' · ID '+pid+' · server #'+kd;
+}
 function updateSideProf(){
+  updateBrandCredit();
   const sub=$('#sp_sub'); if(!sub) return;
   const p=store.get('profile',{});
   sub.textContent=p.pid?('#'+(p.kingdom||'?')+' · '+p.pid):'belum terhubung';

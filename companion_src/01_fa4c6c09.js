@@ -409,6 +409,52 @@ function wireMystic(el){
 }
 
 /* ============ BANGUN (build + progres) ============ */
+function _calcEN(){ return !!(window.__getLang&&window.__getLang()==='en'); }
+function _fmtMin(mins){
+  mins=Math.max(0,Math.round(mins));
+  var d=Math.floor(mins/1440), h=Math.floor((mins%1440)/60), m=mins%60, out=[], en=_calcEN();
+  var U=en?['d','h','m']:['hari','jam','mnt'];
+  if(d) out.push(d+' '+U[0]); if(h) out.push(h+' '+U[1]); if(m||!out.length) out.push(m+' '+U[2]);
+  return out.join(' ');
+}
+function buildCalcCard(){
+  return card('Kalkulator Waktu Bangun & Speedup','🧮',
+    `<p class="muted small">Hitung waktu upgrade sebenarnya setelah bonus <b>Construction Speed</b>, dan berapa speedup yang dibutuhkan. Baca <b>base time</b> di layar upgrade dan total <b>Construction Speed %</b> di profil buff-mu (VIP + Research + Chief Minister + pet Gray Wolf + decree).</p>
+     <div class="calcgrid">
+       <label class="calcf"><span>Base — Hari</span><input id="cd_d" type="number" min="0" value="0" inputmode="numeric"></label>
+       <label class="calcf"><span>Base — Jam</span><input id="cd_h" type="number" min="0" max="23" value="0" inputmode="numeric"></label>
+       <label class="calcf"><span>Base — Menit</span><input id="cd_m" type="number" min="0" max="59" value="0" inputmode="numeric"></label>
+       <label class="calcf"><span>Construction Speed %</span><input id="cd_p" type="number" min="0" value="0" inputmode="numeric"></label>
+       <label class="calcf"><span>Speedup dimiliki (menit)</span><input id="cd_su" type="number" min="0" value="0" inputmode="numeric"></label>
+       <label class="calcf chk"><input id="cd_dt" type="checkbox"> Double Time Decree (−50%)</label>
+     </div>
+     <div id="cd_out" class="calcout"></div>
+     <div class="alert inf small">💡 Simpan upgrade besar untuk hari <b>City Construction</b> (KvK D1/D5, SG D1, stage City Construction HoG) → dobel manfaat: naik level + poin event. Aktifkan <b>Double Time</b> + pet <b>Gray Wolf</b> SEBELUM mulai (window 5 mnt).</div>
+     <div class="muted small">Rumus: Double Time diterapkan ke base dulu (×0.5), lalu Construction Speed menumpuk (÷ (1 + %/100)) — sesuai mekanik in-game, bukan stack flat.</div>`,
+    null,true);
+}
+function wireCalc(root){
+  var el=root||document;
+  function num(id){ var e=$('#'+id,el); return e?(parseFloat(e.value)||0):0; }
+  function calc(){
+    var out=$('#cd_out',el); if(!out) return; var en=_calcEN();
+    var base=num('cd_d')*1440+num('cd_h')*60+num('cd_m');
+    if(base<=0){ out.innerHTML='<div class="muted small">'+(en?'Enter the base time from the upgrade screen to start calculating.':'Isi base time dari layar upgrade untuk mulai menghitung.')+'</div>'; return; }
+    var p=num('cd_p'); var dt=$('#cd_dt',el)&&$('#cd_dt',el).checked;
+    var eff=base*(dt?0.5:1)/(1+p/100); var saved=base-eff; var own=num('cd_su'); var rem=eff-own;
+    var suLine = own>0
+      ? (rem<=0 ? '<b class="ok">'+(en?'Enough speedups':'Speedup cukup')+'</b>'+(en?' — finishes instantly ('+_fmtMin(-rem)+' speedups left).':' — selesai instan (sisa '+_fmtMin(-rem)+' speedup).')
+                : (en?'Use all speedups → still wait <b>'+_fmtMin(rem)+'</b>.':'Pakai semua speedup → sisa nunggu <b>'+_fmtMin(rem)+'</b>.'))
+      : (en?'Need <b>'+_fmtMin(eff)+'</b> of speedups to finish instantly.':'Butuh <b>'+_fmtMin(eff)+'</b> speedup untuk selesai instan.');
+    out.innerHTML=
+      '<div class="calcrow"><span>'+(en?'Actual time':'Waktu sebenarnya')+'</span><b class="num">'+_fmtMin(eff)+'</b></div>'
+     +'<div class="calcrow"><span>'+(en?'Saved by buffs':'Hemat dari buff')+'</span><b class="num ok">'+_fmtMin(saved)+'</b></div>'
+     +'<div class="calcrow"><span>'+(en?'Speedups':'Speedup')+'</span><span class="small">'+suLine+'</span></div>';
+  }
+  ['cd_d','cd_h','cd_m','cd_p','cd_su'].forEach(function(id){ var e=$('#'+id,el); if(e) e.oninput=calc; });
+  var c=$('#cd_dt',el); if(c) c.onchange=calc;
+  calc();
+}
 function renderBangun(){
   const el=$('[data-tab=bangun]');
   const done=store.get('buildDone',{});
@@ -461,9 +507,9 @@ function renderBangun(){
        <div class="alert warn small">Governor Gear TIDAK pakai Forgehammer/Mithril (itu Hero Gear). Jangan gear hero joiner.</div>`);
   el.innerHTML=pageHead('Bangun & Progres','Urutan upgrade F2P (rush TC30), research, VIP, troop, gear & prioritas gubernur.')
     +`<div class="seg" id="bg_sub" style="flex-wrap:wrap;margin:4px 0 10px">
-        <button data-s="urut">▣ Urutan</button><button data-s="riset">▤ Riset/VIP</button><button data-s="troop">⚔ Troop</button><button data-s="gear">◈ Gear & Gubernur</button><button data-s="track">✓ Tracker</button>
+        <button data-s="urut">▣ Urutan</button><button data-s="riset">▤ Riset/VIP</button><button data-s="troop">⚔ Troop</button><button data-s="gear">◈ Gear & Gubernur</button><button data-s="calc">🧮 Kalkulator</button><button data-s="track">✓ Tracker</button>
       </div><div id="bg_subc"></div>`;
-  const BG_SUBS={ urut:cUrut, riset:cRiset, troop:cTroop, gear:cGub, track:buildTrackerCard() };
+  const BG_SUBS={ urut:cUrut, riset:cRiset, troop:cTroop, gear:cGub, calc:buildCalcCard(), track:buildTrackerCard() };
   const wireUp=()=>{ const list=$('#up_list',el); if(!list) return;
     BUILD_ORDER.forEach((b,idx)=>{ const id='bo'+idx,isDone=!!done[id];
       const div=document.createElement('label'); div.className='check'+(isDone?' done':'');
@@ -475,6 +521,7 @@ function renderBangun(){
     $$('#bg_sub button',el).forEach(b=>b.classList.toggle('active',b.dataset.s===k));
     store.set('bgSub',k);
     if(k==='urut') wireUp();
+    if(k==='calc') wireCalc(el);
     if(k==='track') wireTracker(el);
     if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
   $$('#bg_sub button',el).forEach(b=>b.onclick=()=>showSub(b.dataset.s));
