@@ -165,9 +165,9 @@ function renderEvent(){
     return `<details><summary>${esc(e.n)} <span class="tag" style="margin-left:auto">${esc(e.cat)}</span></summary><div class="dt">${parts.join('')}</div></details>`;
   }).join('')).join('');
 
-  el.innerHTML=pageHead('Event & Kalender','Advisory otomatis: kapan TAHAN item, kapan PAKAI, dan jam berapa \u2014 digerakkan umur server.')
+  el.innerHTML=pageHead('Event','Advisory otomatis: kapan TAHAN item, kapan PAKAI, dan jam berapa \u2014 digerakkan umur server. (Kalender kini tab tersendiri.)')
     +`<div class="seg" id="ev_sub" style="flex-wrap:wrap;margin:4px 0 10px">
-        <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="cal">\u2691 Kalender</button><button data-s="hog">\ud83c\udfdb HoG</button><button data-s="mystic">\ud83d\udd2e Mystic Trial</button><button data-s="find">\ud83d\udd0e Cari Event</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
+        <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="hog">\ud83c\udfdb HoG</button><button data-s="mystic">\ud83d\udd2e Mystic Trial</button><button data-s="find">\ud83d\udd0e Cari Event</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
       </div><div id="ev_subc"></div>`;
 
   /* SEMUA bagian jadi sub-tab \u2014 satu bagian tampil pada satu waktu, tanpa scroll panjang */
@@ -202,7 +202,7 @@ function renderEvent(){
        <div class="lbl" style="margin:12px 0 4px">Castle Battle \u2014 taktik F2P</div>
        <div class="small muted">\u2022 <b>Serang TURRET, bukan castle</b> \u2014 tiap turret musuh = 2% korban/siklus ke pasukan castle (4 turret = 8%).<br>\u2022 <b>Forbidden Zone</b>: TP masuk hanya &lt;1 jam sebelum mulai (lebih awal = kota dipindah, shield hilang).<br>\u2022 Batch-heal slider ~30 mnt + minta help; jangan buang healing speedup kecuali hospital overflow (overflow = 30% mati permanen).</div>`)
   };
-  const showSub=k=>{ if(!EV_SUBS[k]) k='adv'; const c=$('#ev_subc',el); if(!c) return;
+  const showSub=k=>{ if(!EV_SUBS[k]||k==='cal') k='adv'; const c=$('#ev_subc',el); if(!c) return; /* Kalender kini tab utama */
     c.innerHTML=EV_SUBS[k];
     $$('#ev_sub button',el).forEach(b=>b.classList.toggle('active',b.dataset.s===k));
     store.set('evSub',k);
@@ -455,6 +455,122 @@ function wireCalc(root){
   var c=$('#cd_dt',el); if(c) c.onchange=calc;
   calc();
 }
+/* ===== Kalkulator Statistik Tempur ===== */
+function statCalcCard(){
+  return card('Kalkulator Statistik Tempur','⚔',
+    `<p class="muted small">4 stat inti Kingshot — <b>Attack</b> + <b>Lethality</b> = kekuatan serang; <b>Defense</b> + <b>Health</b> = daya tahan. Isi total bonus %-mu (Avatar → Stat / detail troop) untuk lihat keseimbangan & stat mana yang jadi prioritas.</p>
+     <div class="calcgrid">
+       <label class="calcf"><span>Attack %</span><input id="st_atk" type="number" min="0" value="0" inputmode="numeric"></label>
+       <label class="calcf"><span>Lethality %</span><input id="st_let" type="number" min="0" value="0" inputmode="numeric"></label>
+       <label class="calcf"><span>Defense %</span><input id="st_def" type="number" min="0" value="0" inputmode="numeric"></label>
+       <label class="calcf"><span>Health %</span><input id="st_hp" type="number" min="0" value="0" inputmode="numeric"></label>
+     </div>
+     <div id="st_out" class="calcout"></div>
+     <p class="muted small" style="margin-top:4px">Indeks = pengali relatif dari buff-mu (bukan angka power in-game). Gunanya lihat keseimbangan serang↔tahan dan stat terlemah untuk dinaikkan lebih dulu.</p>
+     <div class="lbl" style="margin:16px 0 4px">Rasio Formasi vs Musuh</div>
+     <p class="muted small">RPS: <b>Archer › Infantry › Cavalry › Archer</b>. Pilih tipe pasukan dominan musuh (dari Battle Report) → rasio counter Inf/Archer/Cav.</p>
+     <label class="calcf" style="max-width:280px"><span>Tipe musuh</span>
+       <select id="st_enemy">
+         <option value="bal">Tak tahu / seimbang</option>
+         <option value="inf">Infantry-berat</option>
+         <option value="arc">Archer-berat</option>
+         <option value="cav">Cavalry-berat</option>
+       </select></label>
+     <div id="st_ratio" class="calcout"></div>
+     <div class="alert inf small">💡 Meta F2P: <b>50/0/50</b> (Infantry + Archer, tanpa Cavalry) — infantry tembok, archer DPS. Jaga floor <b>5.000 infantry</b> supaya skill hero infantry aktif. Default (musuh tak diketahui) = 50/20/30.</div>`,
+    null,true);
+}
+function wireStat(root){
+  var el=root||document;
+  function num(id){ var e=$('#'+id,el); return e?(parseFloat(e.value)||0):0; }
+  var RAT={ bal:[50,20,30], inf:[30,50,20], arc:[30,20,50], cav:[60,20,20] };
+  function calc(){
+    var en=_calcEN();
+    var out=$('#st_out',el);
+    if(out){
+      var off=(1+num('st_atk')/100)*(1+num('st_let')/100);
+      var def=(1+num('st_def')/100)*(1+num('st_hp')/100);
+      var stats=[['Attack','st_atk'],['Lethality','st_let'],['Defense','st_def'],['Health','st_hp']];
+      var minv=Infinity,minn=''; stats.forEach(function(s){ var v=num(s[1]); if(v<minv){minv=v;minn=s[0];} });
+      out.innerHTML=
+        '<div class="calcrow"><span>'+(en?'Offense index':'Indeks Serang')+'</span><b class="num">×'+off.toFixed(2)+'</b></div>'
+       +'<div class="calcrow"><span>'+(en?'Defense index':'Indeks Tahan')+'</span><b class="num">×'+def.toFixed(2)+'</b></div>'
+       +'<div class="calcrow"><span>'+(en?'Raise first':'Prioritas naikkan')+'</span><b class="num ok">'+minn+'</b></div>';
+    }
+    var rr=$('#st_ratio',el);
+    if(rr){
+      var ekey=$('#st_enemy',el)?$('#st_enemy',el).value:'bal'; var r=RAT[ekey]||RAT.bal;
+      var expl={ bal:en?'balanced / enemy unknown':'seimbang / musuh tak diketahui',
+                 inf:en?'archer beats infantry':'archer kalahkan infantry',
+                 arc:en?'cavalry beats archer':'cavalry kalahkan archer',
+                 cav:en?'infantry beats cavalry':'infantry kalahkan cavalry' };
+      rr.innerHTML=
+        '<div class="calcrow"><span>'+(en?'Recommended ratio':'Rasio disarankan')+'</span><b class="num">'+r[0]+' / '+r[1]+' / '+r[2]+'</b></div>'
+       +'<div class="calcrow"><span class="small">Inf / Archer / Cav — '+esc(expl[ekey])+'</span></div>';
+    }
+  }
+  ['st_atk','st_let','st_def','st_hp'].forEach(function(id){ var e=$('#'+id,el); if(e) e.oninput=calc; });
+  var es=$('#st_enemy',el); if(es) es.onchange=calc;
+  calc();
+}
+/* ===== Tab Kalkulator (Building + Statistik) ===== */
+function renderKalkulator(){
+  const el=$('[data-tab=kalkulator]'); if(!el) return;
+  el.innerHTML=pageHead('Kalkulator','Alat hitung: waktu bangun & speedup, dan statistik tempur (power & rasio formasi).')
+    +`<div class="seg" id="kk_sub" style="flex-wrap:wrap;margin:4px 0 10px">
+        <button data-s="build">🧮 Building</button><button data-s="stat">⚔ Statistik</button>
+      </div><div id="kk_subc"></div>`;
+  const KK_SUBS={ build:buildCalcCard(), stat:statCalcCard() };
+  const showSub=k=>{ if(!KK_SUBS[k]) k='build'; const c=$('#kk_subc',el); if(!c) return;
+    c.innerHTML=KK_SUBS[k];
+    $$('#kk_sub button',el).forEach(b=>b.classList.toggle('active',b.dataset.s===k));
+    store.set('kkSub',k);
+    if(k==='build') wireCalc(el);
+    if(k==='stat') wireStat(el);
+    if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
+  $$('#kk_sub button',el).forEach(b=>b.onclick=()=>showSub(b.dataset.s));
+  showSub(store.get('kkSub','build'));
+}
+/* ===== Tab Kalender (dipindah dari sub-tab Event jadi tab utama) ===== */
+function renderKalender(){
+  const el=$('[data-tab=kalender]'); if(!el) return;
+  el.innerHTML=pageHead('Kalender Server','Event pertumbuhan (umur server) + rotasi mingguan live kingshot.net — sesuai server-mu.')
+    +card('Kalender Server','⚑',
+      `<p class="muted small">Event PERTUMBUHAN berbasis umur server (HoG · KvK · SG · Burst · Milestone) + event mingguan aliansi (rotasi live kingshot.net). Klik tanggal untuk detail.</p><div id="evcal_k"></div>`);
+  renderCalendar($('#evcal_k',el));
+  if(typeof ksLiveEvents==='function') ksLiveEvents().then(()=>{ const ec=$('#evcal_k',el); if(ec&&$('[data-tab=kalender]').classList.contains('active')) renderCalendar(ec); });
+  if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
+}
+/* ===== Tab Admin (owner-only) — Daftar Pengunjung ===== */
+function renderAdmin(){
+  const el=$('[data-tab=admin]'); if(!el) return;
+  const p=store.get('profile',{});
+  if(p.pid!=='330300846'){
+    el.innerHTML=pageHead('Admin','Khusus pemilik app.')+`<div class="alert warn small">Tab ini hanya untuk pemilik app (Player ID pemilik). Profil aktifmu bukan pemilik.</div>`;
+    return;
+  }
+  el.innerHTML=pageHead('Admin','Panel pemilik — daftar pengunjung app. Hanya kamu yang bisa melihat.')
+    +card('Daftar Pengunjung','👥',
+      `<p class="muted small">Pemain yang membuka app dengan Player ID terhubung — tercatat 1× per hari (dihitung di server, anti-manipulasi). Hanya tampil di akun pemilik.</p>
+       ${store.get('ownerKey','')?'':`<label class="fl">Kunci pemilik (sekali isi)</label><div class="row" style="margin-bottom:8px"><input id="vs_key" style="flex:1" placeholder="kunci dari Claude"><button class="btn sec sm" id="vs_keysave">Simpan</button></div>`}
+       <div class="row" style="margin-bottom:8px"><button class="btn sec sm" id="vs_load">↻ Muat daftar</button><span class="small muted" id="vs_meta"></span></div>
+       <div id="vs_out"></div>`);
+  const vk=$('#vs_keysave',el); if(vk) vk.onclick=()=>{ const v=($('#vs_key').value||'').trim(); if(!v) return; store.set('ownerKey',v); renderAdmin(); };
+  const vl=$('#vs_load',el); if(vl) vl.onclick=async()=>{
+    const out=$('#vs_out',el), meta=$('#vs_meta',el);
+    out.innerHTML='<div class="muted small">⏳ Memuat…</div>';
+    const rows=await ksVisitorList();
+    if(rows==='nokey'){ out.innerHTML='<div class="alert warn small">Isi kunci pemilik dulu di atas.</div>'; return; }
+    if(rows==='badkey'){ out.innerHTML='<div class="alert bad small">Kunci pemilik salah.</div>'; store.set('ownerKey',''); renderAdmin(); return; }
+    if(rows===null){ out.innerHTML='<div class="alert warn small">Gagal memuat (offline/diblokir).</div>'; return; }
+    if(meta) meta.textContent=rows.length+' pengunjung';
+    out.innerHTML=rows.length?('<div class="scrollx"><table><thead><tr><th>Pemain</th><th>K#</th><th>TC</th><th>Kunjungan</th><th>Terakhir</th></tr></thead><tbody>'
+      +rows.map(v=>`<tr><td><b>${esc(v.nick||'?')}</b><div class="dim small num">${esc(v.pid)}</div></td><td class="num">${esc(v.kid||'')}</td><td class="num">${esc(v.tc||'')}</td><td class="num">${esc(v.visits||0)}×<div class="dim small">sejak ${esc(v.first||'')}</div></td><td class="small num" style="white-space:nowrap">${esc(v.last||'')}</td></tr>`).join('')
+      +'</tbody></table></div>'):'<div class="muted small">Belum ada pengunjung tercatat.</div>';
+    if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
+  };
+  if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
+}
 function renderBangun(){
   const el=$('[data-tab=bangun]');
   const done=store.get('buildDone',{});
@@ -507,9 +623,9 @@ function renderBangun(){
        <div class="alert warn small">Governor Gear TIDAK pakai Forgehammer/Mithril (itu Hero Gear). Jangan gear hero joiner.</div>`);
   el.innerHTML=pageHead('Bangun & Progres','Urutan upgrade F2P (rush TC30), research, VIP, troop, gear & prioritas gubernur.')
     +`<div class="seg" id="bg_sub" style="flex-wrap:wrap;margin:4px 0 10px">
-        <button data-s="urut">▣ Urutan</button><button data-s="riset">▤ Riset/VIP</button><button data-s="troop">⚔ Troop</button><button data-s="gear">◈ Gear & Gubernur</button><button data-s="calc">🧮 Kalkulator</button><button data-s="track">✓ Tracker</button>
+        <button data-s="urut">▣ Urutan</button><button data-s="riset">▤ Riset/VIP</button><button data-s="troop">⚔ Troop</button><button data-s="gear">◈ Gear & Gubernur</button><button data-s="track">✓ Tracker</button>
       </div><div id="bg_subc"></div>`;
-  const BG_SUBS={ urut:cUrut, riset:cRiset, troop:cTroop, gear:cGub, calc:buildCalcCard(), track:buildTrackerCard() };
+  const BG_SUBS={ urut:cUrut, riset:cRiset, troop:cTroop, gear:cGub, track:buildTrackerCard() };
   const wireUp=()=>{ const list=$('#up_list',el); if(!list) return;
     BUILD_ORDER.forEach((b,idx)=>{ const id='bo'+idx,isDone=!!done[id];
       const div=document.createElement('label'); div.className='check'+(isDone?' done':'');
@@ -521,7 +637,6 @@ function renderBangun(){
     $$('#bg_sub button',el).forEach(b=>b.classList.toggle('active',b.dataset.s===k));
     store.set('bgSub',k);
     if(k==='urut') wireUp();
-    if(k==='calc') wireCalc(el);
     if(k==='track') wireTracker(el);
     if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
   $$('#bg_sub button',el).forEach(b=>b.onclick=()=>showSub(b.dataset.s));
@@ -922,11 +1037,7 @@ function renderProfil(){
       `<p class="muted small">App ikut waktu server (UTC) \u2014 reset 07:00 WIB. Sinkron otomatis saat online. Kalau meleset, geser manual (menit):</p>
        <div class="row"><input id="pf_nudge" type="number" step="1" value="${esc(ksClock.nudge)}" style="width:100px"><button class="btn sec sm" id="pf_nudgeset">Terapkan</button><span id="pf_synstat" class="muted small">${ksClock.synced?'\u2713 tersinkron server':'pakai jam perangkat'}</span></div>`)
     +card('Notifikasi otomatis','◉',notifBody())
-    +(p.pid==='330300846'?card('Daftar Pengunjung','👥',
-      `<p class="muted small">Pemain yang membuka app dengan Player ID terhubung — tercatat 1× per hari (dihitung di server, anti-manipulasi). Kartu ini hanya tampil di akunmu.</p>
-       ${store.get('ownerKey','')?'':`<label class="fl">Kunci pemilik (sekali isi)</label><div class="row" style="margin-bottom:8px"><input id="vs_key" style="flex:1" placeholder="kunci dari Claude"><button class="btn sec sm" id="vs_keysave">Simpan</button></div>`}
-       <div class="row" style="margin-bottom:8px"><button class="btn sec sm" id="vs_load">↻ Muat daftar</button><span class="small muted" id="vs_meta"></span></div>
-       <div id="vs_out"></div>`):'')
+    +(p.pid==='330300846'?`<div class="alert inf small">👥 Daftar Pengunjung kini di tab <b>🛡 Admin</b> (khusus pemilik).</div>`:'')
     +card('Sinkron Otomatis Antar Perangkat','🔁',syncBody())
     +card('Backup & Pindah Perangkat','💾',
       `<p class="muted small">Semua data (profil, checklist, jam alliance, progres) tersimpan di browser INI saja. Ganti HP/browser = data hilang. Export dulu, lalu Import di perangkat baru.</p>
@@ -984,20 +1095,7 @@ function renderProfil(){
     };
   }
   wireNotif(el);
-  /* visitor list (owner only) */
-  const vk=$('#vs_keysave',el); if(vk) vk.onclick=()=>{ const v=($('#vs_key').value||'').trim(); if(!v) return; store.set('ownerKey',v); renderProfil(); };
-  const vl=$('#vs_load',el); if(vl) vl.onclick=async()=>{
-    const out=$('#vs_out',el), meta=$('#vs_meta',el);
-    out.innerHTML='<div class="muted small">⏳ Memuat…</div>';
-    const rows=await ksVisitorList();
-    if(rows==='nokey'){ out.innerHTML='<div class="alert warn small">Isi kunci pemilik dulu di atas.</div>'; return; }
-    if(rows==='badkey'){ out.innerHTML='<div class="alert bad small">Kunci pemilik salah.</div>'; store.set('ownerKey',''); renderProfil(); return; }
-    if(rows===null){ out.innerHTML='<div class="alert warn small">Gagal memuat (offline/diblokir).</div>'; return; }
-    if(meta) meta.textContent=rows.length+' pengunjung';
-    out.innerHTML=rows.length?('<div class="scrollx"><table><thead><tr><th>Pemain</th><th>K#</th><th>TC</th><th>Kunjungan</th><th>Terakhir</th></tr></thead><tbody>'
-      +rows.map(v=>`<tr><td><b>${esc(v.nick||'?')}</b><div class="dim small num">${esc(v.pid)}</div></td><td class="num">${esc(v.kid||'')}</td><td class="num">${esc(v.tc||'')}</td><td class="num">${esc(v.visits||0)}×<div class="dim small">sejak ${esc(v.first||'')}</div></td><td class="small num" style="white-space:nowrap">${esc(v.last||'')}</td></tr>`).join('')
-      +'</tbody></table></div>'):'<div class="muted small">Belum ada pengunjung tercatat.</div>';
-  };
+  /* Daftar Pengunjung dipindah ke tab Admin (renderAdmin) — owner only */
   /* sync wiring */
   const sm=$('#sy_make',el); if(sm) sm.onclick=async()=>{ sm.disabled=true; const st=$('#sy_status');
     if(st) st.innerHTML='<div class="alert inf small">⏳ Membuat slot sinkron…</div>';

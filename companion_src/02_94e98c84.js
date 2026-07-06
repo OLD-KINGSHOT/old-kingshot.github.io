@@ -9,7 +9,11 @@ const NAV=[
   {id:'pets',gi:'\u2b22',label:'Pets'},
   {id:'island',gi:'\ud83c\udfdd',label:'Island'},
   {id:'kode',gi:'\u2726',label:'Kode'},
+  {id:'kalender',gi:'\u2691',label:'Kalender'},
+  {id:'kalkulator',gi:'\ud83e\uddee',label:'Kalkulator'},
 ];
+const ADMIN_NAV={id:'admin',gi:'\ud83d\udee1',label:'Admin'};
+function _isOwner(){ return (store.get('profile',{}).pid==='330300846'); }
 
 function navBtnHTML(n,cls){ return `<button class="navbtn" data-go="${n.id}"><span class="gi">${n.gi}</span><span class="nl">${esc(n.label)}</span></button>`; }
 function updateBrandCredit(){
@@ -24,6 +28,9 @@ function updateBrandCredit(){
 }
 function updateSideProf(){
   updateBrandCredit();
+  /* Admin tab hanya untuk pemilik — sembunyikan tombolnya di nav utama & mobile utk profil lain */
+  const owner=_isOwner();
+  $$('[data-go="admin"]').forEach(b=>{ b.style.display=owner?'':'none'; });
   const sub=$('#sp_sub'); if(!sub) return;
   const p=store.get('profile',{});
   sub.textContent=p.pid?('#'+(p.kingdom||'?')+' · '+p.pid):'belum terhubung';
@@ -40,9 +47,10 @@ function updateSideProf(){
   }
 }
 function buildNav(){
-  $('#navlist').innerHTML=NAV.map(n=>navBtnHTML(n)).join('');
+  const full=NAV.concat([ADMIN_NAV]); /* Admin selalu dirender, disembunyikan utk non-owner di updateSideProf */
+  $('#navlist').innerHTML=full.map(n=>navBtnHTML(n)).join('');
   /* mobile bottom-nav: Profil FIRST (bottom-LEFT — the single login/settings access on phones) */
-  $('#mobnav').innerHTML=[{id:'profil',gi:'👤',label:'Profil'}].concat(NAV).map(n=>navBtnHTML(n)).join('');
+  $('#mobnav').innerHTML=[{id:'profil',gi:'👤',label:'Profil'}].concat(full).map(n=>navBtnHTML(n)).join('');
   $$('[data-go]').forEach(b=>b.onclick=()=>activate(b.dataset.go));
   const sp=$('#sideprof'); if(sp) sp.onclick=()=>activate('profil');
   updateSideProf();
