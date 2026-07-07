@@ -218,10 +218,11 @@ function renderSekarang(){
   /* bear cooldown state */
   const today=ksClock.now().toISOString().slice(0,10);
   let bd=store.get('bearDone',{date:today,done:false}); if(bd.date!==today){ bd={date:today,done:false}; store.set('bearDone',bd); }
-  const timesetHTML=(id,label)=>{ const t=et[id]; const saved=!!t;
-    return '<div class="timeset'+(saved?' saved':'')+'" data-ts="'+id+'"><div class="lbl2">⏰ '+label+' <span style="color:var(--sk-ink-faint)">(diatur aliansi)</span></div>'
-      +'<div class="row"><input type="time" value="'+esc(t||'')+'" id="ts-'+id+'"><button data-set="'+id+'">Simpan</button></div>'
-      +'<div class="saved-row">✓ <span class="cd">'+esc(t||'')+'</span><button class="edit" data-edit="'+id+'">ubah</button></div></div>'; };
+  const _tz=(typeof tzInfo==='function')?tzInfo().label:'WIB';
+  const timesetHTML=(id,label)=>{ const t=et[id]; const saved=!!t; const disp=(typeof wibToDisp==='function')?wibToDisp(t||''):(t||'');
+    return '<div class="timeset'+(saved?' saved':'')+'" data-ts="'+id+'"><div class="lbl2">⏰ '+label+' <span style="color:var(--sk-ink-faint)">(diatur aliansi · '+_tz+')</span></div>'
+      +'<div class="row"><input type="time" value="'+esc(disp||'')+'" id="ts-'+id+'"><button data-set="'+id+'">Simpan</button></div>'
+      +'<div class="saved-row">✓ <span class="cd">'+esc(disp||'')+'</span> '+_tz+'<button class="edit" data-edit="'+id+'">ubah</button></div></div>'; };
   let cardsHTML='';
   /* Bear Trap */
   if(bearGen){ const done=bd.done;
@@ -288,7 +289,7 @@ function renderSekarang(){
   const moreBtn=$('#sk_more',el); if(moreBtn) moreBtn.onclick=()=>{ expanded=!expanded; moreBtn.textContent=expanded?'Tampilkan lebih sedikit ↑':('Lihat semua '+TOTAL+' tugas →'); drawActs(); };
 
   /* time inputs */
-  $$('[data-set]',el).forEach(b=>b.onclick=()=>{ const id=b.dataset.set; const v=($('#ts-'+id,el)||{}).value; if(!v)return; const pr=store.get('profile',{}); const t=Object.assign({},pr.eventTimes||{}); t[id]=v; pr.eventTimes=t; if(id==='bear')pr.bearTime=v; store.set('profile',pr); renderSekarang(); });
+  $$('[data-set]',el).forEach(b=>b.onclick=()=>{ const id=b.dataset.set; let v=($('#ts-'+id,el)||{}).value; if(!v)return; v=(typeof dispToWib==='function')?dispToWib(v):v; const pr=store.get('profile',{}); const t=Object.assign({},pr.eventTimes||{}); t[id]=v; pr.eventTimes=t; if(id==='bear')pr.bearTime=v; store.set('profile',pr); renderSekarang(); });
   $$('[data-edit]',el).forEach(b=>b.onclick=()=>{ const id=b.dataset.edit; const pr=store.get('profile',{}); const t=Object.assign({},pr.eventTimes||{}); delete t[id]; pr.eventTimes=t; if(id==='bear')pr.bearTime=''; store.set('profile',pr); renderSekarang(); });
   /* bear cooldown toggle */
   const bdc=$('#bear_done',el); if(bdc) bdc.onchange=()=>{ store.set('bearDone',{date:today,done:bdc.checked}); renderSekarang(); };

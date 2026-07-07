@@ -194,6 +194,10 @@ function nextWibDay(dows,hhmm){ const wib=wibNow(); const cur=wib.getUTCDay(); l
   if(add===0&&hhmm){ const a=hhmm.split(':'); const evMin=(+a[0])*60+(+a[1]||0); if(wib.getUTCHours()*60+wib.getUTCMinutes()>=evMin) add=7; } /* today's occurrence already passed */
   if(add<best)best=add; } const d=new Date(wib.getTime()+best*86400000); return {days:best,date:d,label:ID_DOW[d.getUTCDay()].slice(0,3)+' '+d.getUTCDate()+' '+ID_MON[d.getUTCMonth()]}; }
 function utcToWibTime(hhmm){ if(!hhmm) return hhmm; const a=hhmm.split(':'); return pad(((+a[0])+7)%24)+':'+pad(+a[1]||0); }
+/* Jam event disimpan internal dalam WIB. Konversi ke/dari zona TAMPILAN aktif (WIB⇄UTC)
+   supaya input jam mengikuti toggle — hilangkan kebingungan "ini UTC atau lokal". */
+function wibToDisp(hhmm){ if(!hhmm||DISPLAY_TZ!=='UTC') return hhmm; const a=hhmm.split(':'); return pad((((parseInt(a[0])||0)-7)%24+24)%24)+':'+pad(parseInt(a[1])||0); }
+function dispToWib(hhmm){ if(!hhmm||DISPLAY_TZ!=='UTC') return hhmm; const a=hhmm.split(':'); return pad(((parseInt(a[0])||0)+7)%24)+':'+pad(parseInt(a[1])||0); }
 function profileAge(){ const p=store.get('profile',{}); if(!p.start) return {p,start:null,age:null,tc:0}; const start=new Date(p.start+'T00:00:00Z'); return {p,start,age:daysBetween(start,todayMidnight())+1,tc:parseInt(p.tc)||0}; }
 
 /* ── MD5 (for signing official API) ── */

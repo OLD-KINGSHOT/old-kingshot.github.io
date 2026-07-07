@@ -1059,7 +1059,8 @@ function renderProfil(){
        <div class="row" style="margin-top:10px"><button class="btn" id="pf_save">Simpan</button></div>`)
     +card('Jam Event Alliance','\u23f0',
       `<p class="muted small">Jam berikut diatur R4/R5 alliance (tanya pengumuman). Isi sekali \u2014 app beri hitung mundur di tab Sekarang. Hari = perkiraan, jam pasti cek tab Events di game.</p>
-       ${SETTABLE_EVENTS.map(ev=>{const days=ev.daily?'tiap hari':esc((ev.note||'').split('\u00b7')[0].trim());return `<label class="fl">${ev.gi} ${esc(ev.n)} <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">\u2014 ${days}</span></label><input id="et_${ev.id}" type="time" value="${esc(evtTimes()[ev.id]||'')}">`;}).join('')}
+       <div class="alert inf small">Jam diisi dalam zona <b>${tzInfo().label}</b> (ikut toggle ${tzInfo().label}/... di kanan atas). Ganti toggle = jam ikut dikonversi otomatis.</div>
+       ${SETTABLE_EVENTS.map(ev=>{const days=ev.daily?'tiap hari':esc((ev.note||'').split('\u00b7')[0].trim());return `<label class="fl">${ev.gi} ${esc(ev.n)} <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">\u2014 ${days} \u00b7 ${tzInfo().label}</span></label><input id="et_${ev.id}" type="time" value="${esc(wibToDisp(evtTimes()[ev.id]||''))}">`;}).join('')}
        <div class="row" style="margin-top:12px"><button class="btn" id="et_save">Simpan jam</button></div>`)
     +((age!=null&&age>=1)?card('Status','\u25c8',
       `<div class="stats">
@@ -1105,7 +1106,7 @@ function renderProfil(){
     renderProfil(); if(typeof updateSideProf==='function') updateSideProf();
   };
   $('#pf_save',el).onclick=()=>saveProfile();
-  const ets=$('#et_save',el); if(ets) ets.onclick=()=>{ const pr=store.get('profile',{}); const et=Object.assign({},pr.eventTimes||{}); SETTABLE_EVENTS.forEach(ev=>{ const inp=$('#et_'+ev.id,el); if(inp) et[ev.id]=inp.value; }); pr.eventTimes=et; pr.bearTime=et.bear||''; store.set('profile',pr); renderProfil(); };
+  const ets=$('#et_save',el); if(ets) ets.onclick=()=>{ const pr=store.get('profile',{}); const et=Object.assign({},pr.eventTimes||{}); SETTABLE_EVENTS.forEach(ev=>{ const inp=$('#et_'+ev.id,el); if(inp) et[ev.id]=dispToWib(inp.value); }); pr.eventTimes=et; pr.bearTime=et.bear||''; store.set('profile',pr); renderProfil(); };
   $('#pf_nudgeset',el).onclick=()=>{ ksClock.setNudge($('#pf_nudge').value); renderTopClock(); renderProfil(); };
   /* backup / restore: every ks_* localStorage key */
   const be=$('#bk_export',el); if(be) be.onclick=()=>{
@@ -1199,12 +1200,25 @@ function connectProfileTo(fid,d,openDate){
 }
 /* Auto-deteksi nama/Kingdom/TC untuk profil yg belum ber-nama (saat load, non-blok). */
 async function autoDetectProfiles(){
+  /* Refresh nick/Kingdom/TC dari server game. TC & Kingdom BISA berubah seiring waktu
+     (TC naik) → JANGAN skip profil yang sudah punya nama; refresh tiap buka app. */
   const profs=store.get('profiles',[]); let changed=false;
-  for(const p of profs){ if(p.nick) continue;
+  const apid=(typeof _ksActivePid==='function')?_ksActivePid():'';
+  for(const p of profs){ if(!p.pid) continue;
     try{ const j=await ksPlayerLookup(p.pid);
-      if(j&&j.code===0&&j.data){ p.nick=j.data.nickname||''; p.kingdom=String(j.data.kid||''); p.tc=String(j.data.stove_lv||''); changed=true; } }catch(e){} }
-  if(changed){ store.set('profiles',profs); if(typeof updateSideProf==='function') updateSideProf();
-    if(store.get('lastTab','sekarang')==='profil'&&typeof renderProfil==='function') renderProfil(); }
+      if(j&&j.code===0&&j.data){
+        if(!p.nick && j.data.nickname) p.nick=j.data.nickname;      /* nama: isi kalau kosong (jangan timpa kustom) */
+        const nk=String(j.data.kid||''); if(nk) p.kingdom=nk;        /* Kingdom & TC: selalu segarkan (otoritatif) */
+        const nt=String(j.data.stove_lv||''); if(nt) p.tc=nt;
+        changed=true; } }catch(e){} }
+  if(changed){ store.set('profiles',profs);
+    /* sinkronkan ke profil AKTIF (sumber tampilan profileAge) — kalau tidak, TC di layar tetap basi */
+    const act=profs.find(p=>p.pid===apid);
+    if(act){ const cur=store.get('profile',{});
+      store.set('profile',Object.assign({},cur,{nick:cur.nick||act.nick||'',kingdom:act.kingdom||cur.kingdom||'',tc:act.tc||cur.tc||''})); }
+    if(typeof updateSideProf==='function') updateSideProf();
+    const lt=store.get('lastTab','sekarang'), fn=window['render'+lt.charAt(0).toUpperCase()+lt.slice(1)];
+    if((lt==='profil'||lt==='sekarang')&&typeof fn==='function') fn(); }
 }
 function saveProfile(){
   const old=store.get('profile',{});
