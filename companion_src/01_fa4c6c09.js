@@ -670,20 +670,25 @@ function renderCastle(){
 /* ===== Tab Dukung — Saran/Request + Donasi ===== */
 function renderDukung(){
   const el=$('[data-tab=dukung]'); if(!el) return;
-  el.innerHTML=pageHead('Saran & Donasi','Punya ide atau permintaan fitur? Kirim di sini. Suka app-nya? Dukung biar terus berkembang.')
-    +card('Pembuat App','👑',
-      `<div style="display:flex;align-items:center;gap:12px">
+  el.innerHTML=pageHead('Saran & Donasi','Punya ide atau permintaan fitur? Kirim di sini — semoga membantu.')
+    +card('Pembuat','👑',
+      `<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
          <div class="crest" style="width:46px;height:46px;flex:0 0 auto;font-size:22px">👑</div>
-         <div><div style="font-weight:800;font-size:16px">INDONenen13</div><div class="muted small num">Kingdom #2114</div></div>
+         <div><div style="font-weight:800;font-size:16px">INDONenen13</div><div class="muted small">2 server</div></div>
        </div>
-       <div class="row" style="margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap">
-         <span class="dim small">ID:</span>
-         <code class="num" id="dev_id" style="background:var(--bg-2);border:1px solid var(--bd);border-radius:8px;padding:6px 12px;font-size:15px">330300846</code>
-         <button class="btn sec sm" id="dev_copy">📋 Salin ID</button>
+       <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+         <span class="badge acc" style="min-width:50px;text-align:center">#2114</span>
+         <code class="num" style="background:var(--bg-2);border:1px solid var(--bd);border-radius:8px;padding:6px 12px;font-size:15px">330300846</code>
+         <button class="btn sec sm" data-cid="330300846">📋 Salin</button>
        </div>
-       <div class="dim small" style="margin-top:8px">Kirim gift / friend request in-game, atau titip saran di bawah. Terima kasih sudah memakai app ini! 🙏</div>`)
+       <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+         <span class="badge acc" style="min-width:50px;text-align:center">#2184</span>
+         <code class="num" style="background:var(--bg-2);border:1px solid var(--bd);border-radius:8px;padding:6px 12px;font-size:15px">343522603</code>
+         <button class="btn sec sm" data-cid="343522603">📋 Salin</button>
+       </div>
+       <div class="dim small" style="margin-top:8px">Semoga membantu perjalanan F2P-mu. 🙏</div>`)
     +card('Saran / Request Fitur','💬',
-      `<p class="muted small">Tulis ide, bug, atau fitur yang kamu mau. Terkirim langsung dari sini — tak perlu buka aplikasi email.</p>
+      `<p class="muted small">Tulis ide, bug, atau fitur yang kamu mau. Terkirim langsung dari sini.</p>
        <textarea id="fb_text" rows="5" placeholder="Contoh: tambah kalkulator gear, atau event X belum ada…"></textarea>
        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
          <button class="btn" id="fb_send">📨 Kirim</button>
@@ -691,7 +696,7 @@ function renderDukung(){
        </div>
        <div id="fb_status"></div>`)
     +card('Dukung / Donasi','❤',
-      `<p class="muted small">App ini gratis & F2P-friendly. Donasi sekecil apa pun membantu biaya server (sinkron, gift-code, jadwal live) & pengembangan fitur baru. Terima kasih! 🙏</p>
+      `<p class="muted small">Gratis & F2P-friendly. Donasi sepenuhnya opsional — kalau merasa terbantu, boleh dukung biaya server. Semoga membantu! 🙏</p>
        <div class="row" style="gap:10px;flex-wrap:wrap">
          <a class="btn" href="https://saweria.co/indonenen13" target="_blank" rel="noopener">🇮🇩 Saweria</a>
          <a class="btn sec" href="https://ko-fi.com/indonenen13" target="_blank" rel="noopener">🌍 Ko-fi</a>
@@ -740,9 +745,9 @@ function renderDukung(){
   const ppc=$('#pp_copy',el); if(ppc) ppc.onclick=async()=>{
     try{ await navigator.clipboard.writeText(mailAddr()); ppc.textContent=en()?'✅ Copied':'✅ Tersalin'; setTimeout(()=>{ ppc.textContent=en()?'📋 Copy email':'📋 Salin email'; },1500); }catch(e){}
   };
-  const dvc=$('#dev_copy',el); if(dvc) dvc.onclick=async()=>{
-    try{ await navigator.clipboard.writeText('330300846'); dvc.textContent=en()?'✅ Copied':'✅ Tersalin'; setTimeout(()=>{ dvc.textContent=en()?'📋 Copy ID':'📋 Salin ID'; },1500); }catch(e){}
-  };
+  $$('[data-cid]',el).forEach(b=>{ b.onclick=async()=>{
+    try{ await navigator.clipboard.writeText(b.dataset.cid); const o=b.textContent; b.textContent=en()?'✅ Copied':'✅ Tersalin'; setTimeout(()=>{ b.textContent=o; },1500); }catch(e){}
+  }; });
   if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
 function renderBangun(){
