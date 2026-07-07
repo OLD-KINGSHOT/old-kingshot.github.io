@@ -182,7 +182,10 @@
   }, true);
 
   /* set initial button label once DOM is live */
-  function syncBtn(){ var b=document.getElementById('langtoggle'); if(b) b.textContent = (LANG==='en')?'ID':'EN'; }
+  function syncBtn(){ var b=document.getElementById('langtoggle'); if(!b) return;
+    /* globe + active language via textContent (auto-ignored by translator) */
+    b.textContent = (LANG==="en") ? "ID" : "EN"; b.setAttribute("title","Ganti bahasa / Switch language");
+    b.setAttribute('title','Ganti bahasa / Switch language'); }
 
   /* Wrap the app's render entry points so a tab switch / clock tick translates
      synchronously (no flash of Indonesian). The app modules load AFTER this
