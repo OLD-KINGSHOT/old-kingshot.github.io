@@ -544,6 +544,85 @@ function renderKalender(){
   if(typeof ksLiveEvents==='function') ksLiveEvents().then(()=>{ const ec=$('#evcal_k',el); if(ec&&$('[data-tab=kalender]').classList.contains('active')) renderCalendar(ec); });
   if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
+/* ===== Tab Castle Battle — riset + simulasi posisi ===== */
+function nextCastleDay(age){ if(age==null) return 54; if(age<54) return 54; return 54+Math.ceil((age-54+0.0001)/18)*18; }
+function attackRallyHeroes(age){ var g=(typeof _genNum==='function')?_genNum(age):1;
+  if(g>=5) return 'Long Fei · Petra · (tergantung rasio)';
+  if(g>=4) return 'Amadeus · Petra · Rosa';
+  if(g>=3) return 'Amadeus · Petra · Marlin';
+  return 'JOIN rally (jangan lead sbg F2P). Terpaksa lead: '+((typeof heroLeadersInline==='function')?heroLeadersInline(age).replace(/<[^>]+>/g,''):'Howard · Quinn · Jabel'); }
+function castleMapSVG(){
+  /* 5 struktur: Castle (tengah) + 4 turret; zona terlarang (ring) + area TP aliansi */
+  var tur=function(id,x,y,lbl){ return '<g id="tur-'+id+'" class="turret enemy" style="cursor:pointer" tabindex="0"><circle cx="'+x+'" cy="'+y+'" r="21"/><text x="'+x+'" y="'+(y+4)+'" text-anchor="middle" class="tl">⛨</text><text x="'+x+'" y="'+(y+34)+'" text-anchor="middle" class="tn">'+lbl+'</text></g>'; };
+  return '<svg class="cbmap" viewBox="0 0 340 310" role="img" aria-label="Peta Castle Battle">'
+    +'<circle cx="170" cy="150" r="118" class="fzone"/><text x="170" y="28" text-anchor="middle" class="fz-lbl">⛔ Zona Terlarang — TP hanya &lt;1 jam sebelum mulai</text>'
+    +tur('n',170,66,'Turret N')+tur('e',280,150,'Turret E')+tur('s',170,234,'Turret S')+tur('w',60,150,'Turret W')
+    +'<g><rect x="146" y="126" width="48" height="48" rx="8" class="castle"/><text x="170" y="157" text-anchor="middle" class="cico">🏰</text><text x="170" y="192" text-anchor="middle" class="cn">King'+"'"+'s Castle</text></g>'
+    +'<text x="170" y="300" text-anchor="middle" class="stage">Aliansi TP & staging di LUAR ring · 1 march = 1 struktur</text>'
+    +'</svg>';
+}
+function wireCastle(root){
+  var el=root||document; var st={n:'enemy',e:'enemy',s:'us',w:'us'};
+  function paint(){
+    ['n','e','s','w'].forEach(function(k){ var g=$('#tur-'+k,el); if(g) g.setAttribute('class','turret '+st[k]); });
+    var en=['n','e','s','w'].filter(function(k){return st[k]==='enemy';}).length;
+    var out=$('#cb_out',el); if(!out) return; var atr=en*2; var eng=(window.__getLang&&window.__getLang()==='en');
+    out.innerHTML='<div class="calcrow"><span>'+(eng?'Turrets held by enemy':'Turret dikuasai musuh')+'</span><b class="num">'+en+' / 4</b></div>'
+     +'<div class="calcrow"><span>'+(eng?'Attrition to your garrison':'Attrition ke garrison-mu')+'</span><b class="num" style="'+(atr>=6?'color:var(--loss)':(atr===0?'color:var(--win,#5bd6a0)':''))+'">−'+atr+'% / siklus</b></div>'
+     +'<div class="calcrow"><span class="small">'+(en>0?(eng?'Retake the '+en+' enemy turret(s) → 0% attrition. Hit TURRETS first, then hold the castle.':'Rebut '+en+' turret musuh → attrition 0%. Serang TURRET dulu, baru tahan castle.'):(eng?'All turrets safe — defend & hold the castle.':'Semua turret aman — pertahankan & tahan castle.'))+'</span></div>';
+  }
+  ['n','e','s','w'].forEach(function(k){ var g=$('#tur-'+k,el); if(g){ g.onclick=function(){ st[k]=st[k]==='enemy'?'us':(st[k]==='us'?'contested':'enemy'); paint(); }; g.onkeydown=function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); g.onclick(); } }; } });
+  paint();
+}
+function renderCastle(){
+  const el=$('[data-tab=castle]'); if(!el) return;
+  const {start,age}=profileAge();
+  let cdCard;
+  if(age!=null){ const nd=nextCastleDay(age); const left=nd-age;
+    cdCard=card('Hitung Mundur','⏳',
+      `<div class="stats"><div class="stat acc"><div class="sl">Castle Battle berikutnya</div><div class="sv sm">${left<=0?'≈ hari ini':'~'+left+' hari'}</div></div>
+        <div class="stat"><div class="sl">Perkiraan tanggal</div><div class="sv sm">${addDaysFmt(start,nd)}</div></div>
+        <div class="stat"><div class="sl">Umur server</div><div class="sv">H${age}</div></div></div>
+       <div class="muted small">Pertama ~hari 54, lalu ~tiap 18 hari (biweekly, sering Sabtu). Timer pasti: zoom peta dunia → tap King's Castle. Format bisa Standard atau KvK Castle Battle.</div>`,null,true);
+  } else cdCard='<div class="alert inf small">Hubungkan Player ID (tab Profil) untuk hitung mundur Castle Battle.</div>';
+  const mapCard=card('Simulasi Peta & Posisi','🗺',
+    `<p class="muted small">5 struktur: <b>Castle</b> (tengah) + <b>4 turret</b>. Tiap turret yang dipegang <b>musuh</b> = <b>−2%</b> pasukan/siklus ke penahan castle (maks −8%). Ketuk turret untuk simulasi (musuh → kamu → rebutan).</p>
+     ${castleMapSVG()}
+     <div class="cbleg"><span><i class="d us"></i> kamu</span><span><i class="d enemy"></i> musuh</span><span><i class="d contested"></i> rebutan</span></div>
+     <div id="cb_out" class="calcout"></div>`,null,true);
+  const winCard=card('Cara Menang & Skor','🏆',
+    `<div class="alert ok small"><b>Menang</b> = tahan Castle <b>2,5–3 jam beruntun</b> (langsung menang), ATAU <b>total waktu tahan tertinggi</b> saat event (5–6 jam) habis. Dihitung per-<b>ALIANSI</b>, bukan 1 timer — jangan pecah hold antar grup.</div>
+     <div class="lbl" style="margin:12px 0 4px">3 sumber poin — FIGHT, jangan diam</div>
+     <div class="scrollx"><table><thead><tr><th>Poin</th><th>Dari</th></tr></thead><tbody>
+       <tr><td><b>Carnage / KO</b></td><td class="small">Bunuh/lukai pasukan musuh di castle & turret</td></tr>
+       <tr><td><b>Occupation</b></td><td class="small">POWER pasukan yang kamu stasiunkan × lama tahan</td></tr>
+       <tr><td><b>Casualty</b></td><td class="small">Pasukanmu yang terluka saat bertempur</td></tr>
+     </tbody></table></div>
+     <div class="alert warn small">Diam menahan struktur TANPA bertempur = skor kecil. Poin datang dari <b>pertempuran aktif</b>.</div>
+     <div class="alert inf small">🩹 Pasukan TIDAK mati permanen kecuali <b>hospital penuh</b> (lalu 30% hilang, 70% balik via Enlistment Office/Loyalty). Pantau kapasitas hospital.</div>`);
+  const posCard=card('Posisi & Peran','📍',
+    `<div class="lbl" style="margin-bottom:4px">Aturan posisi</div>
+     <ul class="doul">
+       <li><b>1 march = 1 struktur</b> — pasukan di turret tak bisa sekaligus di castle.</li>
+       <li><b>Zona terlarang</b>: TP masuk hanya <b>&lt;1 jam</b> sebelum mulai (kepagian = kota dipindah, shield hilang).</li>
+       <li>Staging di LUAR ring, lalu serbu saat mulai.</li>
+     </ul>
+     <div class="lbl" style="margin:12px 0 4px">Peran F2P</div>
+     <div class="alert ok small">JOIN rally (jangan lead — rally cap = CC leader, butuh Widget mahal). Rebut/pegang <b>turret</b> (attrition + poin) lebih realistis daripada castle utama untuk F2P.</div>
+     <div class="lbl" style="margin:12px 0 4px">Hero rally serang${age!=null?' (Gen '+(_genNum(age))+')':''}</div>
+     <div class="alert inf small">${age!=null?attackRallyHeroes(age):'Hubungkan Player ID untuk saran hero sesuai generasi.'}</div>`);
+  const tacCard=card('Taktik F2P','🎯',
+    `<ul class="doul">
+       <li><b>Serang TURRET, bukan castle</b> — tiap turret musuh = 2% korban/siklus ke garrison mereka (4 turret = 8%, tak bisa di-heal saat dipegang).</li>
+       <li><b>Rebut ulang</b> turret musuh = reset attack-speed-nya (makin lama dipegang makin sakit) + beri garrison waktu heal.</li>
+       <li>Heal pakai <b>slider ~30 mnt + spam Help</b>, BUKAN speedup (kecuali hospital overflow).</li>
+       <li>Kosongkan <b>hospital & infirmary</b> sebelum battle (kapasitas untuk luka).</li>
+       <li>Menang → aliansi tunjuk <b>King</b> = buff kingdom + reward semua anggota. Kalah pun dapat <b>Charm material</b> — tetap ikut.</li>
+     </ul>`);
+  el.innerHTML=pageHead('Castle Battle',"King's Castle — rebut & tahan. Simulasi posisi, skor, taktik F2P (riset komunitas).")+cdCard+mapCard+winCard+posCard+tacCard;
+  wireCastle(el);
+  if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
+}
 /* ===== Tab Dukung — Saran/Request + Donasi ===== */
 function renderDukung(){
   const el=$('[data-tab=dukung]'); if(!el) return;
@@ -1279,7 +1358,7 @@ function init(){
   $('#brand').onclick=()=>activate('sekarang');
   const tzb=$('#tztoggle'); if(tzb){ tzb.textContent=DISPLAY_TZ; tzb.onclick=()=>setTZ(DISPLAY_TZ==='WIB'?'UTC':'WIB'); }
   const last=store.get('lastTab','sekarang');
-  activate(['sekarang','hero','event','bangun','pets','island','kode','kalender','kalkulator','dukung','profil'].includes(last)?last:'sekarang');
+  activate(['sekarang','hero','event','castle','bangun','pets','island','kode','kalender','kalkulator','dukung','profil'].includes(last)?last:'sekarang');
   renderTopClock();
   _lastGameDay=ksClock.now().toISOString().slice(0,10);
   if(typeof autoDetectProfiles==='function') autoDetectProfiles(); /* isi nama/Kingdom/TC profil (non-blok) */

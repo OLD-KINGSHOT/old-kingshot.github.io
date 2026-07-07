@@ -5,6 +5,7 @@ const NAV=[
   {id:'sekarang',gi:'\u25d0',label:'Sekarang'},
   {id:'hero',gi:'\u25ce',label:'Hero'},
   {id:'event',gi:'\u2694',label:'Event'},
+  {id:'castle',gi:'\ud83c\udff0',label:'Castle'},
   {id:'bangun',gi:'\u25a3',label:'Bangun'},
   {id:'pets',gi:'\u2b22',label:'Pets'},
   {id:'island',gi:'\ud83c\udfdd',label:'Island'},
