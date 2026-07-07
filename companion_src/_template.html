@@ -906,6 +906,8 @@ td{line-height:1.45}
     background:rgba(9,12,17,.96);backdrop-filter:blur(10px);border-top:1px solid var(--bd);
     padding:6px 4px env(safe-area-inset-bottom,6px);overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x proximity;overscroll-behavior-x:contain}
   .mobnav::-webkit-scrollbar{display:none}
+  .mobnav{touch-action:pan-x;user-select:none;-webkit-user-select:none;cursor:grab}
+  .mobnav:active{cursor:grabbing}
   .mobnav .navbtn{flex:0 0 auto;width:auto;min-width:58px;flex-direction:column;gap:3px;padding:7px 9px;margin:0;border-left:0;border-bottom:2px solid transparent;
     font-size:9px;letter-spacing:.02em;align-items:center;text-align:center;white-space:nowrap;scroll-snap-align:center}
   .mobnav .navbtn .gi{font-size:17px;width:auto}
@@ -1266,7 +1268,9 @@ window.__splashT0=Date.now();setTimeout(function(){var s=document.getElementById
 .topprofile .spt{display:flex;flex-direction:column;line-height:1.12;text-align:left}
 .topprofile .spt b{font-size:12.5px;color:var(--fg);font-weight:700}
 .topprofile .spt small{font-size:10px;color:var(--fg-dim)}
-.topnav{display:flex;gap:6px;padding:8px 26px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.topnav{display:flex;gap:6px;padding:8px 26px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x;user-select:none;-webkit-user-select:none;scrollbar-width:none}
+.topnav::-webkit-scrollbar{display:none}
+.topnav:active{cursor:grabbing}
 .topnav .navbtn{flex:0 0 auto;flex-direction:row;width:auto;gap:8px;padding:9px 16px;margin:0;border-radius:11px;border:1px solid transparent;font-size:13.5px;font-weight:600;box-shadow:none;color:var(--fg-mute)}
 .topnav .navbtn .gi{width:auto;font-size:15px}
 .topnav .navbtn:hover{background:var(--bg-3);color:var(--fg)}

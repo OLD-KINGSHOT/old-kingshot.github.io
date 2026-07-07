@@ -43,11 +43,25 @@ function updateSideProf(){
     } else { sel.style.display='none'; }
   }
 }
+/* Geser nav seperti trackpad: drag mouse/pen + roda vertikal → scroll horizontal.
+   Hanya menggeser nav itu sendiri (tidak menyentuh scroll halaman / elemen lain).
+   Touch pakai scroll native (sudah mulus). Klik ditahan kalau barusan men-drag. */
+function makeDragScroll(nav){
+  if(!nav||nav._drag) return; nav._drag=true;
+  var down=false,startX=0,startL=0,moved=false;
+  nav.addEventListener('pointerdown',function(e){ if(e.pointerType==='touch'||(e.button&&e.button!==0)) return; down=true; moved=false; startX=e.clientX; startL=nav.scrollLeft; try{nav.setPointerCapture(e.pointerId);}catch(_){} });
+  nav.addEventListener('pointermove',function(e){ if(!down) return; var dx=e.clientX-startX; if(Math.abs(dx)>4) moved=true; nav.scrollLeft=startL-dx; });
+  var up=function(e){ if(!down) return; down=false; try{nav.releasePointerCapture(e.pointerId);}catch(_){} };
+  nav.addEventListener('pointerup',up); nav.addEventListener('pointercancel',up);
+  nav.addEventListener('click',function(e){ if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; } },true);
+  nav.addEventListener('wheel',function(e){ if(nav.scrollWidth>nav.clientWidth+2 && Math.abs(e.deltaY)>=Math.abs(e.deltaX)){ nav.scrollLeft+=e.deltaY; e.preventDefault(); } },{passive:false});
+}
 function buildNav(){
   $('#navlist').innerHTML=NAV.map(n=>navBtnHTML(n)).join('');
   /* mobile bottom-nav: Profil FIRST (bottom-LEFT — the single login/settings access on phones) */
   $('#mobnav').innerHTML=[{id:'profil',gi:'👤',label:'Profil'}].concat(NAV).map(n=>navBtnHTML(n)).join('');
   $$('[data-go]').forEach(b=>b.onclick=()=>activate(b.dataset.go));
+  makeDragScroll($('#mobnav')); makeDragScroll($('#navlist'));
   const sp=$('#sideprof'); if(sp) sp.onclick=()=>activate('profil');
   updateSideProf();
 }
