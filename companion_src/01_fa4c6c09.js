@@ -633,8 +633,10 @@ function renderCastle(){
        <li><b>Zona terlarang</b>: TP masuk hanya <b>&lt;1 jam</b> sebelum mulai (kepagian = kota dipindah, shield hilang).</li>
        <li>Staging di LUAR ring, lalu serbu saat mulai.</li>
      </ul>
-     <div class="lbl" style="margin:12px 0 4px">Peran F2P</div>
-     <div class="alert ok small">JOIN rally (jangan lead — rally cap = CC leader, butuh Widget mahal). Rebut/pegang <b>turret</b> (attrition + poin) lebih realistis daripada castle utama untuk F2P.</div>`);
+     <div class="lbl" style="margin:12px 0 4px">Peran ${isP2W()?'P2W / Spender':'F2P'}</div>
+     ${isP2W()
+       ? '<div class="alert ok small">Ujung tombak: <b>LEAD rally serang</b> ke Castle (beli <b>Attack Widget</b> = rally cap besar). Refresh <b>gem</b> untuk attempt/serangan ekstra, dorong <b>leaderboard</b>. Koordinasi target turret dengan R4/R5.</div>'
+       : '<div class="alert ok small">JOIN rally (jangan lead — rally cap = CC leader, butuh Widget mahal). Rebut/pegang <b>turret</b> (attrition + poin) lebih realistis daripada castle utama untuk F2P.</div>'}`);
   const heroCard=card('Hero & Rasio — Serang vs Tahan','⚔',
     `<p class="muted small">${age!=null?'Generasimu: <b>Gen '+_cbGen(age)+'</b>. ':''}Rally <b>SERANG</b> = pecah/rebut · Rally <b>TAHAN</b> (garrison) = hold castle. Sumber: kingshotwiki.</p>
      <div class="grid2">
@@ -1177,6 +1179,12 @@ function renderProfil(){
        <label class="fl">Tanggal server buka (Hari 0)</label><input id="pf_start" type="date" value="${esc(p.start||'')}"${p.start?' readonly tabindex="-1" style="opacity:.6;cursor:not-allowed"':''}>
        <div class="alert inf small">\ud83d\udd12 Kingdom, TC & tanggal server terisi OTOMATIS dari Player ID \u2014 tekan "Hubungkan & Deteksi" untuk memperbarui.</div>
        ${p.start?'':'<div class="alert warn small">Tanggal server belum terdeteksi. Manual: buka Monument \u2192 misi "Beast Hunting", tanggal selesai \u2212 2 hari = Hari 0.</div>'}
+       <label class="fl" style="margin-top:10px">Gaya main (per server ini)</label>
+       <div class="seg" id="pf_mode" style="margin:2px 0">
+         <button data-m="f2p"${curMode()==='f2p'?' class="active"':''}>\ud83c\udd93 F2P</button>
+         <button data-m="p2w"${curMode()==='p2w'?' class="active"':''}>\ud83d\udcb3 P2W / Spender</button>
+       </div>
+       <div class="muted small">Ubah panduan sesuai server: F2P (hemat, hindari spend) vs P2W (kejar leaderboard, lead rally, belanja terarah). Tersimpan per-profil \u2014 cocok kalau main >1 server.</div>
        <div class="row" style="margin-top:10px"><button class="btn" id="pf_save">Simpan</button></div>`)
     +card('Jam Event Alliance','\u23f0',
       `<p class="muted small">Jam berikut diatur R4/R5 alliance (tanya pengumuman). Isi sekali \u2014 app beri hitung mundur di tab Sekarang. Hari = perkiraan, jam pasti cek tab Events di game.</p>
@@ -1226,6 +1234,7 @@ function renderProfil(){
     store.set('profile',{eventTimes:pr.eventTimes||{},bearTime:pr.bearTime||''}); /* keep alliance times — they're alliance settings, not identity */
     renderProfil(); if(typeof updateSideProf==='function') updateSideProf();
   };
+  $$('#pf_mode button',el).forEach(b=>b.onclick=()=>{ const pr=store.get('profile',{}); pr.mode=b.dataset.m; store.set('profile',pr); renderProfil(); if(typeof updateSideProf==='function') updateSideProf(); });
   $('#pf_save',el).onclick=()=>saveProfile();
   const ets=$('#et_save',el); if(ets) ets.onclick=()=>{ const pr=store.get('profile',{}); const et=Object.assign({},pr.eventTimes||{}); SETTABLE_EVENTS.forEach(ev=>{ const inp=$('#et_'+ev.id,el); if(inp) et[ev.id]=dispToWib(inp.value); }); pr.eventTimes=et; pr.bearTime=et.bear||''; store.set('profile',pr); renderProfil(); };
   $('#pf_nudgeset',el).onclick=()=>{ ksClock.setNudge($('#pf_nudge').value); renderTopClock(); renderProfil(); };

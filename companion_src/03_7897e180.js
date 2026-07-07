@@ -169,6 +169,9 @@ function battleUTC(){ const n=ksClock.now(); return Date.UTC(n.getUTCFullYear(),
    RECURRING_* data flagged settable:true (daily=every day; else dows). */
 const SETTABLE_EVENTS=(typeof RECURRING_DAILY!=='undefined'?RECURRING_DAILY:[]).concat(typeof RECURRING_WEEKLY!=='undefined'?RECURRING_WEEKLY:[]).filter(e=>e&&e.settable);
 function evtTimes(){ const p=store.get('profile',{}); const t=Object.assign({},p.eventTimes||{}); if(p.bearTime&&t.bear===undefined) t.bear=p.bearTime; /* migrate old single field */ return t; }
+/* Gaya main per-profil: 'f2p' (default) atau 'p2w'. User main 2 server (1 F2P, 1 P2W). */
+function curMode(){ return (store.get('profile',{}).mode==='p2w')?'p2w':'f2p'; }
+function isP2W(){ return curMode()==='p2w'; }
 /* Next occurrence (UTC ms) of a settable event at its WIB time. */
 function nextRecurUTC(ev,hhmm){ if(!ev||!hhmm) return null; const a=hhmm.split(':'); const wh=parseInt(a[0]); const wm=parseInt(a[1])||0; if(isNaN(wh)) return null;
   const days=ev.daily?[0,1,2,3,4,5,6]:(ev.dows||[]); if(!days.length) return null; const now=ksClock.now().getTime(); let best=null;

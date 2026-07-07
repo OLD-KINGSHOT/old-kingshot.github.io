@@ -60,6 +60,9 @@ function activate(id){
   const fn=window['render'+id.charAt(0).toUpperCase()+id.slice(1)];
   if(typeof fn==='function') fn();
   window.scrollTo(0,0);
+  /* mobile bottom-nav: geser tombol aktif ke tengah biar tak "hilang" saat banyak tab */
+  const ab=document.querySelector('#mobnav [data-go="'+id+'"]');
+  if(ab&&ab.scrollIntoView){ try{ ab.scrollIntoView({inline:'center',block:'nearest'}); }catch(e){} }
 }
 
 /* ============ LIVE CLOCK (topbar) ============ */
@@ -171,7 +174,9 @@ function renderSekarang(){
     +'<div class="pf-meta"><span class="badge acc">Kingdom #'+esc(p.kingdom||'?')+'</span>'
     +'<span class="badge">Umur server: Hari ke-'+age+'</span>'
     +(tc?'<span class="badge">TC '+tc+'</span>':'')
-    +(gen?'<span class="badge">'+esc(gen)+'</span>':'')+'</div></div></div>'
+    +(gen?'<span class="badge">'+esc(gen)+'</span>':'')
+    +'<span class="badge" style="'+(isP2W()?'color:#ffb64a;border-color:rgba(255,182,74,.45)':'color:#5bd6a0;border-color:rgba(91,214,160,.45)')+'">'+(isP2W()?'💳 P2W':'🆓 F2P')+'</span>'
+    +'</div></div></div>'
     +'<div class="pf-clock"><span class="clk tabular" id="hud_clock">'+clock+' <span style="color:var(--sk-ink-faint)">'+tzInfo().label+'</span></span>'
     +'<span class="reset"><span class="dot"></span> Reset '+tzInfo().reset+' dalam <b class="tabular" id="hud_reset">'+hms(left)+'</b></span></div></div>';
 

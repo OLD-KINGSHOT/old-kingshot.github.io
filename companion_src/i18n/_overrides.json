@@ -541,5 +541,19 @@
   "turret kita": "our turret",
   "base kita": "our base",
   "Simulasi attrition turret": "Turret attrition sim",
-  "Hero & Rasio — Serang vs Tahan": "Heroes & Ratios — Attack vs Hold"
+  "Hero & Rasio — Serang vs Tahan": "Heroes & Ratios — Attack vs Hold",
+  "Gaya main (per server ini)": "Playstyle (this server)",
+  "Ubah panduan sesuai server: F2P (hemat, hindari spend) vs P2W (kejar leaderboard, lead rally, belanja terarah). Tersimpan per-profil — cocok kalau main >1 server.": "Tailors advice per server: F2P (frugal, avoid spending) vs P2W (chase leaderboard, lead rallies, targeted spending). Saved per profile — great if you play >1 server.",
+  "Hubungkan Player ID (tab Profil) untuk hitung mundur Castle Battle.": "Connect your Player ID (Profile tab) for the Castle Battle countdown.",
+  "Pertama ~hari 54, lalu ~tiap 18 hari (biweekly, sering Sabtu). Timer pasti: zoom peta dunia → tap King's Castle. Format bisa Standard atau KvK Castle Battle.": "First ~day 54, then ~every 18 days (biweekly, often Saturday). Exact timer: zoom the world map → tap the King's Castle. May be Standard or KvK Castle Battle.",
+  "Bunuh/lukai pasukan musuh di castle & turret": "Kill/wound enemy troops at the castle & turrets",
+  "POWER pasukan yang kamu stasiunkan × lama tahan": "POWER of troops you station × hold time",
+  "Pasukanmu yang terluka saat bertempur": "Your troops wounded while fighting",
+  "Dari": "From",
+  "Infantry-berat + cavalry, TANPA archer. Hero fokus survivability/sustain.": "Infantry-heavy + cavalry, NO archers. Heroes focused on survivability/sustain.",
+  "Archer lumat infantry; buang Cav kalau musuh tak punya archer.": "Archers melt infantry; drop Cav if the enemy has no archers.",
+  "Rasio standar": "Standard ratio",
+  "Rasio garrison (durability)": "Garrison ratio (durability)",
+  "Vs castle Infantry-berat": "Vs infantry-heavy castle",
+  "Peran P2W / Spender": "P2W / Spender role"
 }
