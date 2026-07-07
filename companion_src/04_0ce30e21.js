@@ -289,9 +289,9 @@ const MYSTIC_TRIAL={
   },
   zones:[
    {key:'coliseum',name:'Coliseum',days:'Sen-Sel',stat:'Hero + Hero Gear + Widget',ratio:[50,10,40],unlock:'Langsung',heroes:true,teams:'≤3 team',ownTroops:false,
-    lead:'Hanya hitung HERO + Hero Gear + Widget. ATURAN expedition: hanya skill TEMPUR yang aktif — hero ekonomi (Diana: skill cuma −stamina & +march speed) = dead weight walau power tinggi. Leader F2P per kelas (lihat tab Hero) — Inf: Zoe (inti, Charisma +25% Atk); sebelum Zoe siap pakai Howard (tank). Archer: Marlin (carry, Wild Card); awal Quinn/Saul. Cav: Petra (leader, Gen-3); awal Jabel (garrison/leader Gen-1). Stage dalam butuh 3 team → hero ke-2 & ke-3 juga beri gear.',
+    lead:'Cuma skill TEMPUR yang aktif — hero ekonomi (mis. Diana) = dead weight walau power tinggi. Stage dalam butuh 3 team → hero ke-2/3 juga diberi gear.',
     marches:[
-     {m:'Team 1 — UTAMA',hero:'Leader combat terkuat + gear terbaik (mis. Zoe/Marlin/Petra)',why:'Power & gear utama ditaruh di sini.'},
+     {m:'Team 1 — UTAMA',hero:'Leader combat terkuat + gear terbaik-mu',why:'Power & gear utama ditaruh di sini.'},
      {m:'Team 2 & 3 (stage dalam)',hero:'Hero combat berikutnya, beri gear minimal (purple Lv5 pun membantu)',why:'Stage lanjut butuh 3 team. Trik: reset Armor XP hero utama → pinjam ke hero 2/3 buat tembus stage, lalu reset balik.'}],
     tips:['Bawa hero SKILL TEMPUR — hero ekonomi (cth Diana) jadi dead weight walau power tinggi.','Pastikan semua hero punya gear minimal; fokus 1 set utama.','Makin dalam butuh 2–3 team → siapkan gear di hero ke-2/3 (trik reset Armor XP).']},
    {key:'forest',name:'Forest of Life',days:'Rab-Kam',stat:'Pet (level + taming marks + combat skill)',ratio:[50,15,35],unlock:'~54 hari (Pet Gen-1)',heroes:false,teams:'tanpa hero',ownTroops:false,
@@ -307,7 +307,7 @@ const MYSTIC_TRIAL={
     lead:'Hanya hitung Governor Gear (Attack + Defense). Hero/charm/pet/riset DIABAIKAN. Prioritas upgrade Inf → Archer → Cav; bottleneck material = Artisan Vision; set bonus di 3 & 6 piece se-rarity.',
     tips:['Hanya Governor Gear — hero/charm/pet/riset DIABAIKAN (taktik hero tak berlaku).','Prioritas upgrade Inf→Arc→Cav; bottleneck material = Artisan Vision.','Set bonus di 3 & 6 piece se-rarity. Gear beri Atk/Def; Lethality/Health dari Charm.']},
    {key:'spire',name:'Radiant Spire',days:'Minggu',stat:'SEMUA stat + VIP + Skin + Oasis',ratio:[50,15,35],unlock:'Langsung',heroes:true,teams:'≤3 team',ownTroops:true,
-    lead:'Ujian pamungkas: SEMUA sumber stat berlaku (Hero + Gear + Charm + Pet + Riset + VIP + Skin + Oasis) DAN pakai TROOP SENDIRI (tier tinggi spt True Gold+ unggul besar). Hero sama seperti Coliseum — Inf Zoe (awal Howard) · Archer Marlin (awal Quinn/Saul) · Cav Petra (awal Jabel); hindari hero ekonomi (Diana). Stage dalam butuh 3 team.',
+    lead:'Ujian pamungkas: SEMUA sumber stat berlaku + pakai TROOP SENDIRI (tier tinggi spt True Gold+ unggul besar). Hero sama seperti Coliseum; hindari hero ekonomi (Diana). Stage dalam butuh 3 team.',
     marches:[
      {m:'Team 1 — UTAMA',hero:'Combat-skill terkuat + gear terbaik + troop tier tertinggi-mu',why:'Power, gear, & troop terbaik di sini (Spire pakai troop sendiri).'},
      {m:'Team 2 & 3 (stage dalam)',hero:'Combat-skill berikutnya, beri gear minimal',why:'Stage lanjut butuh 3 team. Trik: reset Armor XP hero utama → pinjam ke hero 2/3, lalu reset balik.'}],

@@ -42,6 +42,19 @@ function genForAge(d){
 }
 const GEN_DAY={1:0,2:50,3:113,4:197,5:281,6:365,7:449};
 const HERO_GEN={Amadeus:1,Helga:1,Jabel:1,Saul:1,Howard:1,Chenko:1,Quinn:1,Diana:1,Gordon:1,Fahd:1,Amane:1,Yeonwoo:1,Edwin:1,Seth:1,Olive:1,Zoe:2,Hilde:2,Marlin:2,Petra:3,Eric:3,Jaeger:3,Rosa:4,Alcar:4,Margot:4,'Long Fei':5,Thrud:5,Vivian:5,Sophia:6,Triton:6,Yang:6};
+/* Leader F2P per kelas, sadar-generasi — Gen 1 belum ada Zoe/Marlin/Petra.
+   [gen unlock, hero]. Dipakai Mystic Trial & panduan lineup agar tampil hero yg BENAR-BENAR kamu punya. */
+const F2P_LEAD={ inf:[[1,'Howard'],[2,'Zoe']], arc:[[1,'Quinn'],[2,'Marlin']], cav:[[1,'Jabel'],[3,'Petra']] };
+function _genNum(age){ var g=1; for(var k in GEN_DAY){ if(age!=null&&age>=GEN_DAY[k]&&+k>g) g=+k; } return g; }
+function f2pLeadNow(cls,age){ var arr=F2P_LEAD[cls]||[],g=_genNum(age),cur=arr[0],nxt=null;
+  for(var i=0;i<arr.length;i++){ if(arr[i][0]<=g) cur=arr[i]; else if(!nxt) nxt=arr[i]; } return {now:cur[1],gen:cur[0],next:nxt}; }
+function heroNowLine(age){
+  var en=(window.__getLang&&window.__getLang()==='en'), C=[['Inf','inf'],['Arc','arc'],['Cav','cav']], now=[], ups=[];
+  C.forEach(function(c){ var r=f2pLeadNow(c[1],age); now.push(c[0]+' <b>'+r.now+'</b>'); if(r.next) ups.push('<b>'+r.next[1]+'</b> Gen'+r.next[0]); });
+  var g=_genNum(age);
+  return '<div class="small">'+(en?'Your F2P leaders (Gen ':'Leader F2P kamu (Gen ')+g+'): '+now.join(' · ')+'</div>'
+    +(ups.length?'<div class="dim small">'+(en?'later upgrade: ':'upgrade nanti: ')+ups.join(' · ')+'</div>':'');
+}
 
 /* ============================================================
    COMBAT — SATU sumber: SITUATIONS + HERO_PRIORITY

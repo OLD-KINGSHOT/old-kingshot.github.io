@@ -383,11 +383,14 @@ function _wireCounter(el){
 }
 function _mtZoneDetail(z){
   const tag=(on,txt)=>`<span class="tag" style="${on?'color:var(--profit)':'opacity:.7'}">${txt}</span>`;
+  const _age=(typeof profileAge==='function')?profileAge().age:null;
+  const leadBlock=z.lead?('<div class="lbl" style="margin:12px 0 4px">⭐ Leader zona'+(z.heroes?' (otomatis sesuai umur)':'')+'</div><div class="alert inf small">'
+    +(z.heroes?heroNowLine(_age)+'<div class="dim small" style="margin-top:6px">'+esc(z.lead)+'</div>':esc(z.lead))+'</div>'):'';
   return `<div class="kv"><b style="font-size:15px">${esc(z.name)}</b><span class="mono small" style="color:var(--accent)">⏱ ${esc(z.days)}</span></div>
     <div class="small" style="margin:4px 0">Stat dihitung: <b>${esc(z.stat)}</b></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">${tag(true,'Unlock: '+esc(z.unlock))} ${tag(true,esc(z.teams))} ${tag(z.heroes,z.heroes?'Hero dihitung ✓':'Hero tidak dihitung')} ${tag(z.ownTroops,z.ownTroops?'Troop sendiri':'Troop game (T10)')}</div>
     ${_mtBar(z.ratio)}<div class="mono small">Rekomendasi: <b style="color:${_MTC.inf}">${z.ratio[0]}</b> / <b style="color:${_MTC.cav}">${z.ratio[1]}</b> / <b style="color:${_MTC.arc}">${z.ratio[2]}</b> (Inf/Cav/Arc)</div>
-    ${z.lead?`<div class="lbl" style="margin:12px 0 4px">⭐ Andalan / Leader zona</div><div class="alert inf small">${esc(z.lead)}</div>`:''}
+    ${leadBlock}
     ${z.marches?`<div class="lbl" style="margin:12px 0 4px">Susunan team (stage lanjut butuh 3 team)</div>
      <div class="scrollx"><table><thead><tr><th>Team</th><th>Hero</th><th>Catatan</th></tr></thead><tbody>${z.marches.map(m=>`<tr><td class="small"><b>${esc(m.m)}</b></td><td class="small">${esc(m.hero)}</td><td class="small muted">${esc(m.why)}</td></tr>`).join('')}</tbody></table></div>`:''}
     <ul class="mtul" style="margin-top:8px">${z.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
