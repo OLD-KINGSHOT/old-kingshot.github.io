@@ -48,12 +48,13 @@ function updateSideProf(){
    Touch pakai scroll native (sudah mulus). Klik ditahan kalau barusan men-drag. */
 function makeDragScroll(nav){
   if(!nav||nav._drag) return; nav._drag=true;
-  var down=false,startX=0,startL=0,moved=false;
-  nav.addEventListener('pointerdown',function(e){ if(e.pointerType==='touch'||(e.button&&e.button!==0)) return; down=true; moved=false; startX=e.clientX; startL=nav.scrollLeft; try{nav.setPointerCapture(e.pointerId);}catch(_){} });
-  nav.addEventListener('pointermove',function(e){ if(!down) return; var dx=e.clientX-startX; if(Math.abs(dx)>4) moved=true; nav.scrollLeft=startL-dx; });
-  var up=function(e){ if(!down) return; down=false; try{nav.releasePointerCapture(e.pointerId);}catch(_){} };
-  nav.addEventListener('pointerup',up); nav.addEventListener('pointercancel',up);
-  nav.addEventListener('click',function(e){ if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; } },true);
+  var down=false,startX=0,startL=0,dragged=false;
+  /* pakai listener di document (BUKAN setPointerCapture — capture bikin klik nyasar ke
+     nav → tombol anak tak bisa diklik). Klik hanya ditahan bila BENAR men-drag (>6px). */
+  function move(e){ if(!down) return; var dx=e.clientX-startX; if(Math.abs(dx)>6) dragged=true; if(dragged){ nav.scrollLeft=startL-dx; if(e.cancelable) e.preventDefault(); } }
+  function up(){ down=false; document.removeEventListener('pointermove',move); document.removeEventListener('pointerup',up); }
+  nav.addEventListener('pointerdown',function(e){ if(e.pointerType==='touch'||(e.button&&e.button!==0)) return; down=true; dragged=false; startX=e.clientX; startL=nav.scrollLeft; document.addEventListener('pointermove',move); document.addEventListener('pointerup',up); });
+  nav.addEventListener('click',function(e){ if(dragged){ e.preventDefault(); e.stopPropagation(); } dragged=false; },true);
   nav.addEventListener('wheel',function(e){ if(nav.scrollWidth>nav.clientWidth+2 && Math.abs(e.deltaY)>=Math.abs(e.deltaX)){ nav.scrollLeft+=e.deltaY; e.preventDefault(); } },{passive:false});
 }
 function buildNav(){

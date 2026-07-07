@@ -600,77 +600,88 @@ function wireCastle(root){
 function renderCastle(){
   const el=$('[data-tab=castle]'); if(!el) return;
   const {start,age}=profileAge();
+  const L=!!(window.__getLang&&window.__getLang()==='en'); const P2W=isP2W();
   let cdCard;
   if(age!=null){ const nd=nextCastleDay(age); const left=nd-age;
-    cdCard=card('Hitung Mundur','⏳',
-      `<div class="stats"><div class="stat acc"><div class="sl">Castle Battle berikutnya</div><div class="sv sm">${left<=0?'≈ hari ini':'~'+left+' hari'}</div></div>
-        <div class="stat"><div class="sl">Perkiraan tanggal</div><div class="sv sm">${addDaysFmt(start,nd)}</div></div>
-        <div class="stat"><div class="sl">Umur server</div><div class="sv">H${age}</div></div></div>
-       <div class="muted small">Pertama ~hari 54, lalu ~tiap 18 hari (biweekly, sering Sabtu). Timer pasti: zoom peta dunia → tap King's Castle. Format bisa Standard atau KvK Castle Battle.</div>`,null,true);
-  } else cdCard='<div class="alert inf small">Hubungkan Player ID (tab Profil) untuk hitung mundur Castle Battle.</div>';
-  const mapCard=card('Simulasi Peta & Posisi','🗺',
-    `<p class="muted small">5 struktur: <b>Castle</b> (tengah) + <b>4 turret</b>. Tiap turret yang dipegang <b>musuh</b> = <b>−2%</b> pasukan/siklus ke penahan castle (maks −8%). Ketuk turret untuk simulasi (musuh → kamu → rebutan).</p>
-     <div class="cbdir">Base aliansi kita: <span id="cb_dir"><button data-dir="n">Utara</button><button data-dir="e">Timur</button><button data-dir="s" class="active">Selatan</button><button data-dir="w">Barat</button></span></div>
+    cdCard=card(L?'Countdown':'Hitung Mundur','⏳',
+      `<div class="stats"><div class="stat acc"><div class="sl">${L?'Next Castle Battle':'Castle Battle berikutnya'}</div><div class="sv sm">${left<=0?(L?'≈ today':'≈ hari ini'):'~'+left+(L?' days':' hari')}</div></div>
+        <div class="stat"><div class="sl">${L?'Estimated date':'Perkiraan tanggal'}</div><div class="sv sm">${addDaysFmt(start,nd)}</div></div>
+        <div class="stat"><div class="sl">${L?'Server age':'Umur server'}</div><div class="sv">${L?'D':'H'}${age}</div></div></div>
+       <div class="muted small">${L?"First ~day 54, then ~every 18 days (biweekly, often Saturday). Exact timer: zoom the world map → tap the King's Castle. May be Standard or KvK Castle Battle.":"Pertama ~hari 54, lalu ~tiap 18 hari (biweekly, sering Sabtu). Timer pasti: zoom peta dunia → tap King's Castle. Format bisa Standard atau KvK Castle Battle."}</div>`,null,true);
+  } else cdCard='<div class="alert inf small">'+(L?'Connect your Player ID (Profile tab) for the Castle Battle countdown.':'Hubungkan Player ID (tab Profil) untuk hitung mundur Castle Battle.')+'</div>';
+  const mapCard=card(L?'Map & Position Simulator':'Simulasi Peta & Posisi','🗺',
+    `<p class="muted small">${L?'5 structures: <b>Castle</b> (center) + <b>4 turrets</b>. Each turret held by the <b>enemy</b> = <b>−2%</b> troops/cycle to the castle holder (max −8%). Tap a turret to simulate (enemy → you → contested).':'5 struktur: <b>Castle</b> (tengah) + <b>4 turret</b>. Tiap turret yang dipegang <b>musuh</b> = <b>−2%</b> pasukan/siklus ke penahan castle (maks −8%). Ketuk turret untuk simulasi (musuh → kamu → rebutan).'}</p>
+     <div class="cbdir">${L?'Our alliance base:':'Base aliansi kita:'} <span id="cb_dir"><button data-dir="n">${L?'North':'Utara'}</button><button data-dir="e">${L?'East':'Timur'}</button><button data-dir="s" class="active">${L?'South':'Selatan'}</button><button data-dir="w">${L?'West':'Barat'}</button></span></div>
      ${castleMapSVG()}
-     <div class="cbleg"><span><i class="d us"></i> turret kita</span><span><i class="d enemy"></i> musuh</span><span><i class="d contested"></i> rebutan</span><span><i class="d base"></i> base kita</span></div>
+     <div class="cbleg"><span><i class="d us"></i> ${L?'our turret':'turret kita'}</span><span><i class="d enemy"></i> ${L?'enemy':'musuh'}</span><span><i class="d contested"></i> ${L?'contested':'rebutan'}</span><span><i class="d base"></i> ${L?'our base':'base kita'}</span></div>
      <div id="cb_guide" class="alert inf small"></div>
-     <div class="lbl" style="margin:10px 0 2px">Simulasi attrition turret</div>
+     <div class="lbl" style="margin:10px 0 2px">${L?'Turret attrition sim':'Simulasi attrition turret'}</div>
      <div id="cb_out" class="calcout"></div>`,null,true);
-  const winCard=card('Cara Menang & Skor','🏆',
-    `<div class="alert ok small"><b>Menang</b> = tahan Castle <b>2,5–3 jam beruntun</b> (langsung menang), ATAU <b>total waktu tahan tertinggi</b> saat event (5–6 jam) habis. Dihitung per-<b>ALIANSI</b>, bukan 1 timer — jangan pecah hold antar grup.</div>
-     <div class="lbl" style="margin:12px 0 4px">3 sumber poin — FIGHT, jangan diam</div>
-     <div class="scrollx"><table><thead><tr><th>Poin</th><th>Dari</th></tr></thead><tbody>
-       <tr><td><b>Carnage / KO</b></td><td class="small">Bunuh/lukai pasukan musuh di castle & turret</td></tr>
-       <tr><td><b>Occupation</b></td><td class="small">POWER pasukan yang kamu stasiunkan × lama tahan</td></tr>
-       <tr><td><b>Casualty</b></td><td class="small">Pasukanmu yang terluka saat bertempur</td></tr>
+  const winCard=card(L?'How to Win & Score':'Cara Menang & Skor','🏆',
+    `<div class="alert ok small">${L?"<b>Win</b> = hold the Castle <b>2.5–3h straight</b> (instant win), OR the <b>highest total hold time</b> when the event (5–6h) ends. Counted per-<b>ALLIANCE</b>, not one timer — don't split holds.":'<b>Menang</b> = tahan Castle <b>2,5–3 jam beruntun</b> (langsung menang), ATAU <b>total waktu tahan tertinggi</b> saat event (5–6 jam) habis. Dihitung per-<b>ALIANSI</b>, bukan 1 timer — jangan pecah hold antar grup.'}</div>
+     <div class="lbl" style="margin:12px 0 4px">${L?"3 point sources — FIGHT, don't idle":'3 sumber poin — FIGHT, jangan diam'}</div>
+     <div class="scrollx"><table><thead><tr><th>${L?'Points':'Poin'}</th><th>${L?'From':'Dari'}</th></tr></thead><tbody>
+       <tr><td><b>Carnage / KO</b></td><td class="small">${L?'Kill/wound enemy troops at the castle & turrets':'Bunuh/lukai pasukan musuh di castle & turret'}</td></tr>
+       <tr><td><b>Occupation</b></td><td class="small">${L?'POWER of troops you station × hold time':'POWER pasukan yang kamu stasiunkan × lama tahan'}</td></tr>
+       <tr><td><b>Casualty</b></td><td class="small">${L?'Your troops wounded while fighting':'Pasukanmu yang terluka saat bertempur'}</td></tr>
      </tbody></table></div>
-     <div class="alert warn small">Diam menahan struktur TANPA bertempur = skor kecil. Poin datang dari <b>pertempuran aktif</b>.</div>
-     <div class="alert inf small">🩹 Pasukan TIDAK mati permanen kecuali <b>hospital penuh</b> (lalu 30% hilang, 70% balik via Enlistment Office/Loyalty). Pantau kapasitas hospital.</div>`);
-  const posCard=card('Posisi & Peran','📍',
-    `<div class="lbl" style="margin-bottom:4px">Aturan posisi</div>
-     <ul class="doul">
-       <li><b>1 march = 1 struktur</b> — pasukan di turret tak bisa sekaligus di castle.</li>
-       <li><b>Zona terlarang</b>: TP masuk hanya <b>&lt;1 jam</b> sebelum mulai (kepagian = kota dipindah, shield hilang).</li>
-       <li>Staging di LUAR ring, lalu serbu saat mulai.</li>
-     </ul>
-     <div class="lbl" style="margin:12px 0 4px">Peran ${isP2W()?'P2W / Spender':'F2P'}</div>
-     ${isP2W()
-       ? '<div class="alert ok small">Ujung tombak: <b>LEAD rally serang</b> ke Castle (beli <b>Attack Widget</b> = rally cap besar). Refresh <b>gem</b> untuk attempt/serangan ekstra, dorong <b>leaderboard</b>. Koordinasi target turret dengan R4/R5.</div>'
-       : '<div class="alert ok small">JOIN rally (jangan lead — rally cap = CC leader, butuh Widget mahal). Rebut/pegang <b>turret</b> (attrition + poin) lebih realistis daripada castle utama untuk F2P.</div>'}`);
-  const heroCard=card('Hero & Rasio — Serang vs Tahan','⚔',
-    `<p class="muted small">${age!=null?'Generasimu: <b>Gen '+_cbGen(age)+'</b>. ':''}Rally <b>SERANG</b> = pecah/rebut · Rally <b>TAHAN</b> (garrison) = hold castle. Sumber: kingshotwiki.</p>
+     <div class="alert warn small">${L?'Idle holding WITHOUT fighting = low score. Points come from <b>active combat</b>.':'Diam menahan struktur TANPA bertempur = skor kecil. Poin datang dari <b>pertempuran aktif</b>.'}</div>
+     <div class="alert inf small">${L?'🩹 Troops are NOT permanently killed unless the <b>hospital is full</b> (then 30% lost, 70% recovered via the Enlistment Office/Loyalty). Watch hospital capacity.':'🩹 Pasukan TIDAK mati permanen kecuali <b>hospital penuh</b> (lalu 30% hilang, 70% balik via Enlistment Office/Loyalty). Pantau kapasitas hospital.'}</div>`);
+  const heroCard=card(L?'Heroes & Ratios — Attack vs Hold':'Hero & Rasio — Serang vs Tahan','⚔',
+    `<p class="muted small">${age!=null?(L?'Your generation: <b>Gen '+_cbGen(age)+'</b>. ':'Generasimu: <b>Gen '+_cbGen(age)+'</b>. '):''}${L?'<b>ATTACK</b> rally = break/capture · <b>HOLD</b> (garrison) rally = keep the castle. Source: kingshotwiki.':'Rally <b>SERANG</b> = pecah/rebut · Rally <b>TAHAN</b> (garrison) = hold castle. Sumber: kingshotwiki.'}</p>
      <div class="grid2">
        <div>
-         <div class="lbl" style="color:#c8737a">⚔ Serang (Attack Rally)</div>
-         <div class="alert inf small" style="margin:4px 0">${age!=null?esc(attackRallyHeroes(age)):'Hubungkan Player ID.'}</div>
-         <div class="small muted">Rasio standar</div>${cbRatioBar(50,20,30)}
-         <div class="small muted" style="margin-top:8px">Vs castle Infantry-berat</div>${cbRatioBar(50,0,50)}
-         <div class="dim small" style="margin-top:4px">Archer lumat infantry; buang Cav kalau musuh tak punya archer.</div>
+         <div class="lbl" style="color:#c8737a">${L?'⚔ Attack (rally)':'⚔ Serang (Attack Rally)'}</div>
+         <div class="alert inf small" style="margin:4px 0">${age!=null?esc(attackRallyHeroes(age)):(L?'Connect your Player ID.':'Hubungkan Player ID.')}</div>
+         <div class="small muted">${L?'Standard ratio':'Rasio standar'}</div>${cbRatioBar(50,20,30)}
+         <div class="small muted" style="margin-top:8px">${L?'Vs infantry-heavy castle':'Vs castle Infantry-berat'}</div>${cbRatioBar(50,0,50)}
+         <div class="dim small" style="margin-top:4px">${L?'Archers melt infantry; drop Cav if the enemy has no archers.':'Archer lumat infantry; buang Cav kalau musuh tak punya archer.'}</div>
        </div>
        <div>
-         <div class="lbl" style="color:#6fbf95">🛡 Tahan (Garrison)</div>
-         <div class="alert inf small" style="margin:4px 0">${age!=null?esc(defenseHeroes(age)):'Hubungkan Player ID.'}</div>
-         <div class="small muted">Rasio garrison (durability)</div>${cbRatioBar(60,40,0)}
-         <div class="dim small" style="margin-top:4px">Infantry-berat + cavalry, TANPA archer. Hero fokus survivability/sustain.</div>
+         <div class="lbl" style="color:#6fbf95">${L?'🛡 Hold (garrison)':'🛡 Tahan (Garrison)'}</div>
+         <div class="alert inf small" style="margin:4px 0">${age!=null?esc(defenseHeroes(age)):(L?'Connect your Player ID.':'Hubungkan Player ID.')}</div>
+         <div class="small muted">${L?'Garrison ratio (durability)':'Rasio garrison (durability)'}</div>${cbRatioBar(60,40,0)}
+         <div class="dim small" style="margin-top:4px">${L?'Infantry-heavy + cavalry, NO archers. Heroes focused on survivability/sustain.':'Infantry-berat + cavalry, TANPA archer. Hero fokus survivability/sustain.'}</div>
        </div>
      </div>
-     <div class="alert warn small" style="margin-top:10px">RPS: <b>Archer › Infantry › Cavalry › Archer</b>. Scout garrison musuh dulu; tak tahu → pakai 50/20/30.</div>`);
-  const tacCard=card('Taktik F2P','🎯',
+     <div class="alert warn small" style="margin-top:10px">${L?'RPS: <b>Archer › Infantry › Cavalry › Archer</b>. Scout the enemy garrison first; unknown → use 50/20/30.':'RPS: <b>Archer › Infantry › Cavalry › Archer</b>. Scout garrison musuh dulu; tak tahu → pakai 50/20/30.'}</div>`);
+  const posCard=card(L?'Positions & Roles':'Posisi & Peran','📍',
+    `<div class="lbl" style="margin-bottom:4px">${L?'Positioning rules':'Aturan posisi'}</div>
+     <ul class="doul">
+       <li>${L?"<b>1 march = 1 structure</b> — troops in a turret can't also be in the castle.":'<b>1 march = 1 struktur</b> — pasukan di turret tak bisa sekaligus di castle.'}</li>
+       <li>${L?'<b>Forbidden zone</b>: TP in only <b>&lt;1 hour</b> before start (too early = city moved, shield lost).':'<b>Zona terlarang</b>: TP masuk hanya <b>&lt;1 jam</b> sebelum mulai (kepagian = kota dipindah, shield hilang).'}</li>
+       <li>${L?'Stage OUTSIDE the ring, then rush in at start.':'Staging di LUAR ring, lalu serbu saat mulai.'}</li>
+     </ul>
+     <div class="lbl" style="margin:12px 0 4px">${P2W?(L?'P2W / Spender role':'Peran P2W / Spender'):(L?'F2P role':'Peran F2P')}</div>
+     ${P2W
+       ? '<div class="alert ok small">'+(L?'Spearhead: <b>LEAD the attack rally</b> on the Castle (buy the <b>Attack Widget</b> = big rally cap). Refresh with <b>gems</b> for extra attempts, push the <b>leaderboard</b>. Coordinate turret targets with R4/R5.':'Ujung tombak: <b>LEAD rally serang</b> ke Castle (beli <b>Attack Widget</b> = rally cap besar). Refresh <b>gem</b> untuk attempt/serangan ekstra, dorong <b>leaderboard</b>. Koordinasi target turret dengan R4/R5.')+'</div>'
+       : '<div class="alert ok small">'+(L?"JOIN rallies (don't lead — rally cap = the CC leader's, needs an expensive Widget). Capturing/holding a <b>turret</b> (attrition + points) is more realistic than the main castle for F2P.":'JOIN rally (jangan lead — rally cap = CC leader, butuh Widget mahal). Rebut/pegang <b>turret</b> (attrition + poin) lebih realistis daripada castle utama untuk F2P.')+'</div>'}`);
+  const tacCard=card(L?'F2P Tactics':'Taktik F2P','🎯',
     `<ul class="doul">
-       <li><b>Serang TURRET, bukan castle</b> — tiap turret musuh = 2% korban/siklus ke garrison mereka (4 turret = 8%, tak bisa di-heal saat dipegang).</li>
-       <li><b>Rebut ulang</b> turret musuh = reset attack-speed-nya (makin lama dipegang makin sakit) + beri garrison waktu heal.</li>
-       <li>Heal pakai <b>slider ~30 mnt + spam Help</b>, BUKAN speedup (kecuali hospital overflow).</li>
-       <li>Kosongkan <b>hospital & infirmary</b> sebelum battle (kapasitas untuk luka).</li>
-       <li>Menang → aliansi tunjuk <b>King</b> = buff kingdom + reward semua anggota. Kalah pun dapat <b>Charm material</b> — tetap ikut.</li>
+       <li>${L?'<b>Hit TURRETS, not the castle</b> — each enemy turret = 2% casualties/cycle to their garrison (4 turrets = 8%, un-healable while held).':'<b>Serang TURRET, bukan castle</b> — tiap turret musuh = 2% korban/siklus ke garrison mereka (4 turret = 8%, tak bisa di-heal saat dipegang).'}</li>
+       <li>${L?'<b>Retake</b> an enemy turret = resets its attack-speed buildup (the longer held, the more it hurts) + gives the garrison time to heal.':'<b>Rebut ulang</b> turret musuh = reset attack-speed-nya (makin lama dipegang makin sakit) + beri garrison waktu heal.'}</li>
+       <li>${L?'Heal with the <b>~30-min slider + spam Help</b>, NOT speedups (unless hospital overflow).':'Heal pakai <b>slider ~30 mnt + spam Help</b>, BUKAN speedup (kecuali hospital overflow).'}</li>
+       <li>${L?'Clear your <b>hospital & infirmary</b> before battle (capacity for the wounded).':'Kosongkan <b>hospital & infirmary</b> sebelum battle (kapasitas untuk luka).'}</li>
+       <li>${L?'Win → the alliance appoints the <b>King</b> = kingdom buff + rewards for all. Even a loss gives <b>Charm materials</b> — always join.':'Menang → aliansi tunjuk <b>King</b> = buff kingdom + reward semua anggota. Kalah pun dapat <b>Charm material</b> — tetap ikut.'}</li>
      </ul>`);
-  el.innerHTML=pageHead('Castle Battle',"King's Castle — rebut & tahan. Simulasi posisi, skor, taktik F2P (riset komunitas).")+cdCard+mapCard+winCard+heroCard+posCard+tacCard;
+  el.innerHTML=pageHead('Castle Battle',L?"King's Castle — capture & hold. Position simulator, scoring, F2P tactics (community research).":"King's Castle — rebut & tahan. Simulasi posisi, skor, taktik F2P (riset komunitas).")+cdCard+mapCard+winCard+heroCard+posCard+tacCard;
   wireCastle(el);
-  if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
 /* ===== Tab Dukung — Saran/Request + Donasi ===== */
 function renderDukung(){
   const el=$('[data-tab=dukung]'); if(!el) return;
   el.innerHTML=pageHead('Saran & Donasi','Punya ide atau permintaan fitur? Kirim di sini. Suka app-nya? Dukung biar terus berkembang.')
+    +card('Pembuat App','👑',
+      `<div style="display:flex;align-items:center;gap:12px">
+         <div class="crest" style="width:46px;height:46px;flex:0 0 auto;font-size:22px">👑</div>
+         <div><div style="font-weight:800;font-size:16px">INDONenen13</div><div class="muted small num">Kingdom #2114</div></div>
+       </div>
+       <div class="row" style="margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap">
+         <span class="dim small">ID:</span>
+         <code class="num" id="dev_id" style="background:var(--bg-2);border:1px solid var(--bd);border-radius:8px;padding:6px 12px;font-size:15px">330300846</code>
+         <button class="btn sec sm" id="dev_copy">📋 Salin ID</button>
+       </div>
+       <div class="dim small" style="margin-top:8px">Kirim gift / friend request in-game, atau titip saran di bawah. Terima kasih sudah memakai app ini! 🙏</div>`)
     +card('Saran / Request Fitur','💬',
       `<p class="muted small">Tulis ide, bug, atau fitur yang kamu mau. Terkirim langsung dari sini — tak perlu buka aplikasi email.</p>
        <textarea id="fb_text" rows="5" placeholder="Contoh: tambah kalkulator gear, atau event X belum ada…"></textarea>
@@ -728,6 +739,9 @@ function renderDukung(){
   const ppm=$('#pp_mail',el); if(ppm) ppm.textContent=mailAddr();
   const ppc=$('#pp_copy',el); if(ppc) ppc.onclick=async()=>{
     try{ await navigator.clipboard.writeText(mailAddr()); ppc.textContent=en()?'✅ Copied':'✅ Tersalin'; setTimeout(()=>{ ppc.textContent=en()?'📋 Copy email':'📋 Salin email'; },1500); }catch(e){}
+  };
+  const dvc=$('#dev_copy',el); if(dvc) dvc.onclick=async()=>{
+    try{ await navigator.clipboard.writeText('330300846'); dvc.textContent=en()?'✅ Copied':'✅ Tersalin'; setTimeout(()=>{ dvc.textContent=en()?'📋 Copy ID':'📋 Salin ID'; },1500); }catch(e){}
   };
   if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
@@ -1444,7 +1458,7 @@ function showOnboard(){
   const d=document.createElement('div'); d.id='onboard';
   d.innerHTML=`<div class="ob-box">
     <div class="ob-logo"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M2 8.2l4.3 3.4L12 3l5.7 8.6L22 8.2l-2 10.4H4L2 8.2z"/><rect x="4" y="19.4" width="16" height="2.2" rx=".4" fill="currentColor"/></svg></div>
-    <div class="ob-wm"><span class="ob-br">[</span><span class="ob-tt">KINGSHOT<b class="ob13">13</b></span><span class="ob-br">]</span></div>
+    <div class="ob-wm"><span class="ob-br">[</span><span class="ob-tt">INDONenen<b class="ob13">13</b></span><span class="ob-br">]</span></div>
     <div class="ob-s">F2P Companion · Tilubelas Gaming Network</div>
     <div class="ob-l">Bahasa / Language</div>
     <div class="ob-row" id="ob_lang"><button data-v="id" class="active">🇮🇩 Indonesia</button><button data-v="en">🇬🇧 English</button></div>
