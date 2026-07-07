@@ -532,5 +532,14 @@
   "musuh": "enemy",
   "rebutan": "contested",
   "King's Castle — rebut & tahan. Simulasi posisi, skor, taktik F2P (riset komunitas).": "King's Castle — capture & hold. Position simulator, scoring, F2P tactics (community research).",
-  "3 sumber poin — FIGHT, jangan diam": "3 point sources — FIGHT, don't idle"
+  "3 sumber poin — FIGHT, jangan diam": "3 point sources — FIGHT, don't idle",
+  "Utara": "North",
+  "Timur": "East",
+  "Selatan": "South",
+  "Barat": "West",
+  "Base aliansi kita:": "Our alliance base:",
+  "turret kita": "our turret",
+  "base kita": "our base",
+  "Simulasi attrition turret": "Turret attrition sim",
+  "Hero & Rasio — Serang vs Tahan": "Heroes & Ratios — Attack vs Hold"
 }
