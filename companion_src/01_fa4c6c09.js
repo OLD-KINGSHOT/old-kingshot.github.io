@@ -578,7 +578,7 @@ function renderDukung(){
     send.disabled=true;
     try{
       const p=store.get('profile',{});
-      const r=await fetch('https://formsubmit.co/ajax/'+mailAddr(),{
+      const r=await fetch('https://formsubmit.co/ajax/905432b354085e82520786f06171434c',{ /* FormSubmit token (form aktif) — email pemilik tak tampil di bundle */
         method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
         body:JSON.stringify({ message:v, _subject:'Saran Kingshot App', _captcha:'false', _template:'table',
           dari:(p.nick||'?')+' · ID '+(p.pid||'-')+' · Kingdom '+(p.kingdom||'-'), bahasa:(window.__getLang&&window.__getLang())||'id' }) });
