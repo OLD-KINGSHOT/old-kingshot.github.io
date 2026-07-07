@@ -1233,7 +1233,30 @@ async function autoDetectUI(){
 /* (removed dead updateHeaderSub \u2014 the Companion topbar has no #hdrsub element) */
 
 /* ============ INIT ============ */
+function initAppStars(){
+  var c=document.getElementById('app_stars'); if(!c||!c.getContext) return;
+  var ctx=c.getContext('2d'), stars=[], raf, reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function rs(){ c.width=window.innerWidth; c.height=window.innerHeight; }
+  function seed(){ stars=[]; var n=Math.max(45,Math.min(110,Math.floor(c.width*c.height/14000)));
+    for(var i=0;i<n;i++) stars.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.1+0.2,sp:Math.random()*0.006+0.001,ph:Math.random()*6.283}); }
+  function paint(t){ ctx.clearRect(0,0,c.width,c.height);
+    for(var i=0;i<stars.length;i++){ var s=stars[i]; var a=reduce?0.5:(0.25+0.45*Math.sin(t*s.sp+s.ph)); if(a<0)a=0;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,6.283); ctx.fillStyle='rgba(150,190,255,'+a+')'; ctx.fill(); } }
+  function loop(t){ paint(t); raf=requestAnimationFrame(loop); }
+  rs(); seed(); if(reduce){ paint(0); } else { raf=requestAnimationFrame(loop); }
+  window.addEventListener('resize',function(){ rs(); seed(); if(reduce) paint(0); });
+}
+function injectFavicon(){
+  try{
+    var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#0d1219"/><path fill="#6b93f2" d="M3 8.6l3.6 2.8L12 4l5.4 7.4L21 8.6l-1.7 8.8H4.7L3 8.6z"/><rect x="5" y="18.2" width="14" height="1.9" rx=".4" fill="#6b93f2"/></svg>';
+    var l=document.querySelector('link[rel="icon"]')||document.createElement('link');
+    l.rel='icon'; l.type='image/svg+xml'; l.href='data:image/svg+xml,'+encodeURIComponent(svg);
+    if(!l.parentNode) document.head.appendChild(l);
+  }catch(e){}
+}
 function init(){
+  injectFavicon();
+  initAppStars();
   migrateProfiles();
   ksClock.load();
   Object.assign(KINGDOM_DATES,store.get('kdates',{}));
@@ -1242,7 +1265,7 @@ function init(){
   $('#brand').onclick=()=>activate('sekarang');
   const tzb=$('#tztoggle'); if(tzb){ tzb.textContent=DISPLAY_TZ; tzb.onclick=()=>setTZ(DISPLAY_TZ==='WIB'?'UTC':'WIB'); }
   const last=store.get('lastTab','sekarang');
-  activate(['sekarang','hero','event','bangun','pets','island','kode','profil'].includes(last)?last:'sekarang');
+  activate(['sekarang','hero','event','bangun','pets','island','kode','kalender','kalkulator','dukung','profil'].includes(last)?last:'sekarang');
   renderTopClock();
   _lastGameDay=ksClock.now().toISOString().slice(0,10);
   if(typeof autoDetectProfiles==='function') autoDetectProfiles(); /* isi nama/Kingdom/TC profil (non-blok) */
@@ -1251,10 +1274,10 @@ function init(){
     /* only force a re-render if the sync actually moved us to a different game day — otherwise it would wipe in-progress typing */
     if(changed){ const ae=document.activeElement; if(!ae||!/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) activate(store.get('lastTab','sekarang')); }
   } });
-  /* bumper splash: tahan minimal ~900ms biar terasa, lalu fade (fallback 6s ada di template) */
+  /* bumper splash: tahan ~2.4s biar animasi starfield + shimmer terlihat, lalu fade */
   const sp=document.getElementById('splash');
   if(sp){ const t0=window.__splashT0||Date.now();
-    setTimeout(()=>{ sp.classList.add('off'); setTimeout(()=>sp.remove(),600); },Math.max(0,900-(Date.now()-t0))); }
+    setTimeout(()=>{ sp.classList.add('off'); setTimeout(()=>sp.remove(),600); },Math.max(0,2400-(Date.now()-t0))); }
   showOnboard(); /* first-run: pilih bahasa + jam + Player ID (muncul saat splash memudar) */
   setTimeout(()=>{ if(typeof ksVisitorPing==='function') ksVisitorPing(); },5000); /* daftar pengunjung (1×/hari) */
   /* jaring pengaman EN di perangkat lambat: render async menyusul → terjemahkan ulang */
@@ -1276,8 +1299,9 @@ function showOnboard(){
   if(store.get('onboard',0)&&(store.get('profile',{})||{}).pid) return;
   const d=document.createElement('div'); d.id='onboard';
   d.innerHTML=`<div class="ob-box">
-    <div class="ob-t">OLD.KINGSHOT</div>
-    <div class="ob-s">powered by INDONENEN13</div>
+    <div class="ob-logo"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M2 8.2l4.3 3.4L12 3l5.7 8.6L22 8.2l-2 10.4H4L2 8.2z"/><rect x="4" y="19.4" width="16" height="2.2" rx=".4" fill="currentColor"/></svg></div>
+    <div class="ob-wm"><span class="ob-br">[</span><span class="ob-tt">KINGSHOT<b class="ob13">13</b></span><span class="ob-br">]</span></div>
+    <div class="ob-s">F2P Companion · Tilubelas Gaming Network</div>
     <div class="ob-l">Bahasa / Language</div>
     <div class="ob-row" id="ob_lang"><button data-v="id" class="active">🇮🇩 Indonesia</button><button data-v="en">🇬🇧 English</button></div>
     <div class="ob-l">Jam / Clock</div>

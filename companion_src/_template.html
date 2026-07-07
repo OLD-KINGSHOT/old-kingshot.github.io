@@ -506,7 +506,9 @@ body{
   -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;
 }
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:none}
+  background:radial-gradient(ellipse 90% 55% at 12% -8%,rgba(107,147,242,.11),transparent 55%),radial-gradient(ellipse 85% 60% at 96% 104%,rgba(86,116,224,.09),transparent 55%),radial-gradient(circle at 50% 26%,rgba(22,32,58,.30),transparent 72%)}
+/* persistent subtle starfield behind the whole app */
+#app_stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.42}
 .num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
 .mono{font-family:var(--font-mono)}
 a{color:var(--cyan);text-decoration:none}
@@ -1143,9 +1145,14 @@ html{scrollbar-width:thin;scrollbar-color:var(--bg-4) transparent}
 @keyframes sp-shine{0%{background-position:200% 0}100%{background-position:-20% 0}}
 @keyframes sp-rise{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
 /* first-run chooser (bahasa + jam) — revealed when the splash fades */
-#onboard{position:fixed;inset:0;z-index:99998;background:#06080C;display:flex;align-items:center;justify-content:center;transition:opacity .4s ease}
+#onboard{position:fixed;inset:0;z-index:99998;background:radial-gradient(circle at 50% 34%,#0c1526 0%,#070b14 55%,#04060b 100%);display:flex;align-items:center;justify-content:center;transition:opacity .4s ease}
+#onboard .ob-logo{color:#6b93f2;display:flex;justify-content:center;filter:drop-shadow(0 0 12px rgba(107,147,242,.5));margin-bottom:2px}
+#onboard .ob-wm{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:2px}
+#onboard .ob-br{color:#6b93f2;font-family:var(--font-mono,monospace);font-weight:700;font-size:22px;line-height:1;text-shadow:0 0 10px rgba(107,147,242,.6)}
+#onboard .ob-wm .ob-tt{font-family:var(--font-mono,monospace);font-weight:800;font-size:19px;letter-spacing:.16em;margin-left:.16em;background:linear-gradient(100deg,#5c86ee,#a9c6ff 30%,#eafcff 52%,#7fd7e6 68%,#5c86ee);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;display:inline-flex;align-items:center}
+#onboard .ob-wm .ob13{display:inline-grid;place-items:center;width:21px;height:21px;margin-left:6px;border-radius:6px;background:linear-gradient(135deg,#f7f7f7,#98a2b6 52%,#f7f7f7);color:#06080C;-webkit-text-fill-color:#06080C;font-size:11px;font-weight:800;transform:rotate(-4deg);box-shadow:inset 0 1px 3px rgba(255,255,255,.6),0 0 12px rgba(107,147,242,.4)}
 #onboard.off{opacity:0;pointer-events:none}
-#onboard .ob-box{display:flex;flex-direction:column;gap:8px;min-width:260px;max-width:320px;padding:26px 24px;border:1px solid rgba(107,147,242,.35);border-radius:10px;background:#0A0D13}
+#onboard .ob-box{display:flex;flex-direction:column;gap:8px;min-width:260px;max-width:320px;padding:26px 24px;border:1px solid rgba(107,147,242,.3);border-radius:14px;background:linear-gradient(180deg,rgba(16,22,34,.92),rgba(8,11,18,.94));box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 40px rgba(107,147,242,.08),inset 0 1px 0 rgba(255,255,255,.04);backdrop-filter:blur(6px)}
 #onboard .ob-t{font-family:var(--font-mono,monospace);font-weight:800;font-size:17px;letter-spacing:.24em;color:#EDF1F7;text-align:center}
 #onboard .ob-s{font-family:var(--font-mono,monospace);font-size:9.5px;letter-spacing:.14em;color:#7A86A0;text-transform:uppercase;text-align:center;margin-bottom:8px}
 #onboard .ob-l{font-family:var(--font-mono,monospace);font-size:10px;letter-spacing:.14em;color:#7A86A0;text-transform:uppercase;margin-top:8px}
@@ -1170,6 +1177,7 @@ rs();init();raf=requestAnimationFrame(draw);window.addEventListener('resize',fun
 /* fade splash after a short bumper */
 window.__splashT0=Date.now();setTimeout(function(){var s=document.getElementById('splash');if(s){s.classList.add('off');setTimeout(function(){s.remove();},600);}},3200);
 </script>
+<canvas id="app_stars"></canvas>
 <div class="app">
   <div class="apphead">
     <header class="topbar">
