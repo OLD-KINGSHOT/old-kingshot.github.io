@@ -48,11 +48,14 @@ const F2P_LEAD={ inf:[[1,'Howard'],[2,'Zoe']], arc:[[1,'Quinn'],[2,'Marlin']], c
 function _genNum(age){ var g=1; for(var k in GEN_DAY){ if(age!=null&&age>=GEN_DAY[k]&&+k>g) g=+k; } return g; }
 function f2pLeadNow(cls,age){ var arr=F2P_LEAD[cls]||[],g=_genNum(age),cur=arr[0],nxt=null;
   for(var i=0;i<arr.length;i++){ if(arr[i][0]<=g) cur=arr[i]; else if(!nxt) nxt=arr[i]; } return {now:cur[1],gen:cur[0],next:nxt}; }
+function heroLeadersInline(age){
+  return [['Inf','inf'],['Arc','arc'],['Cav','cav']].map(function(c){ return c[0]+' <b>'+f2pLeadNow(c[1],age).now+'</b>'; }).join(' · ');
+}
 function heroNowLine(age){
-  var en=(window.__getLang&&window.__getLang()==='en'), C=[['Inf','inf'],['Arc','arc'],['Cav','cav']], now=[], ups=[];
-  C.forEach(function(c){ var r=f2pLeadNow(c[1],age); now.push(c[0]+' <b>'+r.now+'</b>'); if(r.next) ups.push('<b>'+r.next[1]+'</b> Gen'+r.next[0]); });
+  var en=(window.__getLang&&window.__getLang()==='en'), ups=[];
+  [['Arc','arc'],['Inf','inf'],['Cav','cav']].forEach(function(c){ var r=f2pLeadNow(c[1],age); if(r.next) ups.push('<b>'+r.next[1]+'</b> Gen'+r.next[0]); });
   var g=_genNum(age);
-  return '<div class="small">'+(en?'Your F2P leaders (Gen ':'Leader F2P kamu (Gen ')+g+'): '+now.join(' · ')+'</div>'
+  return '<div class="small">'+(en?'Your F2P leaders (Gen ':'Leader F2P kamu (Gen ')+g+'): '+heroLeadersInline(age)+'</div>'
     +(ups.length?'<div class="dim small">'+(en?'later upgrade: ':'upgrade nanti: ')+ups.join(' · ')+'</div>':'');
 }
 
