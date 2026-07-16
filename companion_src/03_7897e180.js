@@ -429,12 +429,15 @@ function _wkLen(e){ const s=_WK_DI[e.startDay],t=_WK_DI[e.endDay];
 function _wkRef(){ const c=store.get('liveEvents',null); const d=c&&c.d;
   const ref=d&&d.calendar&&Date.parse(d.calendar.cycleReference);
   return (!ref||isNaN(ref)||!d.weeks)?null:{ref:ref,d:d}; }
-/* Proyeksi MURNI — tidak memfilter PACK; kebijakan filter ada di evUpcoming. */
+/* Proyeksi MURNI — tidak memfilter PACK; kebijakan filter ada di evUpcoming.
+   Jendela = TEPAT daysAhead hari (off < max, bukan <=): 28 hari sudah mencakup semua
+   28 residu mod-28, jadi tiap event ketemu persis sekali. `daysAhead==null` (bukan
+   falsy) supaya nextWkStarts(0) berarti "hari ini saja", bukan diam-diam jadi 28. */
 function nextWkStarts(daysAhead){
   const R=_wkRef(); if(!R) return new Map();
   const d0=Math.floor((todayMidnight().getTime()-R.ref)/86400000); if(d0<0) return new Map();
-  const out=new Map(), max=daysAhead||28;
-  for(let off=0;off<=max;off++){
+  const out=new Map(), max=(daysAhead==null?28:daysAhead);
+  for(let off=0;off<max;off++){
     const dd=d0+off, wk=(Math.floor(dd/7)%4)+1, wd=dd%7;
     for(const e of (R.d.weeks[wk]||[])){
       if(out.has(e.titleKey)||_WK_DI[e.startDay]!==wd) continue;

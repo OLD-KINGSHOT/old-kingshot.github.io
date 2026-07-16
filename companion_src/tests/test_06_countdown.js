@@ -87,4 +87,12 @@ t('nextWkStarts adalah proyeksi murni: PACK tidak difilter di sini', () =>
 t('tanpa cache live -> Map kosong, tidak melempar error', () =>
   eq(envAt(NOW, { noCache: true }).ctx.nextWkStarts(28).size, 0));
 
+t('jendela sapuan = TEPAT daysAhead hari (bukan 29)', () => {
+  /* 20 Jul (Champagne Fair) berjarak 4 hari dari 16 Jul: masuk di window 5, tidak di 4. */
+  ok(!e.ctx.nextWkStarts(4).has('champagneFair'), 'window 4 hari tidak boleh memuat hari ke-5');
+  ok(e.ctx.nextWkStarts(5).has('champagneFair'), 'window 5 hari harus memuat 20 Jul');
+});
+t('nextWkStarts(0) = hari ini saja, tidak diam-diam jadi 28', () =>
+  eq(e.ctx.nextWkStarts(0).size, 0, 'window 0 harus kosong (16 Jul bukan hari mulai event mana pun)'));
+
 done();
