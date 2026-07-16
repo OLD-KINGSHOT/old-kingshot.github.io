@@ -459,6 +459,10 @@ const KINGDOM_ANCHORS=[[1,'2025-02-24'],[26,'2025-03-17'],[51,'2025-03-25'],[76,
 const WEEKLY_MIN={kvkMatchmaking:70,kvkPrepPhase:70,kvkFieldTriage:70,strongestGovernor:75,
   castleBattle:54,kingsCastle:54,armamentCompetition1:65,armamentCompetition2:65,
   swordlandShowdown:15,fishing:15};
+/* Feed live memakai titleKey GLOBAL; model umur server memakai id EVENT_TEMPLATES.
+   Samakan supaya satu event tidak muncul dua kali dengan tanggal berbeda.
+   (Fase KvK diciutkan jadi satu entri 'kvk' — granularitas fase bukan tujuan countdown.) */
+const EV_ALIAS={kvkMatchmaking:'kvk',kvkPrepPhase:'kvk',kvkFieldTriage:'kvk',strongestGovernor:'sg'};
 const EV_EMOJI={burst:'\u25c8',hog:'\u25c9',kvk:'\u2620',sg:'\u25a3',armament:'\u25c6'};
 
 /* ── Gift codes cadangan (volatile \u2014 live fetch utama) ── */

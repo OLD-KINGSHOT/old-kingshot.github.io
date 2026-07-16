@@ -154,4 +154,57 @@ t('tanpa profil -> evUpcoming tetap jalan, tidak melempar', () => {
   ok(!l.some(x => x.id === 'hog'), 'tanpa tanggal buka server, HoG tak bisa dihitung');
 });
 
+console.log('\nTask 3 — sumber live');
+
+const KVK_PREP = { phase:'preparation', phaseName:'Prep Phase', eventNumber:16, timeLeft:{ total: 2 * DAY } };
+const TRANSFER = { phase:'countdown', phaseName:'Next Transfer', eventNumber:7, timeLeft:{ total: 2 * DAY + 5 * 3600000 } };
+
+{
+  const env = envAt(NOW, { kvk: KVK_PREP, transfer: TRANSFER });
+  const list = env.ctx.evUpcoming();
+  const byId = id => list.find(x => x.id === id);
+
+  t('transfer (phase=countdown): timeLeft = menuju MULAI', () => {
+    const tr = byId('transfer');
+    ok(tr, 'transfer tidak ada');
+    eq(tr.startUTC, NOW + TRANSFER.timeLeft.total, 'harus jadi startUTC');
+    eq(tr.active, false);
+    eq(tr.conf, 'live');
+  });
+  t('phase != countdown: timeLeft = sisa fase BERJALAN, bukan menuju mulai', () => {
+    /* id 'kvk' sudah diambil model umur server (prioritas lebih tinggi) -> pakai id lain
+       untuk menguji semantiknya: 'transfer' saja tidak cukup. Cek lewat fase aktif global. */
+    const env2 = createEnv({ storage: { ks_activePid: JSON.stringify('9'), ks_profilesV: '1',
+      ks_liveEvents: JSON.stringify({ t: NOW, d: { timestamp: new Date(NOW).toISOString(),
+        kvk: KVK_PREP, transfer: TRANSFER,
+        calendar: { cycleReference: REF, currentWeek: 4, currentDay: 'Thursday', events: WEEKS[4] }, weeks: WEEKS } }) } });
+    const ks = env2.evalIn('ksClock'); ks.offset = NOW - Date.now(); ks.nudge = 0;
+    const k = env2.ctx.evUpcoming().find(x => x.id === 'kvk');
+    ok(k, 'kvk global tidak ada saat profil kosong');
+    eq(k.active, true, 'phase preparation = sedang berjalan');
+    eq(k.startUTC, null, 'JANGAN pakai timeLeft sbg startUTC saat fase berjalan');
+    eq(k.endUTC, NOW + KVK_PREP.timeLeft.total, 'timeLeft = akhir fase berjalan');
+  });
+  t('model umur server menang atas KvK global dari API', () => {
+    eq(byId('kvk').source, 'age', 'profil H51 punya model umur -> harus menang');
+  });
+  t('Sanctuary Battle terdeteksi AKTIF (mulai 14 Jul, bukan 11 Agu)', () => {
+    const s = byId('sanctuaryBattle');
+    ok(s, 'sanctuaryBattle tidak ada');
+    eq(s.active, true);
+    eq(iso(s.startUTC), '2026-07-14', 'wkActiveNow harus mundur cari hari mulai');
+  });
+  t('Champagne Fair muncul sbg mendatang 20 Jul', () =>
+    eq(iso(byId('champagneFair').startUTC), '2026-07-20'));
+  t('PACK disaring dari daftar (bundel bayar, bukan event skor)', () =>
+    ok(!byId('conqueror'), 'PACK bocor ke daftar countdown'));
+  t('gate WEEKLY_MIN diterapkan ke event rotasi', () => {
+    const b = byId('allianceBrawl');
+    ok(b, 'allianceBrawl tidak ada');
+    ok(b.startUTC != null, 'tetap punya countdown walau terkunci');
+  });
+  t('alias: strongestGovernor dari feed = id "sg" (tidak dobel)', () =>
+    ok(!byId('strongestGovernor'), 'harus di-alias ke sg, bukan id feed'));
+}
+
 done();

@@ -447,6 +447,26 @@ function nextWkStarts(daysAhead){
   }
   return out;
 }
+/* Event rotasi yang SEDANG berjalan, plus kapan kemunculan ini mulai.
+   Perlu terpisah: sapuan ke depan tak bisa melihat event yang mulainya di masa lalu. */
+function wkActiveNow(){
+  const R=_wkRef(); if(!R) return [];
+  const today=todayMidnight();
+  const d0=Math.floor((today.getTime()-R.ref)/86400000); if(d0<0) return [];
+  const out=[];
+  for(const e of wkEventsOnDate(today)){
+    for(let back=0;back<7;back++){
+      const dd=d0-back, wk=(Math.floor(dd/7)%4)+1;
+      if(_WK_DI[e.startDay]!==((dd%7)+7)%7) continue;
+      if(!(R.d.weeks[wk]||[]).some(x=>x.titleKey===e.titleKey)) continue;
+      out.push({titleKey:e.titleKey,title:e.title,type:e.type,
+        startUTC:R.ref+dd*86400000, endUTC:R.ref+(dd+_wkLen(e))*86400000-1});
+      break;
+    }
+  }
+  return out;
+}
+const evCanonId=k=>((typeof EV_ALIAS!=='undefined'&&EV_ALIAS[k])||k);
 /* Bentuk item jadwal — default lengkap supaya UI tak pernah ketemu undefined. */
 /* srcKey = titleKey ASLI dari feed. WAJIB disimpan terpisah dari id: id sudah di-alias
    (kvkMatchmaking -> kvk), sedangkan WEEKLY_GUIDE di-key pakai titleKey asli — pakai id
@@ -493,6 +513,37 @@ function evUpcoming(){
         locked:!!(tpl.minDay&&age<tpl.minDay)}));
     });
   }
+
+  /* 3) kvk/transfer dari API — timeLeft absolut dari server (terbukti 0,0 menit
+        meleset thd pengumuman resmi). AWAS: arti timeLeft tergantung phase —
+        'countdown' = menuju MULAI; fase lain = sisa fase yang SEDANG berjalan. */
+  const _lc=store.get('liveEvents',null), _ld=_lc&&_lc.d;
+  if(_ld&&_ld.timestamp){
+    const base=Date.parse(_ld.timestamp);
+    const absItem=(o,id,label)=>{
+      if(!o||!o.timeLeft||o.timeLeft.total==null||isNaN(base)) return;
+      const t=base+o.timeLeft.total, counting=(o.phase==='countdown');
+      add(_evItem({id:id,title:label+(o.eventNumber?' #'+o.eventNumber:'')+(counting?'':' — '+(o.phaseName||'')),
+        type:'SPECIAL',startUTC:counting?t:null,endUTC:counting?null:t,active:!counting,
+        source:'live',conf:'live'}));
+    };
+    absItem(_ld.kvk,'kvk','KvK');
+    absItem(_ld.transfer,'transfer','Kingdom Transfer');
+  }
+
+  /* 4) sapuan rotasi (+ status aktif) */
+  const _act=wkActiveNow();
+  const _actKeys=new Set(_act.map(x=>x.titleKey));
+  const _pushWk=(e,isActive)=>{
+    if(e.type==='PACK') return;                       /* pack = bundel bayar, bukan event skor */
+    const min=(typeof WEEKLY_MIN!=='undefined')?WEEKLY_MIN[e.titleKey]:null;
+    add(_evItem({id:evCanonId(e.titleKey),srcKey:e.titleKey,title:e.title,type:e.type,
+      startUTC:e.startUTC,endUTC:e.endUTC,active:!!isActive,source:'live',conf:'live',
+      gate:(min==null)?null:{minDay:min},
+      locked:!!(min!=null&&age!=null&&age<min)}));
+  };
+  _act.forEach(e=>_pushWk(e,true));
+  nextWkStarts(28).forEach(e=>{ if(!_actKeys.has(e.titleKey)) _pushWk(e,false); });
 
   out.sort(_evSort);
   return out;
