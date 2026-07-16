@@ -709,5 +709,13 @@
   "PACK uang asli berisi research speedup/resource — BUKAN kompetisi poin riset. F2P: SKIP pack; tahan riset & dump di hari scoring riset (HoG/SG D5) untuk poin event yang SEBENARNYA. Trap: mengira \"Tech Storm\" itu event scoring lalu riset di waktu salah.": "Real-money PACK of research speedups/resources — NOT a research-point competition. F2P: SKIP the pack; hold research & dump it on a research-scoring day (HoG/SG D5) for the REAL event points. Trap: thinking \"Tech Storm\" is a scoring event and researching at the wrong time.",
   "PACK uang asli berisi Advanced Teleporter + healing speedup (muncul saat event migrasi/relokasi). F2P: SKIP kecuali kamu memang sedang relokasi state & butuh Advanced Teleporter. Trap: di-drop pas event bikin \"butuh teleporter sekarang\" = FOMO rekayasa.": "Real-money PACK with an Advanced Teleporter + healing speedups (appears during migration/relocation events). F2P: SKIP unless you're actually relocating states & need the Advanced Teleporter. Trap: dropped during an event to manufacture \"I need a teleporter now\" FOMO.",
   "Academy + War Academy (riset)": "Academy + War Academy (research)",
-  "Selesaikan upgrade/riset/promote troop naik power (Constr/Research 30, troop 20).": "Finish an upgrade/research/troop promotion to raise power (Constr/Research 30, troop 20)."
+  "Selesaikan upgrade/riset/promote troop naik power (Constr/Research 30, troop 20).": "Finish an upgrade/research/troop promotion to raise power (Constr/Research 30, troop 20).",
+  "Sedang berjalan": "Running now",
+  "Berikutnya": "Up next",
+  "Jadwal tidak pasti": "Schedule unknown",
+  "tak bisa diprediksi": "cannot be predicted",
+  "⚠ Event musiman tidak terlihat di sini": "⚠ Seasonal events are invisible here",
+  "Kingshot menjalankan event terbatas yang tidak ada di katalog maupun API mana pun — contoh: Football Fiesta (9–16 Juli 2026, city skin permanen Apex Arena). Hanya berita in-game & Discord resmi yang mengumumkannya. Daftar di atas lengkap untuk event BERULANG; untuk yang musiman, matamu sendiri satu-satunya sumber.": "Kingshot runs limited-time events that appear in no catalogue or API — e.g. Football Fiesta (9–16 Jul 2026, permanent Apex Arena city skin). Only in-game news and the official Discord announce them. The list above is complete for RECURRING events; for seasonal ones, your own eyes are the only source.",
+  "Discord resmi Kingshot": "Official Kingshot Discord",
+  "📌 Hitungan umur (H-x, gerbang 🔒) mengikuti KINGDOM-mu. Rotasi mingguan bersifat GLOBAL untuk kingdom dewasa — kingdom muda belum sinkron penuh, event bisa muncul di luar daftar. Acuan final = tab Events in-game.": "📌 Age maths (D-x, 🔒 gates) follows YOUR kingdom. The weekly rotation is GLOBAL for mature kingdoms — young kingdoms aren't fully synced, so events can appear outside the list. Final reference = the in-game Events tab."
 }

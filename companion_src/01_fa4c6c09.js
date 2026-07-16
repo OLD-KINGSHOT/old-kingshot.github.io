@@ -88,37 +88,40 @@ function calDetail(host,d){
 async function fillLiveEvents(force){
   const host=$('#evlive'); if(!host) return;
   host.innerHTML='<div class="muted small">⏳ Memuat jadwal live…</div>';
-  const d=await ksLiveEvents(force);
-  if(!d||!d.calendar){ host.innerHTML='<div class="alert warn small">Gagal memuat jadwal live (offline/proxy diblokir). Coba lagi nanti.</div>'
-    +'<div class="row" style="margin-top:8px"><button class="btn sec sm" id="evlive_r">↻ Coba lagi</button></div>';
-    const rb=$('#evlive_r'); if(rb) rb.onclick=()=>fillLiveEvents(true); return; }
-  const ID_DAY={Monday:'Sen',Tuesday:'Sel',Wednesday:'Rab',Thursday:'Kam',Friday:'Jum',Saturday:'Sab',Sunday:'Min'};
-  const base=Date.parse(d.timestamp)||Date.now();
-  const left=tl=>{ if(!tl||tl.total==null) return ''; const ms=base+tl.total-Date.now(); if(ms<=0) return 'sekarang';
-    const dd=Math.floor(ms/86400000), hh=Math.floor(ms%86400000/3600000); return (dd>0?dd+' hr ':'')+hh+' jam lagi'; };
-  let html='';
-  if(d.kvk) html+=`<div class="kv"><span>⚔️ KvK global #${d.kvk.eventNumber} — ${esc(d.kvk.phaseName)}</span><b class="acc">${left(d.kvk.timeLeft)}</b></div>`;
-  if(d.transfer) html+=`<div class="kv"><span>✉️ Kingdom Transfer — ${esc(d.transfer.phaseName)}</span><b>${left(d.transfer.timeLeft)}</b></div>`;
-  const now=Date.now();
-  const evs=d.calendar.events.filter(e=>e.type!=='PACK')
-    .sort((a,b)=>(b.isActive-a.isActive)||(Date.parse(a.startUtc)-Date.parse(b.startUtc)));
+  await ksLiveEvents(force);                       /* isi cache; evUpcoming baca dari store */
+  const list=(typeof evUpcoming==='function')?evUpcoming():[];
   const {age}=profileAge();
-  /* stacked rows (not a table) — pills & day ranges never clip on narrow screens */
-  html+='<div style="margin-top:8px">'
-    +evs.map(e=>{ const done=Date.parse(e.endUtc)<now;
-      const guide=(typeof WEEKLY_GUIDE!=='undefined'&&WEEKLY_GUIDE[e.titleKey])||WEEKLY_GUIDE_DEFAULT;
-      const min=(typeof WEEKLY_MIN!=='undefined')?WEEKLY_MIN[e.titleKey]:null;
-      const locked=min!=null&&age!=null&&age<min;
-      const st=locked?`<span class="pill c">🔒 ~hari ${min}</span>`:e.isActive?'<span class="pill f2p">AKTIF</span>':done?'<span class="pill c">lewat</span>':'';
-      return `<div class="check note"${locked?' style="opacity:.55"':''}><div style="flex:1;min-width:0"><div class="t">${esc(e.title)} <span class="num dim small" style="white-space:nowrap">${ID_DAY[e.startDay]||esc(e.startDay)}–${ID_DAY[e.endDay]||esc(e.endDay)}</span> ${st}</div><div class="d">${esc(guide)}</div></div></div>`; }).join('')
-    +'</div>'
-    +`<div class="muted small" style="margin-top:6px">Minggu ke-${d.calendar.currentWeek} dari siklus 4 minggu GLOBAL (rotasi kingdom dewasa, kingshot.net) · pack disembunyikan.</div>
-     <div class="alert inf small" style="margin-top:6px">📌 Semua hitungan umur (H-x, gerbang 🔒, advisory, kalender) otomatis mengikuti KINGDOM-MU — siapa pun yang login dengan Player ID-nya dapat jadwal servernya sendiri. Yang global hanya rotasi mingguan di atas: kingdom muda belum sinkron penuh, event bisa muncul di luar daftar (contoh: Fishing muncul H14 padahal tak ada di minggu global). Acuan final = tab Events in-game.</div>`
+  const now=ksClock.now().getTime();
+  const CONF={ingame:['✅','terverifikasi in-game'],live:['📡','feed live kingshot.net'],
+    wiki:['📖','kingshotwiki'],community:['💬','satu sumber, belum terkonfirmasi'],
+    inferred:['🔢','perkiraan hitungan app'],unknown:['❔','tidak diketahui']};
+  const dur=ms=>{ if(ms<0)ms=0; const d=Math.floor(ms/86400000), h=Math.floor(ms%86400000/3600000);
+    return d>0?(d+' hr '+h+' jam'):(h+' jam'); };
+  const row=it=>{
+    const c=CONF[it.conf]||CONF.unknown;
+    /* WEEKLY_GUIDE di-key pakai titleKey ASLI -> coba srcKey dulu, baru id kanonik */
+    const guide=(typeof WEEKLY_GUIDE!=='undefined'&&(WEEKLY_GUIDE[it.srcKey]||WEEKLY_GUIDE[it.id]))||'';
+    let when;
+    if(it.unpredictable) when='<span class="pill c">tak bisa diprediksi</span>';
+    else if(it.active) when='<span class="pill f2p">AKTIF</span>'+(it.endUTC?' <span class="num dim small">sisa '+dur(it.endUTC-now)+'</span>':'');
+    else if(it.startUTC!=null) when='<b class="acc">'+dur(it.startUTC-now)+' lagi</b>';
+    else when='';
+    const lock=it.locked?' <span class="pill c">🔒 ~hari '+it.gate.minDay+'</span>':'';
+    return '<div class="check note"'+(it.locked?' style="opacity:.6"':'')+'><div style="flex:1;min-width:0">'
+      +'<div class="t">'+esc(it.title)+' <span title="'+esc(c[1])+'">'+c[0]+'</span> '+when+lock+'</div>'
+      +'<div class="d">'+esc(it.why||guide||WEEKLY_GUIDE_DEFAULT)+'</div></div></div>';
+  };
+  const sec=(label,arr)=>arr.length?('<div class="lbl" style="margin:12px 0 4px">'+label+'</div>'+arr.map(row).join('')):'';
+  const n=(typeof EV_SEASONAL_NOTE!=='undefined')?EV_SEASONAL_NOTE:null;
+  host.innerHTML=
+     sec('Sedang berjalan',list.filter(x=>x.active))
+    +sec('Berikutnya',list.filter(x=>!x.active&&x.startUTC!=null))
+    +sec('Jadwal tidak pasti',list.filter(x=>x.unpredictable))
+    +(n?'<div class="alert warn small" style="margin-top:10px"><b>⚠ '+esc(n.title)+'</b><br>'+esc(n.body)
+        +'<br><a href="'+esc(n.discord)+'" target="_blank" rel="noopener">Discord resmi Kingshot</a></div>':'')
+    +'<div class="alert inf small" style="margin-top:6px">📌 Hitungan umur (H-x, gerbang 🔒) mengikuti KINGDOM-mu. Rotasi mingguan bersifat GLOBAL untuk kingdom dewasa — kingdom muda belum sinkron penuh, event bisa muncul di luar daftar. Acuan final = tab Events in-game.</div>'
     +'<div class="row" style="margin-top:8px"><button class="btn sec sm" id="evlive_r">↻ Muat ulang</button></div>';
-  host.innerHTML=html;
   const b=$('#evlive_r'); if(b) b.onclick=()=>fillLiveEvents(true);
-  /* fresh cycle data may add weekly markers — repaint the month grid */
-  const ec=$('#evcal'); if(ec&&ec.innerHTML) renderCalendar(ec);
 }
 
 function renderEvent(){
