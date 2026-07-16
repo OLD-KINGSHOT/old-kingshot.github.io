@@ -419,6 +419,31 @@ function wkEventsOnDate(cd){
     const s=DI[e.startDay],t=DI[e.endDay]; if(s==null||t==null) return false;
     return s<=t?(wd>=s&&wd<=t):(wd>=s||wd<=t); });
 }
+/* ── Countdown: kemunculan BERIKUTNYA tiap event rotasi (sapuan sekali jalan) ──
+   JANGAN pakai startUtc dari API: untuk minggu yang BUKAN minggu berjalan nilainya
+   adalah kejadian TERAKHIR (Champagne Fair -> 22 Jun, padahal berikutnya 20 Jul).
+   Proyeksikan dari cycleReference — rumus yang sama dengan wkEventsOnDate. */
+const _WK_DI={Monday:0,Tuesday:1,Wednesday:2,Thursday:3,Friday:4,Saturday:5,Sunday:6};
+function _wkLen(e){ const s=_WK_DI[e.startDay],t=_WK_DI[e.endDay];
+  if(s==null||t==null) return 1; return (t>=s?t-s:t+7-s)+1; }   /* wrap: Min(6)->Sen(0) = 2 hari */
+function _wkRef(){ const c=store.get('liveEvents',null); const d=c&&c.d;
+  const ref=d&&d.calendar&&Date.parse(d.calendar.cycleReference);
+  return (!ref||isNaN(ref)||!d.weeks)?null:{ref:ref,d:d}; }
+/* Proyeksi MURNI — tidak memfilter PACK; kebijakan filter ada di evUpcoming. */
+function nextWkStarts(daysAhead){
+  const R=_wkRef(); if(!R) return new Map();
+  const d0=Math.floor((todayMidnight().getTime()-R.ref)/86400000); if(d0<0) return new Map();
+  const out=new Map(), max=daysAhead||28;
+  for(let off=0;off<=max;off++){
+    const dd=d0+off, wk=(Math.floor(dd/7)%4)+1, wd=dd%7;
+    for(const e of (R.d.weeks[wk]||[])){
+      if(out.has(e.titleKey)||_WK_DI[e.startDay]!==wd) continue;
+      out.set(e.titleKey,{titleKey:e.titleKey,title:e.title,type:e.type,
+        startUTC:R.ref+dd*86400000, endUTC:R.ref+(dd+_wkLen(e))*86400000-1});
+    }
+  }
+  return out;
+}
 /* ── Server data milik sendiri (Cloudflare Worker + D1) ── */
 const KS_DATA_API='https://old-kingshot-api.old-kingshot.workers.dev';
 /* ── Daftar pengunjung ──
