@@ -220,10 +220,11 @@ console.log('\nTask 4 — kejujuran');
   const un = list.filter(x => x.unpredictable);
 
   t('event tak-terprediksi ada di daftar', () => {
-    ok(un.length >= 3, 'harusnya >=3 (Treasure Raiders, Power Up, War Preparation), dapat ' + un.length);
+    ok(un.length >= 4, 'harusnya >=4 (Treasure Raiders, Power Up, War Preparation, Plan your City), dapat ' + un.length);
     ok(un.some(x => x.id === 'treasureRaiders'), 'treasureRaiders hilang');
     ok(un.some(x => x.id === 'powerUp'), 'powerUp hilang');
     ok(un.some(x => x.id === 'warPreparation'), 'warPreparation hilang');
+    ok(un.some(x => x.id === 'planYourCity'), 'planYourCity hilang');
   });
   t('event tak-terprediksi TIDAK punya tanggal apa pun', () => {
     for (const u of un) {
@@ -258,7 +259,7 @@ console.log('\nTask 4 — kejujuran');
     eq(h.active, true, 'HoG #4 tetap aktif di H51 walau offline');
   });
   t('offline: item tak-terprediksi tetap ada (statis, tak butuh jaringan)', () =>
-    ok(list.filter(x => x.unpredictable).length >= 3, 'daftar tak-terprediksi hilang saat offline'));
+    ok(list.filter(x => x.unpredictable).length >= 4, 'daftar tak-terprediksi hilang saat offline'));
   t('offline: tidak ada item rotasi yang mengarang tanggal', () =>
     ok(!list.some(x => x.source === 'live'), 'item live muncul tanpa cache'));
 }

@@ -474,6 +474,8 @@ const EV_UNPREDICTABLE=[
    why:'Wiki: "irregular event so it cannot be predicted". 2 hari, Gen 1 SAJA \u2014 tak muncul lagi di Gen 2+. Poin dari speedup konstruksi/riset.'},
   {id:'warPreparation',title:'War Preparation',
    why:'Wiki: "cannot be predicted". 2 hari, minggu-minggu awal saja; Mastery Forging butuh TC20.'},
+  {id:'planYourCity',title:'Plan your City',
+   why:'Wiki: "irregular event so it cannot be predicted... occur early on in your new kingdom". 2 hari, Gen 1 SAJA. 1 poin per POWER dari Research/Construction (beda dari Power Up yang menghitung MENIT speedup).'},
 ];
 /* Kelas MUSIMAN: tidak ada di katalog/API mana pun -> tak ada yang bisa dipoll.
    Yang bisa app lakukan hanyalah berhenti berpura-pura daftarnya lengkap. */
