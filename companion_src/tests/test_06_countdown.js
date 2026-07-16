@@ -212,4 +212,55 @@ const TRANSFER = { phase:'countdown', phaseName:'Next Transfer', eventNumber:7, 
     ok(!byId('strongestGovernor'), 'harus di-alias ke sg, bukan id feed'));
 }
 
+console.log('\nTask 4 — kejujuran');
+
+{
+  const env = envAt(NOW, { kvk: KVK_PREP, transfer: TRANSFER });
+  const list = env.ctx.evUpcoming();
+  const un = list.filter(x => x.unpredictable);
+
+  t('event tak-terprediksi ada di daftar', () => {
+    ok(un.length >= 3, 'harusnya >=3 (Treasure Raiders, Power Up, War Preparation), dapat ' + un.length);
+    ok(un.some(x => x.id === 'treasureRaiders'), 'treasureRaiders hilang');
+    ok(un.some(x => x.id === 'powerUp'), 'powerUp hilang');
+    ok(un.some(x => x.id === 'warPreparation'), 'warPreparation hilang');
+  });
+  t('event tak-terprediksi TIDAK punya tanggal apa pun', () => {
+    for (const u of un) {
+      eq(u.startUTC, null, u.id + ' punya startUTC — dilarang mengarang countdown');
+      eq(u.endUTC, null, u.id + ' punya endUTC');
+      eq(u.conf, 'unknown', u.id + ' conf salah');
+    }
+  });
+  t('tiap item tak-terprediksi menjelaskan KENAPA (mengutip sumber)', () =>
+    un.forEach(u => ok(u.why && u.why.length > 20, u.id + ' tanpa alasan')));
+  t('item tak-terprediksi selalu diurut PALING BAWAH', () => {
+    const last = list.length - un.length;
+    for (let i = last; i < list.length; i++) ok(list[i].unpredictable, 'indeks ' + i + ' harusnya unpredictable');
+  });
+  t('catatan musiman ada dan tidak memuat countdown', () => {
+    const n = env.evalIn('EV_SEASONAL_NOTE');
+    ok(n && n.body, 'EV_SEASONAL_NOTE hilang');
+    ok(/Football Fiesta/.test(n.body), 'harus menyebut contoh konkret');
+    ok(!/hari lagi|days? left/i.test(n.body), 'catatan musiman tak boleh mengandung countdown');
+    ok(/discord/i.test(n.discord || ''), 'butuh tautan Discord resmi');
+  });
+}
+
+/* Offline (spec §7 no.7 + 5b): tanpa cache live, mesin tetap berguna dan tidak melempar. */
+{
+  const env = envAt(NOW, { noCache: true });
+  const list = env.ctx.evUpcoming();
+  t('offline: model umur server tetap jalan tanpa cache live', () => {
+    ok(Array.isArray(list), 'harus array');
+    const h = list.find(x => x.id === 'hog');
+    ok(h, 'HoG hilang saat offline — model umur tidak butuh jaringan');
+    eq(h.active, true, 'HoG #4 tetap aktif di H51 walau offline');
+  });
+  t('offline: item tak-terprediksi tetap ada (statis, tak butuh jaringan)', () =>
+    ok(list.filter(x => x.unpredictable).length >= 3, 'daftar tak-terprediksi hilang saat offline'));
+  t('offline: tidak ada item rotasi yang mengarang tanggal', () =>
+    ok(!list.some(x => x.source === 'live'), 'item live muncul tanpa cache'));
+}
+
 done();

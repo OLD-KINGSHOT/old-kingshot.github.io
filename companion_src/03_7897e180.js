@@ -547,6 +547,11 @@ function evUpcoming(){
   _act.forEach(e=>_pushWk(e,true));
   nextWkStarts(28).forEach(e=>{ if(!_actKeys.has(e.titleKey)) _pushWk(e,false); });
 
+  /* 6) tak-bisa-diprediksi — masuk daftar, TANPA angka, selamanya */
+  if(typeof EV_UNPREDICTABLE!=='undefined') EV_UNPREDICTABLE.forEach(u=>
+    add(_evItem({id:u.id,title:u.title,type:'irregular',source:'none',
+      conf:'unknown',unpredictable:true,why:u.why})));
+
   out.sort(_evSort);
   return out;
 }

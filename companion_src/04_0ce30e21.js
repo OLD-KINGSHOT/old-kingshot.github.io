@@ -465,6 +465,24 @@ const WEEKLY_MIN={kvkMatchmaking:70,kvkPrepPhase:70,kvkFieldTriage:70,strongestG
 const EV_ALIAS={kvkMatchmaking:'kvk',kvkPrepPhase:'kvk',kvkFieldTriage:'kvk',strongestGovernor:'sg'};
 const EV_EMOJI={burst:'\u25c8',hog:'\u25c9',kvk:'\u2620',sg:'\u25a3',armament:'\u25c6'};
 
+/* Event yang WIKI SENDIRI nyatakan tak bisa diprediksi. Tampil TANPA angka \u2014
+   daftar jujur mengalahkan timer palsu. (kingshotwiki.com/events/*) */
+const EV_UNPREDICTABLE=[
+  {id:'treasureRaiders',title:'Treasure Raiders',
+   why:'Wiki: "irregular event so it cannot be predicted". 3 hari; 78 pickaxe gratis, pity \u226414/lantai, pickaxe tersimpan antar event.'},
+  {id:'powerUp',title:'Power Up',
+   why:'Wiki: "irregular event so it cannot be predicted". 2 hari, Gen 1 SAJA \u2014 tak muncul lagi di Gen 2+. Poin dari speedup konstruksi/riset.'},
+  {id:'warPreparation',title:'War Preparation',
+   why:'Wiki: "cannot be predicted". 2 hari, minggu-minggu awal saja; Mastery Forging butuh TC20.'},
+];
+/* Kelas MUSIMAN: tidak ada di katalog/API mana pun -> tak ada yang bisa dipoll.
+   Yang bisa app lakukan hanyalah berhenti berpura-pura daftarnya lengkap. */
+const EV_SEASONAL_NOTE={
+  title:'Event musiman tidak terlihat di sini',
+  body:'Kingshot menjalankan event terbatas yang tidak ada di katalog maupun API mana pun \u2014 contoh: Football Fiesta (9\u201316 Juli 2026, city skin permanen Apex Arena). Hanya berita in-game & Discord resmi yang mengumumkannya. Daftar di atas lengkap untuk event BERULANG; untuk yang musiman, matamu sendiri satu-satunya sumber.',
+  discord:'https://discord.gg/9rzDtTWQbz',
+};
+
 /* ── Gift codes cadangan (volatile \u2014 live fetch utama) ── */
 /* Community island chest template — re-extracted 2026-06-11 from the reference map image:
    red-cell centroids → iso lattice least-squares snap (mean residual 0.32px, max 0.85px),
