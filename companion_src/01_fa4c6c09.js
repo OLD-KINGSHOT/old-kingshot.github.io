@@ -18,7 +18,9 @@ function calEventsOnDay(start,d){
     const u=daysBetween(start,new Date(e.date+'T00:00:00Z'))+1; return u>=1?u:null; };
   const rec=(type,s0,per,col,tag)=>{ const ua=anchor(type); if(ua!=null) s0=ua%per||per;
     if(d<s0) return;
-    const ds=s0+Math.floor((d-s0)/per)*per; const t=EVENT_TEMPLATES[type]; let len=(t&&t.len)||1; if(type==='hog'){ var _no=ds<6?1:Math.floor((ds-6)/14)+1; if(typeof hogLen==='function') len=hogLen(_no); }
+    const ds=s0+Math.floor((d-s0)/per)*per; const t=EVENT_TEMPLATES[type]; let len=(t&&t.len)||1;
+    if(type==='hog'){ var _no=hogNoForDay(ds); if(!hogExists(_no)) return;   /* #6+ tidak pernah ada */
+      len=hogLen(_no); }
     if(d-ds<len) out.push({c:col,n:(t&&t.name)||type,type,di:d-ds,len,tag}); };
   rec('hog',6,14,'var(--accent)','HoG');
   rec('kvk',70,28,'var(--loss)','KvK');
@@ -230,23 +232,32 @@ function renderEvent(){
 /* ── Hall of Governors sub-tab (data: HOG_DETAIL) ── */
 /* Durasi tiap HoG BEDA: #1=5 hari, #2=6 hari, #3+=7 hari (=jumlah stage). Dipakai deteksi iterasi. */
 function hogLen(no){ return no<=1?5 : no===2?6 : 7; }
+/* SATU sumber kebenaran penomoran HoG: siklus 14 hari, iterasi #1 mulai H6.
+   Dulu nomor & datanya dihitung dari dua sumber berbeda (nomor dari hari event, data
+   dari umur server) → judul "#2" tapi hero/durasi milik #1 saat #1 masih jalan. */
+function hogNoForDay(day){ return day<6?1:Math.floor((day-6)/14)+1; }
+function hogStartDay(no){ return 6+(no-1)*14; }
+function hogIdxForNo(no){ return no<=1?0 : no===2?1 : no===3?2 : 3; }
+/* HoG cuma ada di Gen 1-2: #5 (H62) yang terakhir. Setelahnya jangan diramalkan lagi. */
+const HOG_LAST_NO=5;
+function hogExists(no){ return no>=1&&no<=HOG_LAST_NO; }
 function hogCurIdx(age){
   if(age==null) return 3;
   if(age<6) return 0;
-  var no=Math.floor((age-6)/14)+1; var di=age-(6+(no-1)*14);
+  var no=hogNoForDay(age); var di=age-hogStartDay(no);
   if(di>=hogLen(no)) no++;            /* iterasi ini sudah selesai (pakai durasi asli) → berikutnya */
-  return no<=1?0 : no===2?1 : no===3?2 : 3;
+  return hogIdxForNo(no);
 }
 /* Status: HoG apa yang AKTIF sekarang / BERIKUTNYA + hari ke-berapa dari durasinya */
 function hogStatusLine(age){
   if(age==null) return '';
   if(age<6) return '<div class="alert inf small"><b>📍 Berikutnya:</b> HoG #1 · H6 (~'+(6-age)+' hari)</div>';
-  var no=Math.floor((age-6)/14)+1; var di=age-(6+(no-1)*14); var len=hogLen(no);
+  var no=hogNoForDay(age); var di=age-hogStartDay(no); var len=hogLen(no);
   var it=HOG_DETAIL.iters[hogCurIdx(age)]; var hi=it?(' · '+esc(it.hero)+' · '+esc(it.rank)):'';
   var gen3='<div class="alert warn small"><b>📍</b> HoG kemungkinan sudah selesai (cuma Gen 1-2) — fokus KvK / Strongest Governor.</div>';
-  if(di<len) return no>5?gen3:'<div class="alert ok small"><b>📍 Sekarang:</b> HoG #'+no+' · hari '+(di+1)+'/'+len+hi+'</div>';
-  var nno=no+1, nstart=6+(nno-1)*14;
-  if(nno>5) return gen3;
+  if(di<len) return hogExists(no)?'<div class="alert ok small"><b>📍 Sekarang:</b> HoG #'+no+' · hari '+(di+1)+'/'+len+hi+'</div>':gen3;
+  var nno=no+1, nstart=hogStartDay(nno);
+  if(!hogExists(nno)) return gen3;
   return '<div class="alert inf small"><b>📍 Berikutnya:</b> HoG #'+nno+' · H'+nstart+' (~'+(nstart-age)+' hari)'+hi+'</div>';
 }
 function hogStageTbl(idx){
@@ -1242,7 +1253,10 @@ function renderProfil(){
     if(!v){ st.textContent='Isi Player ID.'; return; }
     if(store.get('profiles',[]).some(p=>p.pid===v)){ st.textContent='ID sudah ada di daftar.'; return; }
     st.textContent='⏳ Cek ke server…'; let meta={pid:v,nick:'',kingdom:'',tc:'',start:''};
-    try{ const j=await ksPlayerLookup(v); if(j&&j.code===0&&j.data){ const d=j.data; meta.nick=d.nickname||''; meta.kingdom=String(d.kid||''); meta.tc=String(d.stove_lv||''); } }catch(e){}
+    try{ const j=await ksPlayerLookup(v); if(j&&j.code===0&&j.data){ const d=j.data; meta.nick=d.nickname||''; meta.kingdom=String(d.kid||''); meta.tc=String(d.stove_lv||'');
+      /* tanggal buka ikut diambil DI SINI — tanpa ini profil baru dipakai tanpa umur
+         server, dan tab Sekarang/kalender/HoG kosong sampai user tekan "Deteksi" */
+      if(meta.kingdom) meta.start=(await fetchKingdomDate(meta.kingdom))||''; } }catch(e){}
     const ps=store.get('profiles',[]); ps.push(meta); store.set('profiles',ps);
     renderProfil(); if(typeof updateSideProf==='function') updateSideProf();
   };
@@ -1353,18 +1367,31 @@ async function autoDetectProfiles(){
      (TC naik) → JANGAN skip profil yang sudah punya nama; refresh tiap buka app. */
   const profs=store.get('profiles',[]); let changed=false;
   const apid=(typeof _ksActivePid==='function')?_ksActivePid():'';
+  const moved=new Set();   /* pid yang PINDAH kingdom → tanggal buka lama tak berlaku lagi */
   for(const p of profs){ if(!p.pid) continue;
     try{ const j=await ksPlayerLookup(p.pid);
       if(j&&j.code===0&&j.data){
         if(!p.nick && j.data.nickname) p.nick=j.data.nickname;      /* nama: isi kalau kosong (jangan timpa kustom) */
-        const nk=String(j.data.kid||''); if(nk) p.kingdom=nk;        /* Kingdom & TC: selalu segarkan (otoritatif) */
+        const nk=String(j.data.kid||'');                             /* Kingdom & TC: selalu segarkan (otoritatif) */
+        if(nk){
+          /* Kingdom beda = SERVER LAIN = tanggal buka lain. Tanpa ini `start` tetap
+             milik server lama → umur server & semua tanggal HoG salah diam-diam. */
+          if(nk!==String(p.kingdom||'')||!p.start){
+            if(nk!==String(p.kingdom||'')) moved.add(p.pid);
+            p.start=(await fetchKingdomDate(nk))||'';
+          }
+          p.kingdom=nk;
+        }
         const nt=String(j.data.stove_lv||''); if(nt) p.tc=nt;
         changed=true; } }catch(e){} }
   if(changed){ store.set('profiles',profs);
     /* sinkronkan ke profil AKTIF (sumber tampilan profileAge) — kalau tidak, TC di layar tetap basi */
     const act=profs.find(p=>p.pid===apid);
     if(act){ const cur=store.get('profile',{});
-      store.set('profile',Object.assign({},cur,{nick:cur.nick||act.nick||'',kingdom:act.kingdom||cur.kingdom||'',tc:act.tc||cur.tc||''})); }
+      /* pindah kingdom → meta yang menang (walau kosong; umur tak diketahui lebih baik
+         daripada umur salah). Selain itu tanggal di slot dipertahankan. */
+      const st=moved.has(act.pid)?(act.start||''):(act.start||cur.start||'');
+      store.set('profile',Object.assign({},cur,{nick:cur.nick||act.nick||'',kingdom:act.kingdom||cur.kingdom||'',tc:act.tc||cur.tc||'',start:st})); }
     if(typeof updateSideProf==='function') updateSideProf();
     const lt=store.get('lastTab','sekarang'), fn=window['render'+lt.charAt(0).toUpperCase()+lt.slice(1)];
     if((lt==='profil'||lt==='sekarang')&&typeof fn==='function') fn(); }
@@ -1373,7 +1400,12 @@ function saveProfile(){
   const old=store.get('profile',{});
   const v=(id,prop)=>{ const e=$(id); return e?(e.value||'').trim():(old[prop]||''); };
   const np=Object.assign({},old,{kingdom:v('#pf_k','kingdom'),pid:v('#pf_id','pid'),start:v('#pf_start','start'),tc:v('#pf_tc','tc')});
-  store.set('profile',np); renderProfil();
+  store.set('profile',np);
+  /* cerminkan ke daftar meta — kalau tidak, tanggal yang diisi manual di sini tak
+     dikenal oleh seedProfileFromMeta/autoDetectProfiles dan bisa tertimpa balik */
+  try{ const profs=store.get('profiles',[]); const e=profs.find(x=>x&&String(x.pid)===String(np.pid));
+    if(e){ e.kingdom=np.kingdom||e.kingdom; e.tc=np.tc||e.tc; if(np.start) e.start=np.start; store.set('profiles',profs); } }catch(err){}
+  renderProfil();
 }
 async function autoDetectUI(){
   const st=$('#pf_status'),fid=($('#pf_id').value||'').trim();

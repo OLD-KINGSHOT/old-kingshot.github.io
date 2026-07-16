@@ -19,8 +19,30 @@ const store={
   set(k,v){ const rk=_ksRealKey(k); try{localStorage.setItem('ks_'+rk,JSON.stringify(v));}catch(e){}
     if(typeof ksSync!=='undefined'&&ksSync._skip.indexOf('ks_'+rk)<0) ksSync.schedule(); }
 };
+/* Identitas server hidup di DUA tempat: daftar global `profiles` (meta: pid/nick/
+   kingdom/tc/start) dan objek `profile` per-slot yang dibaca profileAge(). Profil
+   yang lahir cuma sebagai meta (lewat "+ Tambah" atau datang via sync) punya slot
+   KOSONG → begitu dipakai, umur server & jadwal HoG hilang. Isi field identitas yang
+   masih kosong dari meta; setelan per-profil (mode, eventTimes) tidak disentuh, dan
+   slot yang sudah terisi menang (dia yang paling tahu servernya sendiri). */
+function seedProfileFromMeta(pid){
+  try{
+    const meta=(store.get('profiles',[])||[]).find(x=>x&&String(x.pid)===String(pid));
+    if(!meta) return;
+    const cur=store.get('profile',{})||{}; const next=Object.assign({},cur); let changed=false;
+    ['pid','nick','kingdom','tc','start'].forEach(k=>{
+      const v=(k==='pid')?String(pid):meta[k];
+      if(v&&!next[k]){ next[k]=v; changed=true; }
+    });
+    if(changed) store.set('profile',next);
+  }catch(e){}
+}
 /* Profil aktif & migrasi sekali-jalan (idempotent). */
-function setActiveProfile(pid){ try{ localStorage.setItem('ks_activePid',JSON.stringify(String(pid))); }catch(e){}
+function setActiveProfile(pid){ pid=String(pid); try{ localStorage.setItem('ks_activePid',JSON.stringify(pid)); }catch(e){}
+  seedProfileFromMeta(pid);   /* HARUS setelah activePid diganti — store menulis ke slot baru */
+  /* kalender tiap server punya umur sendiri — jangan buka server baru di bulan yang
+     kebetulan lagi di-scroll pada server lama */
+  if(typeof _calOffset!=='undefined') _calOffset=0;
   if(typeof activate==='function') activate(store.get('lastTab','sekarang')); }
 function migrateProfiles(){
   try{
@@ -144,15 +166,27 @@ const ksClock={
     if(at&&Date.now()-at<86400000){ this.synced=true; } else { this.offset=0; }
   },
   now(){ return new Date(Date.now()+this.offset+this.nudge*60000); },
+  /* Waktu untuk MENANDATANGANI permintaan API — offset server saja, TANPA nudge.
+     nudge = koreksi manual milik user untuk TAMPILAN/hitungan tanggal; kalau ikut
+     masuk ke sign, `time` yang dikirim jadi bergeser sesuai selera user. */
+  signNow(){ return Date.now()+this.offset; },
   setNudge(min){ this.nudge=Number(min)||0; store.set('clockNudge',this.nudge); },
   _apply(srvEpoch){ if(isNaN(srvEpoch)) return false; this.offset=srvEpoch-Date.now(); store.set('clockOffset',this.offset); store.set('clockSyncAt',Date.now()); this.synced=true; return true; },
+  _race(u){ return Promise.race([fetch(u),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000))]); },
+  /* Jalur 1 = server sendiri. Waktu dikirim di BODY (/time -> {now}); header `Date`
+     TIDAK bisa dipakai lintas-origin (bukan CORS-safelisted, tak di-expose) — dulu
+     app mengandalkannya dan diam-diam selalu dapat null. */
+  async _srvTime(){
+    try{ const r=await this._race(KS_DATA_API+'/time'); if(!r.ok) return false; const j=await r.json();
+      if(j&&typeof j.now==='number') return this._apply(j.now);
+    }catch(e){}
+    return false;
+  },
   async sync(){
+    if(await this._srvTime()) return true;
+    /* cadangan: timeapi.io (kadang diblokir di jaringan HP) */
     try{
-      const race=Promise.race([
-        fetch('https://timeapi.io/api/time/current/zone?timeZone=UTC'),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000))
-      ]);
-      const res=await race; const j=await res.json();
+      const res=await this._race('https://timeapi.io/api/time/current/zone?timeZone=UTC'); const j=await res.json();
       if(j&&j.year){ return this._apply(Date.UTC(j.year,(j.month||1)-1,j.day||1,j.hour||0,j.minute||0,j.seconds||0,j.milliSeconds||0)); }
       if(j&&j.dateTime){ return this._apply(Date.parse(j.dateTime.replace(/(\.\d{3})\d*$/,'$1')+'Z')); }
     }catch(e){}
@@ -242,17 +276,18 @@ function md5(str){
 
 /* ── Player API: login-style detect (run once, remembers) ── */
 async function ksPlayerLookup(fid){
-  /* sign with SERVER-corrected time, not the raw device clock — a skewed phone
-     clock makes the signed `time` fall outside the API window -> err_code 40004
-     ("not login"). The whole app already runs on ksClock; signing must too. */
-  const time=ksClock.now().getTime();
+  /* sign with the SERVER-corrected clock, minus the manual nudge (signNow). */
+  const time=ksClock.signNow();
   const sign=md5('fid='+fid+'&time='+time+KS_SALT);
   const body='sign='+sign+'&fid='+encodeURIComponent(fid)+'&time='+time;
   const res=await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
-  const dh=res.headers.get('date'); if(dh){ const srv=Date.parse(dh); if(!isNaN(srv)) ksClock._apply(srv); }
   return res.json();
 }
 async function fetchKingdomDate(kid){
+  /* flag "ini cuma perkiraan" harus menggambarkan lookup INI — dulu hanya di-reset di
+     cabang fallback, padahal jalur seed/cache/exact return lebih dulu, jadi label
+     "(perkiraan ±2-3 hari)" nempel dari server sebelumnya. */
+  window._kdateEst=false;
   if(KINGDOM_DATES[String(kid)]) return KINGDOM_DATES[String(kid)];
   const cached=store.get('kdates',{}); if(cached[String(kid)]) return cached[String(kid)];
   const target='https://kingshot.net/api/kingdom-tracker?kingdomId='+kid;
@@ -268,7 +303,6 @@ async function fetchKingdomDate(kid){
   }
   /* offline fallback: interpolate from the embedded anchor table (±2-3 hari).
      NOT cached, so a later online lookup replaces it with the exact date. */
-  window._kdateEst=false;
   if(typeof KINGDOM_ANCHORS!=='undefined'&&KINGDOM_ANCHORS.length>1){
     const k=+kid, A=KINGDOM_ANCHORS;
     if(k>=A[0][0]){
@@ -290,15 +324,12 @@ async function fetchKingdomDate(kid){
 }
 /* Redeem one code. Returns {cls,txt}. */
 async function ksRedeem(fid,code){
-  /* 1) "login" hit. Sign with corrected time, and (key) resync ksClock from the
-        response's HTTP Date header \u2014 server time is authoritative and always
-        present, so the very next sign is correct even if the device clock and a
-        prior sync were both wrong. This is what kills the "not login" (40004). */
-  let t=ksClock.now().getTime(); let s=md5('fid='+fid+'&time='+t+KS_SALT);
-  const lr=await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'sign='+s+'&fid='+encodeURIComponent(fid)+'&time='+t});
-  const dh=lr.headers.get('date'); if(dh){ const srv=Date.parse(dh); if(!isNaN(srv)) ksClock._apply(srv); }
-  /* 2) redeem, signed with the now-corrected clock */
-  t=ksClock.now().getTime(); s=md5('cdk='+code+'&fid='+fid+'&time='+t+KS_SALT);
+  /* 1) hit "login" dulu \u2014 /api/gift_code menolak (40004/40009) kalau fid belum
+        punya sesi login di server. INI penyebab error itu, bukan jam perangkat. */
+  let t=ksClock.signNow(); let s=md5('fid='+fid+'&time='+t+KS_SALT);
+  await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'sign='+s+'&fid='+encodeURIComponent(fid)+'&time='+t});
+  /* 2) redeem */
+  t=ksClock.signNow(); s=md5('cdk='+code+'&fid='+fid+'&time='+t+KS_SALT);
   const body='sign='+s+'&fid='+encodeURIComponent(fid)+'&cdk='+encodeURIComponent(code)+'&time='+t;
   const r=await fetch(KS_GIFT_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
   const j=await r.json();
@@ -309,9 +340,15 @@ async function ksRedeem(fid,code){
   if(m.includes('CDK')||m.includes('NOT FOUND')) return {cls:'bad',txt:'Kode salah/tak ada'};
   if(m.includes('CAPTCHA')) return {cls:'warn',txt:'Butuh captcha \u2014 redeem in-game'};
   if(m.includes('EXPIRE')) return {cls:'bad',txt:'Kedaluwarsa'};
-  /* 40004 = sign/time/"not login": almost always a meleset device clock */
-  if(ec===40004||m.includes('LOGIN')||m.includes('SIGN')||m.includes('TIME')||m==='40004')
-    return {cls:'bad',txt:'Jam perangkat meleset \u2014 sinkronkan jam lalu coba lagi'};
+  /* Terverifikasi lewat probe langsung ke API (Jul 2026): `time` yang meleset
+     \u00b124 jam pun tetap diterima (40014 CDK NOT FOUND normal), dan sign yang salah
+     dijawab msg "Sign Error" err_code 0. Jadi 40004/40009 BUKAN jam perangkat \u2014
+     itu sesi login belum ada/hangus (hit login gagal atau kena rate limit 30/menit). */
+  if(ec===40004||ec===40009||m.includes('LOGIN')||m==='40004')
+    return {cls:'warn',txt:'Sesi login ke server game gagal \u2014 tunggu ~1 menit lalu coba lagi'};
+  if(m.includes('SIGN')) return {cls:'bad',txt:'Sign ditolak server \u2014 laporkan sebagai bug app'};
+  /* hanya kalau server BENAR-BENAR bilang soal waktu (window-nya \u00b124 jam, jadi ini langka) */
+  if(m.includes('TIME')) return {cls:'bad',txt:'Jam perangkat meleset jauh \u2014 sinkronkan jam lalu coba lagi'};
   return {cls:'inf',txt:String(j.msg==null?'?':j.msg)};
 }
 /* Live gift codes — aggregated from TWO sources (kingshot.net's API regularly lags
@@ -420,8 +457,13 @@ async function ksLiveCodes(){
 /* ── Event prediction & advisory ── */
 function predictedEvents(start,age){
   const out=[];
-  let hog=age<6?6:6+Math.floor((age-6)/14)*14;
-  for(let k=0;k<3;k++){ const d=hog+k*14; out.push({type:'hog',day:d,date:addDaysISO(start,d),conf:'tinggi'}); }
+  let hno=hogNoForDay(age);
+  /* siklus ini sudah kelar (durasi per-iterasi, bukan template) → ramalkan berikutnya.
+     KvK di bawah sudah begini sejak dulu; HoG kelewat, jadi iterasi yang sudah selesai
+     terus nongol sebagai "berikutnya". */
+  if(age>=hogStartDay(hno)+hogLen(hno)) hno++;
+  for(let k=0;k<3;k++){ const no=hno+k; if(!hogExists(no)) break;   /* HoG berhenti setelah #5 (Gen 3) */
+    const d=hogStartDay(no); out.push({type:'hog',day:d,date:addDaysISO(start,d),conf:'tinggi'}); }
   let kvk=age<70?70:70+Math.floor((age-70)/28)*28;
   const klen=(EVENT_TEMPLATES.kvk&&EVENT_TEMPLATES.kvk.len)||5;
   if(age>=kvk+klen) kvk+=28; /* current cycle already over → predict the next one */
@@ -432,9 +474,8 @@ function predictedEvents(start,age){
 function hogAdvOccurrence(start, pfStart){
   if(!pfStart||typeof HOG_DETAIL==='undefined'||!HOG_DETAIL.iters) return null;
   var sd=daysBetween(new Date(pfStart+'T00:00:00Z'),start)+1;
-  var no=sd<6?1:Math.floor((sd-6)/14)+1;
-  var idx=no<=1?0:no===2?1:no===3?2:3;
-  var it=HOG_DETAIL.iters[idx]; if(!it) return null;
+  var no=hogNoForDay(sd);
+  var it=HOG_DETAIL.iters[hogIdxForNo(no)]; if(!it) return null;
   var days=it.stages.map(function(st){ return st[0]; });
   var spend=it.stages.map(function(st){ var t=st[1]||[]; return t.slice(0,2).map(function(x){ return x[0]+' ('+x[1]+')'; }).join(' + ')||'item sesuai tema'; });
   return {no:no, len:it.stages.length, days:days, spend:spend, hero:it.hero, rank:it.rank};

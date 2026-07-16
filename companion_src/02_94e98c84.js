@@ -206,7 +206,8 @@ function renderSekarang(){
     const target=new Date(nextEv.date+'T00:00:00Z').getTime();
     let steps=[],heroLine='',nameSuffix='',durTxt=tpl.len?tpl.len+' hari':'';
     if(nextEv.type==='hog'){
-      const idx=hogCurIdx(age),it=HOG_DETAIL.iters[idx],no=Math.floor((nextEv.day-6)/14)+1;
+      /* nomor DAN data harus dari iterasi yang sama = iterasi milik nextEv */
+      const no=hogNoForDay(nextEv.day),it=HOG_DETAIL.iters[hogIdxForNo(no)];
       nameSuffix=' #'+no;
       if(it){ heroLine='Hero musim <b>'+esc(it.hero)+'</b> — cukup <b>'+esc(it.rank)+'</b> untuk shard'; durTxt=it.stages.length+' hari'; }
       steps=['<b>TAHAN gem</b> — Roulette D2 = 90.000/spin','<b>TAHAN Widget</b> — D5 = 100.000 (terbesar)','<b>Stage troop T9</b> — promote di hari Train Troops'];
@@ -265,7 +266,7 @@ function renderSekarang(){
       +timesetHTML('viking','Jam Viking')+'</div>';
   }}
   /* Next HoG (solo) */
-  if(nextEv&&nextEv.type==='hog'){ const it=HOG_DETAIL.iters[hogCurIdx(age)]; const no=Math.floor((nextEv.day-6)/14)+1;
+  if(nextEv&&nextEv.type==='hog'){ const no=hogNoForDay(nextEv.day); const it=HOG_DETAIL.iters[hogIdxForNo(no)];
     cardsHTML+='<div class="card ev"><div class="top"><span class="ico">🏛</span><div><div class="nm">Hall of Governors #'+no+'</div><div class="when">H'+nextEv.day+' · ~'+Math.max(0,nextEv.day-age)+' hari</div></div><span class="pill prep">Prep</span></div>'
       +(it?'<div class="lineup"><span class="lbl">Hero musim</span> <b>'+esc(it.hero)+'</b> <span class="pick">'+esc(it.rank)+' → shard</span></div>':'')
       +'<div class="do">Solo · leaderboard. Tahan <b>gem, Widget, troop T9</b> untuk hari temanya.</div></div>';

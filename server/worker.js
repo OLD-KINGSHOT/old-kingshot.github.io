@@ -4,6 +4,7 @@
      PUT  /sync/:code        -> store body text (cap 256KB), body must be JSON with numeric ts
      POST /visit             -> {pid,nick,kid,tc}; server-side once-per-UTC-day visit count
      GET  /visitors?key=K    -> full visitor list (owner key required)
+     GET  /time              -> {now} server epoch ms (app clock source)
      GET  /health            -> ok
    No PII beyond public in-game identity (nickname/kingdom/TC). */
 
@@ -104,6 +105,15 @@ export default {
 
     try {
       if (p === '/health') return text('ok');
+
+      /* Sumber waktu otoritatif untuk app. Dikirim di BODY, bukan header `Date`:
+         header Date bukan CORS-safelisted, jadi headers.get('date') selalu null di
+         browser kecuali di-expose. Body JSON selalu terbaca. Jangan di-cache. */
+      if (p === '/time') {
+        return new Response(JSON.stringify({ now: Date.now() }), {
+          headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...CORS },
+        });
+      }
 
       // ---- upstream passthroughs (kingshot.net has no CORS; we fetch server-side,
       //      edge-cached, so the app never depends on flaky public CORS proxies) ----
