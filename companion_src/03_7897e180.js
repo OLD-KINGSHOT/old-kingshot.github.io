@@ -447,6 +447,56 @@ function nextWkStarts(daysAhead){
   }
   return out;
 }
+/* Bentuk item jadwal — default lengkap supaya UI tak pernah ketemu undefined. */
+/* srcKey = titleKey ASLI dari feed. WAJIB disimpan terpisah dari id: id sudah di-alias
+   (kvkMatchmaking -> kvk), sedangkan WEEKLY_GUIDE di-key pakai titleKey asli — pakai id
+   untuk lookup panduan = meleset diam-diam untuk tiap event yang di-alias. */
+function _evItem(o){ return Object.assign({id:'',srcKey:'',title:'',type:'',startUTC:null,endUTC:null,
+  active:false,source:'',conf:'unknown',gate:null,locked:false,unpredictable:false,why:''},o); }
+/* Aktif dulu; lalu paling dekat dulu; yang tak bisa diprediksi (startUTC null) selalu buncit. */
+function _evSort(a,b){
+  if(a.active!==b.active) return a.active?-1:1;
+  const an=(a.startUTC==null),bn=(b.startUTC==null);
+  if(an!==bn) return an?1:-1;
+  if(an&&bn) return 0;
+  return a.startUTC-b.startUTC;
+}
+/* Satu daftar jadwal terpadu, terurut. Dedup by id: sumber prioritas LEBIH TINGGI
+   yang ditambahkan lebih dulu menang; sumber berikutnya untuk id sama dibuang. */
+function evUpcoming(){
+  const out=[], seen=new Set();
+  const add=it=>{ if(!it||!it.id||seen.has(it.id)) return; seen.add(it.id); out.push(it); };
+  const pa=profileAge(), start=pa.start, age=pa.age;
+  const now=ksClock.now().getTime();
+
+  /* 1) koreksi manual user — menang atas apa pun */
+  (store.get('events',[])||[]).forEach(e=>{
+    if(!e||!e.type||!e.date) return;
+    const t=Date.parse(e.date+'T00:00:00Z'); if(isNaN(t)) return;
+    const tpl=(typeof EVENT_TEMPLATES!=='undefined'&&EVENT_TEMPLATES[e.type])||{};
+    const len=tpl.len||1;
+    add(_evItem({id:e.type,title:tpl.name||e.type,type:'growth',startUTC:t,
+      endUTC:t+len*86400000-1,active:(now>=t&&now<t+len*86400000),source:'user',conf:'ingame'}));
+  });
+
+  /* 2) model umur server — menang atas rotasi GLOBAL karena mengikuti KINGDOM-mu
+        (HoG #4 terverifikasi in-game membuktikan model ini cocok) */
+  if(start&&age!=null){
+    predictedEvents(start,age).forEach(pp=>{
+      const tpl=EVENT_TEMPLATES[pp.type]||{};
+      const t=Date.parse(pp.date+'T00:00:00Z'); if(isNaN(t)) return;
+      const len=(pp.type==='hog'&&typeof hogLen==='function')?hogLen(hogNoForDay(pp.day)):(tpl.len||1);
+      add(_evItem({id:pp.type,title:tpl.name||pp.type,type:'growth',startUTC:t,endUTC:t+len*86400000-1,
+        active:(pp.day<=age&&age<pp.day+len),source:'age',
+        conf:(pp.type==='hog')?'ingame':(pp.conf==='tinggi'?'wiki':'inferred'),
+        gate:tpl.minDay?{minDay:tpl.minDay}:null,
+        locked:!!(tpl.minDay&&age<tpl.minDay)}));
+    });
+  }
+
+  out.sort(_evSort);
+  return out;
+}
 /* ── Server data milik sendiri (Cloudflare Worker + D1) ── */
 const KS_DATA_API='https://old-kingshot-api.old-kingshot.workers.dev';
 /* ── Daftar pengunjung ──

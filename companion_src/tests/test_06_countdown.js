@@ -95,4 +95,63 @@ t('jendela sapuan = TEPAT daysAhead hari (bukan 29)', () => {
 t('nextWkStarts(0) = hari ini saja, tidak diam-diam jadi 28', () =>
   eq(e.ctx.nextWkStarts(0).size, 0, 'window 0 harus kosong (16 Jul bukan hari mulai event mana pun)'));
 
+console.log('\nTask 2 — daftar terpadu (user + model umur)');
+
+/* Kingdom 2114 buka 2026-05-27; pada 2026-07-16 = H51.
+   HoG #4 = H48..H54 -> AKTIF. KvK = H70 -> mendatang, terkunci (minDay 70). */
+{
+  const env = envAt(NOW);
+  const list = env.ctx.evUpcoming();
+  const byId = id => list.find(x => x.id === id);
+
+  t('HoG terdeteksi AKTIF pada H51 (iterasi #4 = H48-H54)', () => {
+    const h = byId('hog');
+    ok(h, 'hog tidak ada di daftar');
+    eq(h.active, true, 'HoG #4 harusnya aktif di H51');
+    eq(h.conf, 'ingame', 'HoG terverifikasi in-game -> conf tertinggi');
+  });
+  t('KvK mendatang dan TERKUNCI di H51 (gate H70)', () => {
+    const k = byId('kvk');
+    ok(k, 'kvk tidak ada');
+    eq(k.active, false);
+    eq(k.locked, true, 'H51 < minDay 70 -> harus locked');
+    eq(k.gate.minDay, 70);
+    ok(k.startUTC > NOW, 'KvK harus di masa depan');
+  });
+  t('item aktif diurut sebelum item mendatang', () => {
+    const iActive = list.findIndex(x => x.active);
+    const iFuture = list.findIndex(x => !x.active && x.startUTC != null);
+    ok(iActive >= 0 && iFuture >= 0 && iActive < iFuture, 'urutan salah: aktif harus di atas');
+  });
+  t('item mendatang terurut menaik menurut startUTC', () => {
+    const f = list.filter(x => !x.active && x.startUTC != null).map(x => x.startUTC);
+    for (let i = 1; i < f.length; i++) ok(f[i] >= f[i - 1], 'tidak terurut di indeks ' + i);
+  });
+  t('setiap item punya bentuk lengkap (tak ada field hilang)', () => {
+    for (const it of list)
+      for (const k of ['id','title','startUTC','endUTC','active','source','conf','locked','unpredictable'])
+        ok(k in it, 'field "' + k + '" hilang di item ' + it.id);
+  });
+}
+
+/* Koreksi manual user menang atas model umur server. */
+{
+  const env = envAt(NOW);
+  env.evalIn('store').set('events', [{ type: 'kvk', date: '2026-09-01' }]);
+  const k = env.ctx.evUpcoming().find(x => x.id === 'kvk');
+  t('koreksi manual user menang atas model umur server', () => {
+    eq(iso(k.startUTC), '2026-09-01', 'tanggal ralat user diabaikan');
+    eq(k.source, 'user');
+    eq(k.conf, 'ingame', 'ralat user = kelas in-game');
+  });
+}
+
+/* Tanpa profil (belum konek): tidak melempar error, model umur kosong. */
+t('tanpa profil -> evUpcoming tetap jalan, tidak melempar', () => {
+  const env = createEnv({ storage: { ks_activePid: JSON.stringify('9'), ks_profilesV: '1' } });
+  const l = env.ctx.evUpcoming();
+  ok(Array.isArray(l), 'harus array');
+  ok(!l.some(x => x.id === 'hog'), 'tanpa tanggal buka server, HoG tak bisa dihitung');
+});
+
 done();
