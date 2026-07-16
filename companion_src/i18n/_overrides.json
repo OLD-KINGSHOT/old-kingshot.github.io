@@ -232,6 +232,12 @@
   "✔ Semua kode aktif sudah pernah di-redeem.": "✔ All active codes have already been redeemed.",
   "Auto-redeem kode baru": "Auto-redeem of new codes",
   "Hadiah masuk mail in-game.": "Rewards arrive in your in-game mail.",
+  "@title:terverifikasi in-game": "@title:verified in-game",
+  "@title:feed live kingshot.net": "@title:kingshot.net live feed",
+  "@title:kingshotwiki": "@title:kingshotwiki",
+  "@title:satu sumber, belum terkonfirmasi": "@title:single source, unconfirmed",
+  "@title:perkiraan hitungan app": "@title:app's own estimate",
+  "@title:tidak diketahui": "@title:unknown",
   "cubit 2 jari / Ctrl+scroll = zoom": "pinch 2 fingers / Ctrl+scroll = zoom",
   "⬜ Jalan": "⬜ Path",
   "Dasar peta = template komunitas:": "Map base = the community template:",
@@ -719,3 +725,4 @@
   "Discord resmi Kingshot": "Official Kingshot Discord",
   "📌 Hitungan umur (H-x, gerbang 🔒) mengikuti KINGDOM-mu. Rotasi mingguan bersifat GLOBAL untuk kingdom dewasa — kingdom muda belum sinkron penuh, event bisa muncul di luar daftar. Acuan final = tab Events in-game.": "📌 Age maths (D-x, 🔒 gates) follows YOUR kingdom. The weekly rotation is GLOBAL for mature kingdoms — young kingdoms aren't fully synced, so events can appear outside the list. Final reference = the in-game Events tab."
 }
+

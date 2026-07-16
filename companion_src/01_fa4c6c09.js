@@ -90,7 +90,6 @@ async function fillLiveEvents(force){
   host.innerHTML='<div class="muted small">⏳ Memuat jadwal live…</div>';
   await ksLiveEvents(force);                       /* isi cache; evUpcoming baca dari store */
   const list=(typeof evUpcoming==='function')?evUpcoming():[];
-  const {age}=profileAge();
   const now=ksClock.now().getTime();
   const CONF={ingame:['✅','terverifikasi in-game'],live:['📡','feed live kingshot.net'],
     wiki:['📖','kingshotwiki'],community:['💬','satu sumber, belum terkonfirmasi'],
