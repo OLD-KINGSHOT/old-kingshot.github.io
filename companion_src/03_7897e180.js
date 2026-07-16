@@ -456,7 +456,9 @@ function wkActiveNow(){
   const out=[];
   for(const e of wkEventsOnDate(today)){
     for(let back=0;back<7;back++){
-      const dd=d0-back, wk=(Math.floor(dd/7)%4)+1;
+      /* dd bisa NEGATIF (mundur melewati cycleReference) — % di JS mengikuti tanda
+         dividen, jadi minggu & dow dua-duanya harus dinormalisasi, bukan cuma dow. */
+      const dd=d0-back, wk=((((Math.floor(dd/7)%4)+4)%4))+1;
       if(_WK_DI[e.startDay]!==((dd%7)+7)%7) continue;
       if(!(R.d.weeks[wk]||[]).some(x=>x.titleKey===e.titleKey)) continue;
       out.push({titleKey:e.titleKey,title:e.title,type:e.type,

@@ -198,10 +198,15 @@ const TRANSFER = { phase:'countdown', phaseName:'Next Transfer', eventNumber:7, 
     eq(iso(byId('champagneFair').startUTC), '2026-07-20'));
   t('PACK disaring dari daftar (bundel bayar, bukan event skor)', () =>
     ok(!byId('conqueror'), 'PACK bocor ke daftar countdown'));
-  t('gate WEEKLY_MIN diterapkan ke event rotasi', () => {
-    const b = byId('allianceBrawl');
-    ok(b, 'allianceBrawl tidak ada');
-    ok(b.startUTC != null, 'tetap punya countdown walau terkunci');
+  t('gate WEEKLY_MIN diterapkan ke event rotasi (pakai titleKey ASLI, bukan id ter-alias)', () => {
+    /* strongestGovernor -> id 'sg' (alias), gate WEEKLY_MIN['strongestGovernor']=75.
+       Di H51: terkunci TAPI tetap punya countdown. Kalau gate dicari pakai id 'sg',
+       WEEKLY_MIN['sg'] undefined -> gate hilang diam-diam. */
+    const s = byId('sg');
+    ok(s, 'strongestGovernor tidak ter-alias ke sg');
+    eq(s.gate && s.gate.minDay, 75, 'gate hilang — dicari pakai id ter-alias?');
+    eq(s.locked, true, 'H51 < 75 harus terkunci');
+    ok(s.startUTC != null, 'tetap punya countdown walau terkunci');
   });
   t('alias: strongestGovernor dari feed = id "sg" (tidak dobel)', () =>
     ok(!byId('strongestGovernor'), 'harus di-alias ke sg, bukan id feed'));
