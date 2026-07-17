@@ -225,7 +225,7 @@ const EVENTS_INFO=[
    {n:'Grow Your Heroes',cat:'hero',freq:'2 hari',what:'Naikkan level/EXP/skill hero -> poin. Pakai EXP & manual di sini.'},
    {n:'City Development',cat:'build',freq:'2 hari',what:'Poin dari konstruksi & power bangunan. Pakai speedup construction.'},
    {n:'Plan your City',cat:'build · Gen 1',freq:'2 hari (early kingdom)',what:'Event Gen 1 SAJA (tak muncul lagi di gen lebih tua). Cuma 2 task: 1 poin per power dari Research/Construction. F2P: antri 1 upgrade/riset besar, selesaikan power-nya di window; pakai Double Time + Saul (potong waktu bangun), tumpuk speedup. Trap: jadwalnya tak pasti → jangan habiskan speedup sehari sebelum.'},
-   {n:'Power Up',cat:'power',freq:'2 hari',what:'Poin dari kenaikan power apa pun (bangun/riset/troop/hero). Hari fleksibel.'},
+   {n:'Power Up',cat:'power · Gen 1',freq:'2 hari (irregular, early kingdom)',what:'Event Gen 1 SAJA (tak muncul di Gen 2+). Poin dari MENIT speedup konstruksi/riset (1 poin/menit) — bukan dari kenaikan power. Irregular: jadwalnya tak bisa diprediksi. F2P: tahan speedup, selesaikan di window.'},
    {n:'Develop New Tech',cat:'research',freq:'rotasi',what:'Poin dari research. Tahan speedup research -> pakai di sini.'},
    {n:'Working Overtime',cat:'produksi',freq:'rotasi',what:'Poin dari produksi/aktivitas. Selesaikan tugas produksi di window.'},
    {n:'Path of Growth',cat:'progres',freq:'~7 hari',what:'Misi progres bertahap -> hadiah growth. Selesaikan tier-nya.'},
@@ -265,7 +265,7 @@ const EVENTS_INFO=[
    {n:'Moonlit Promise (Ramadan)',cat:'musiman · PvE',freq:'bulanan (event Ramadan, terbatas)',what:'Event musiman Ramadan: (1) Radiant Wishes — nyalakan lentera (gratis) untuk Crescent Emblem → shard hero Mythic; (2) Crescent Bazaar — tukar Emblem untuk Custom Mythic Gear / Forgehammer / Charm Design. F2P: kerjakan task gratis, tukar Emblem ke mat paling langka (Forgehammer/Charm Design). Trap: terbatas waktu — habiskan Emblem sebelum tutup.'},
    {n:'Update Des 2026 (catatan QoL)',cat:'changelog',freq:'-',what:'Fitur baru relevan: daily mission khusus Mystic Trial; Rebel Invasion quick-battle (unlock TC25); 2 slot formasi tambahan (TC26 & TC30) + bisa menamai formasi (3 huruf); tukar (exchange) material gear/charm berlebih di interface gear.'},
    {n:'Kingdom Transfer',cat:'pindah server',freq:'~tiap 40-60 hari',what:'Kesempatan pindah ke Kingdom lain (gate: ~hari 152 / Truegold Lv5 + Crucible). Ada batas power & biaya. Pikirkan matang \u2014 cek aturan in-game.'},
-   {n:'War Preparation',cat:'aliansi \u00b7 jelang KvK',freq:'2 hari (sebelum KvK)',what:'Persiapan perang menjelang KvK. Stage troop, isi formasi, kosongkan hospital, koordinasi aliansi.'},
+   {n:'KvK Prep Phase',cat:'aliansi \u00b7 jelang KvK',freq:'2 hari (sebelum KvK)',what:'Fase persiapan KvK (terprediksi lewat countdown KvK) \u2014 stage troop, isi formasi, kosongkan hospital, koordinasi aliansi. Beda dari event "War Preparation" Gen-1 (Forgehammer).'},
    {n:'Fight Club',cat:'event tema \u00b7 PvE',freq:'berkala (event tema)',what:'Ring tinju bawah tanah bertema animatronik \u2014 kalahkan lawan demi kesempatan melawan Bear King. Event tema ringan: ikuti attempt gratis harian, kejar milestone, jangan beli attempt berbayar.'},
    {n:'Master System (Master Academy)',cat:'progresi \u00b7 update Apr 2026',freq:'permanen (gate Kingdom Progress \u00b7 TC25 / ~Hari 113)',what:'Quinn berpetualang ke Badlands \u2014 terima komisi Governor, selesaikan tantangan untuk merekrut MASTER yang pindah ke Master Academy di kotamu. Unlock per-kingdom (cek layar Kingdom Progress). Bonus patch: opsi tukar Truegold diskon 50% (limit mingguan). PRIORITAS master F2P (Gen 1): Valora (wajib unlock pertama \u2014 Weapon Obsession = +Forgehammer) \u2192 Pan (ekonomi harian, compound & tak perlu jadi rally lead = ROI F2P terbaik) \u2192 Cassia atau Roman. Fokus 1 master tuntas dulu, jangan sebar.'},
    {n:'Hero Rally',cat:'hero \u00b7 sub-event',freq:'berkala (cek in-game)',what:'Poin dari rekrut/naikkan hero. F2P: klaim recruitment gratis; pakai shard yang memang sudah direncanakan. JANGAN spend gem khusus event ini \u2014 gem paling bernilai di Hero Roulette saat HoG D2 (90.000/spin).'},
@@ -430,7 +430,7 @@ const WEEKLY_GUIDE={
   kingsCastle:'Castle Battle: serang TURRET (bukan castle), masuk Forbidden Zone <1 jam sebelum mulai.',
   castleBattle:'Serang TURRET (bukan castle); TP masuk <1 jam sebelum mulai; batch-heal.',
   allOut:'Kill event: SHIELD tiap offline; farm gatherer lawan (injured = killed, tanpa hospital).',
-  kvkPrepPhase:'War Preparation: stage troop, isi formasi, kosongkan hospital, koordinasi aliansi.',
+  kvkPrepPhase:'KvK Prep Phase: stage troop, isi formasi, kosongkan hospital, koordinasi aliansi.',
   kvkFieldTriage:'Fase pemulihan KvK \u2014 heal pasukan (batch + help aliansi), klaim reward.',
   truegoldWonders:'Komisi mingguan \u2192 True Gold dust & gold. Kerjakan komisi GRATIS di War Academy.',
   charmCraftsman:'Poin dari charm / Charm Design. Pakai material terencana \u2014 jangan beli khusus event.',
@@ -468,13 +468,13 @@ const EV_EMOJI={burst:'\u25c8',hog:'\u25c9',kvk:'\u2620',sg:'\u25a3',armament:'\
 /* Event yang WIKI SENDIRI nyatakan tak bisa diprediksi. Tampil TANPA angka \u2014
    daftar jujur mengalahkan timer palsu. (kingshotwiki.com/events/*) */
 const EV_UNPREDICTABLE=[
-  {id:'treasureRaiders',title:'Treasure Raiders',
+  {id:'treasureRaiders',title:'Treasure Raiders',recur:'recurring',
    why:'Wiki: "irregular event so it cannot be predicted". 3 hari; 78 pickaxe gratis, pity \u226414/lantai, pickaxe tersimpan antar event.'},
-  {id:'powerUp',title:'Power Up',
+  {id:'powerUp',title:'Power Up',recur:'oneTime',
    why:'Wiki: "irregular event so it cannot be predicted". 2 hari, Gen 1 SAJA \u2014 tak muncul lagi di Gen 2+. Poin dari speedup konstruksi/riset.'},
-  {id:'warPreparation',title:'War Preparation',
+  {id:'warPreparation',title:'War Preparation',recur:'oneTime',
    why:'Wiki: "cannot be predicted". 2 hari, minggu-minggu awal saja; Mastery Forging butuh TC20.'},
-  {id:'planYourCity',title:'Plan your City',
+  {id:'planYourCity',title:'Plan your City',recur:'oneTime',
    why:'Wiki: "irregular event so it cannot be predicted... occur early on in your new kingdom". 2 hari, Gen 1 SAJA. 1 poin per POWER dari Research/Construction (beda dari Power Up yang menghitung MENIT speedup).'},
 ];
 /* Kelas MUSIMAN: tidak ada di katalog/API mana pun -> tak ada yang bisa dipoll.
