@@ -396,7 +396,10 @@ async function fillSoonEvents(age){
     const back=!nx?''
       :nx.done?' <b class="dim tabular" style="margin-left:10px">Selesai · Strongest Governor</b>'
       :' <b class="dim tabular" style="margin-left:10px;white-space:nowrap">'+cd(nx.startUTC)+(nx.no?' <span class="dim">#'+nx.no+'</span>':'')+'</b>';
-    return '<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span>'
+    /* HoG dari rumus umur bisa geser ±1 hari antar server (rumus tak universal) — tandai
+       estimasi + tombol ralat cepat; ralat (source 'user') mengalahkan rumus, umur tetap. */
+    const rat=(x.id==='hog'&&x.source==='age')?' <span class="sk-hograt" style="color:var(--sk-warn,#e6b84a);cursor:pointer;font-size:.85em;white-space:nowrap">estimasi · ralat</span>':'';
+    return '<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+rat+'</span>'
       +'<b class="acc tabular" style="white-space:nowrap">'+cd(x.endUTC!=null?x.endUTC:now)+'</b>'+back+' <span class="dim">›</span></div>';
   }).join(''):'<div class="gc-note">Tak ada yang berjalan.</div>';
   /* BERIKUTNYA (server-mu) = event AKAN DATANG berbasis UMUR: KvK, SG (+ ralat) → tanggal
@@ -418,6 +421,12 @@ async function fillSoonEvents(age){
         +'<div class="muted small" style="margin-bottom:4px">Tanggal dari feed GLOBAL — SAMA utk semua server; kingdom muda sering BEDA. Acuan final: tab Events in-game.</div>'+globRows:'')
     +'<div class="muted small" style="margin-top:8px">Ketuk event untuk tips.</div>'
     +'</div>';
+  $$('.sk-hograt',h).forEach(b=>b.onclick=e=>{ e.stopPropagation();
+    const cur=(store.get('events',[])||[]).find(x=>x&&x.type==='hog');
+    const d=prompt('HoG di game MULAI tanggal berapa? (YYYY-MM-DD)\nContoh: 2026-07-13',(cur&&cur.date)||'');
+    if(d&&/^\d{4}-\d{2}-\d{2}$/.test(d.trim())){ const arr=store.get('events',[])||[]; const i=arr.findIndex(x=>x&&x.type==='hog');
+      if(i>=0)arr[i]={type:'hog',date:d.trim()}; else arr.push({type:'hog',date:d.trim()}); store.set('events',arr); fillSoonEvents(age); }
+  });
   $$('.sk-evrow',h).forEach(b=>b.onclick=()=>{ window.__evJump=(b.dataset.id==='hog')?{sub:'hog'}:{sub:'ency',name:b.dataset.name}; if(typeof activate==='function') activate('event'); });
   if(typeof tickClock==='function') tickClock();
   if(EN&&window.__translate) window.__translate();
