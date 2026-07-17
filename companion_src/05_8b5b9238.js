@@ -11,7 +11,9 @@ const KS_SALT='mN4!pQs6JrYwV9';
 /* Seed tanggal buka. 2114: API kingdom-tracker = 2026-05-27T00:06Z; dengan konvensi
    1-based (buka = H1) tanggal 05-27 membuat HoG-2 jatuh H20 = 15 Jun, persis in-game.
    (Seed lama 05-26 adalah kalibrasi era konvensi 0-based — salah satu hari sekarang.) */
-const KINGDOM_DATES={'2114':'2026-05-27'};
+/* 2184: API openTime 2026-06-11T17:45Z; zona server UTC+8 → 12 Jun = Hari 1 (game H37,
+   bukan H38 dari tanggal UTC). Lihat derivasi +8 di fetchKingdomDate. */
+const KINGDOM_DATES={'2114':'2026-05-27','2184':'2026-06-12'};
 
 /* ── Milestone umur server (hari ± wave/kalender) ── */
 const MILESTONES=[

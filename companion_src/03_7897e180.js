@@ -296,7 +296,7 @@ async function fetchKingdomDate(kid){
     try{
       const r=await ksFT(px(target)); const j=await r.json();
       const srv=j&&j.data&&j.data.servers&&j.data.servers[0];
-      if(srv&&srv.openTime){ const dt=new Date(srv.openTime);
+      if(srv&&srv.openTime){ const dt=new Date(Date.parse(srv.openTime)+8*3600000);   /* Hari-1 = tanggal buka di zona server UTC+8 (bukan UTC): K2114 00:06Z=27 Mei ✓, K2184 17:45Z=12 Jun (game H37, bukan 38). Buka sore UTC = hari parsial → Hari 1 mulai besoknya. */
         const iso=dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate());
         KINGDOM_DATES[String(kid)]=iso; cached[String(kid)]=iso; store.set('kdates',cached); return iso; }
     }catch(e){}

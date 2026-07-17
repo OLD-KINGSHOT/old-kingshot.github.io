@@ -1496,6 +1496,9 @@ function init(){
   initAppStars();
   migrateProfiles();
   ksClock.load();
+  /* Derivasi tanggal buka diperbaiki (UTC+8) — buang cache kdates lama yg dihitung
+     pakai tanggal UTC (bisa meleset 1 hari utk server yg buka sore UTC, mis. 2184). */
+  if(store.get('kdatesVer',0)<2){ store.set('kdates',{}); store.set('kdatesVer',2); }
   Object.assign(KINGDOM_DATES,store.get('kdates',{}));
   buildNav();
   const g=$('#gear'); if(g) g.onclick=()=>activate('profil'); /* gear removed from topbar (profile lives bottom-left) */
