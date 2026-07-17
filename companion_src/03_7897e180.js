@@ -11,7 +11,7 @@ const parseNum=v=>{ if(v==null) return 0; v=(''+v).replace(/[.\s]/g,'').replace(
 /* ── Multi-profil: kunci per-profil disimpan ks_p_<pid>_<key>; sisanya global.
    (lastSit sengaja TIDAK per-profil — ephemeral & ada di ksSync._skip.) ── */
 const PROFILE_KEYS=new Set(['profile','roster','trackProg','buildDone','codesDone',
-  'islandMarks','islandSeedV','daily','events','notifFlags']);
+  'islandMarks','islandSeedV','daily','events','notifFlags','evLog']);
 function _ksActivePid(){ try{ return JSON.parse(localStorage.getItem('ks_activePid'))||''; }catch(e){ return ''; } }
 function _ksRealKey(k){ return PROFILE_KEYS.has(k) ? ('p_'+_ksActivePid()+'_'+k) : k; }
 const store={
@@ -547,14 +547,48 @@ function evUpcoming(){
   _act.forEach(e=>_pushWk(e,true));
   nextWkStarts(28).forEach(e=>{ if(!_actKeys.has(e.titleKey)) _pushWk(e,false); });
 
-  /* 6) tak-bisa-diprediksi — masuk daftar, TANPA angka, selamanya */
-  if(typeof EV_UNPREDICTABLE!=='undefined') EV_UNPREDICTABLE.forEach(u=>
+  /* 6) tak-bisa-diprediksi — masuk daftar, TANPA angka. Lampiri kelas recur +
+        observasi pemain (evLog); startUTC TETAP null. Cadence DINULKAN untuk
+        event non-berulang: mereka tak punya ritme, jadi jangan pura-pura. */
+  if(typeof EV_UNPREDICTABLE!=='undefined') EV_UNPREDICTABLE.forEach(u=>{
+    const obs=(typeof evObserved==='function')?evObserved(u.id):{count:0,lastUTC:null,medianGapDays:null,nextEstUTC:null};
+    if(u.recur!=='recurring'){ obs.medianGapDays=null; obs.nextEstUTC=null; }
     add(_evItem({id:u.id,title:u.title,type:'irregular',source:'none',
-      conf:'unknown',unpredictable:true,why:u.why})));
+      conf:'unknown',unpredictable:true,why:u.why,
+      recur:u.recur||'oneTime',observed:obs}));
+  });
 
   out.sort(_evSort);
   return out;
 }
+/* ── Catat kemunculan: observasi pemain atas event tak-terprediksi ──
+   evLog=[{id,date,title?}] (multi-baris per id), per-profil. BUKAN sumber
+   countdown: estimasi TAK PERNAH ditulis ke startUTC — cuma teks. */
+function _evLogTimes(id){
+  return (store.get('evLog',[])||[]).filter(r=>r&&r.id===id&&r.date)
+    .map(r=>Date.parse(r.date+'T00:00:00Z')).filter(t=>!isNaN(t))
+    .sort((a,b)=>a-b).filter((t,i,a)=>i===0||t!==a[i-1]);   /* dedup tanggal identik */
+}
+function _median(arr){ if(!arr.length) return null; const s=arr.slice().sort((a,b)=>a-b),m=s.length>>1;
+  return s.length%2?s[m]:Math.round((s[m-1]+s[m])/2); }
+function evObserved(id){
+  const ts=_evLogTimes(id), count=ts.length, lastUTC=count?ts[count-1]:null;
+  if(count<3) return {count:count,lastUTC:lastUTC,medianGapDays:null,nextEstUTC:null};
+  const gaps=[]; for(let i=1;i<count;i++) gaps.push(Math.round((ts[i]-ts[i-1])/86400000));
+  const g=_median(gaps);
+  return {count:count,lastUTC:lastUTC,medianGapDays:g,nextEstUTC:lastUTC+g*86400000};
+}
+function evLogAdd(id,date,title){
+  if(!id||!date) return; const arr=store.get('evLog',[])||[];
+  if(arr.some(r=>r&&r.id===id&&r.date===date)) return;         /* idempoten (id,date) */
+  const row={id:String(id),date:String(date)}; if(title) row.title=String(title);
+  arr.push(row); store.set('evLog',arr);
+}
+function evLogRemoveLast(id){
+  const arr=store.get('evLog',[])||[];
+  for(let i=arr.length-1;i>=0;i--){ if(arr[i]&&arr[i].id===id){ arr.splice(i,1); store.set('evLog',arr); return; } }
+}
+function evTodayISO(){ return todayMidnight().toISOString().slice(0,10); }   /* server-corrected 'today' */
 /* ── Server data milik sendiri (Cloudflare Worker + D1) ── */
 const KS_DATA_API='https://old-kingshot-api.old-kingshot.workers.dev';
 /* ── Daftar pengunjung ──
