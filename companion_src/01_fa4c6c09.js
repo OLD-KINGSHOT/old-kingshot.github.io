@@ -116,6 +116,19 @@ async function fillLiveEvents(force){
     return '<div class="obs small dim" style="margin-top:4px">'+line+'</div>'
       +'<div class="row" style="margin-top:4px"><button class="btn sec sm evlog_add" data-id="'+esc(it.id)+'">✏️ Muncul hari ini</button>'+undo+'</div>';
   }
+  const slug=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  function seasonalHTML(){
+    const rows=(store.get('evLog',[])||[]).filter(r=>r&&/^seasonal:/.test(r.id));
+    const byId={};
+    rows.forEach(r=>{ (byId[r.id]=byId[r.id]||{title:r.title||r.id.replace(/^seasonal:/,''),dates:[]}).dates.push(r.date); });
+    let list='';
+    Object.keys(byId).forEach(id=>{ const g=byId[id]; g.dates.sort();
+      list+='<div class="obs small" style="margin-top:4px"><b>'+esc(g.title)+'</b> <span class="dim">'+esc(g.dates.join(', '))+'</span> '
+        +'<button class="btn sec sm evlog_del" data-id="'+esc(id)+'">↩</button></div>'; });
+    return '<div class="lbl" style="margin:10px 0 4px">Catat event musiman</div>'
+      +'<div class="row"><input id="seas_name" placeholder="Nama event (mis. Football Fiesta)" style="flex:1;min-width:0">'
+      +'<input id="seas_date" type="date"><button class="btn sec sm" id="seas_add">Catat</button></div>'+list;
+  }
   const row=it=>{
     const c=CONF[it.conf]||CONF.unknown;
     /* WEEKLY_GUIDE di-key pakai titleKey ASLI -> coba srcKey dulu, baru id kanonik */
@@ -139,10 +152,14 @@ async function fillLiveEvents(force){
     +sec('Jadwal tidak pasti',list.filter(x=>x.unpredictable))
     +(n?'<div class="alert warn small" style="margin-top:10px"><b>⚠ '+esc(n.title)+'</b><br>'+esc(n.body)
         +'<br><a href="'+esc(n.discord)+'" target="_blank" rel="noopener">Discord resmi Kingshot</a></div>':'')
+    +seasonalHTML()
     +'<div class="alert inf small" style="margin-top:6px">📌 Hitungan umur (H-x, gerbang 🔒) mengikuti KINGDOM-mu. Rotasi mingguan bersifat GLOBAL untuk kingdom dewasa — kingdom muda belum sinkron penuh, event bisa muncul di luar daftar. Acuan final = tab Events in-game.</div>'
     +'<div class="row" style="margin-top:8px"><button class="btn sec sm" id="evlive_r">↻ Muat ulang</button></div>';
   $$('.evlog_add',host).forEach(b=>b.onclick=()=>{ if(typeof evLogAdd==='function'){ evLogAdd(b.dataset.id,evTodayISO()); fillLiveEvents(false); } });
   $$('.evlog_del',host).forEach(b=>b.onclick=()=>{ if(typeof evLogRemoveLast==='function'){ evLogRemoveLast(b.dataset.id); fillLiveEvents(false); } });
+  const sa=$('#seas_add',host); if(sa) sa.onclick=()=>{ const nm=$('#seas_name').value.trim(), dt=$('#seas_date').value;
+    if(!nm){$('#seas_name').focus();return;} if(!dt){$('#seas_date').focus();return;}
+    if(typeof evLogAdd==='function') evLogAdd('seasonal:'+slug(nm),dt,nm); fillLiveEvents(false); };
   const b=$('#evlive_r'); if(b) b.onclick=()=>fillLiveEvents(true);
 }
 

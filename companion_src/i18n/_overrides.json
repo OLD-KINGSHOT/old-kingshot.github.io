@@ -730,6 +730,10 @@
   "Belum ada catatan. Tekan ✏️ saat event ini muncul.": "No records yet. Tap ✏️ when this event appears.",
   "✏️ Muncul hari ini": "✏️ Appeared today",
   "↩ hapus catatan terakhir": "↩ remove last record",
-  "Event awal-kingdom (Gen 1), tak berulang.": "Early-kingdom event (Gen 1), does not recur."
+  "Event awal-kingdom (Gen 1), tak berulang.": "Early-kingdom event (Gen 1), does not recur.",
+  "Catat event musiman": "Log a seasonal event",
+  "Nama event (mis. Football Fiesta)": "Event name (e.g. Football Fiesta)",
+  "@ph:Nama event (mis. Football Fiesta)": "@ph:Event name (e.g. Football Fiesta)",
+  "Catat": "Log"
 }
 
