@@ -296,7 +296,7 @@ async function fetchKingdomDate(kid){
     try{
       const r=await ksFT(px(target)); const j=await r.json();
       const srv=j&&j.data&&j.data.servers&&j.data.servers[0];
-      if(srv&&srv.openTime){ const dt=new Date(Date.parse(srv.openTime)+8*3600000);   /* Hari-1 = tanggal buka di zona server UTC+8 (bukan UTC): K2114 00:06Z=27 Mei ✓, K2184 17:45Z=12 Jun (game H37, bukan 38). Buka sore UTC = hari parsial → Hari 1 mulai besoknya. */
+      if(srv&&srv.openTime){ const dt=new Date(srv.openTime);   /* Hari-1 = tanggal buka menurut TANGGAL UTC (terverifikasi K2114: HoG#2=day20=15 Jun ⇒ day1=27 Mei = tanggal UTC openTime). K2184 17:45Z ⇒ 11 Jun; umur/HoG dihitung server-wide, sama utk semua ID di server itu. */
         const iso=dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate());
         KINGDOM_DATES[String(kid)]=iso; cached[String(kid)]=iso; store.set('kdates',cached); return iso; }
     }catch(e){}
@@ -316,7 +316,7 @@ async function fetchKingdomDate(kid){
         t=hi[0]===lo[0]?Date.parse(lo[1])
           :Date.parse(lo[1])+(Date.parse(hi[1])-Date.parse(lo[1]))*(k-lo[0])/(hi[0]-lo[0]);
       }
-      const dt=new Date(t+8*3600000); window._kdateEst=true;   /* zona server UTC+8, konsisten dgn jalur exact */
+      const dt=new Date(t); window._kdateEst=true;   /* tanggal UTC, konsisten dgn jalur exact */
       return dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate());
     }
   }

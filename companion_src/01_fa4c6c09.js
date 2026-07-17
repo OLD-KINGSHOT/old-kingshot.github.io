@@ -1514,7 +1514,7 @@ function init(){
      PENTING: `profile.start` yg TERSIMPAN juga bisa memakai tanggal UTC lama; cache
      bersih saja tak cukup (autoDetect hanya refresh saat kingdom berubah). Selaraskan
      ulang start tiap profil dari seed KINGDOM_DATES yg sudah benar. */
-  if(store.get('kdatesVer',0)<2){ store.set('kdates',{}); store.set('kdatesVer',2);
+  if(store.get('kdatesVer',0)<3){ store.set('kdates',{}); store.set('kdatesVer',3);
     try{
       const _profs=store.get('profiles',[])||[]; let _ch=false;
       _profs.forEach(p=>{ if(!p) return; const s=KINGDOM_DATES[String(p.kingdom||'')]; if(s&&p.start!==s){ p.start=s; _ch=true; } });
