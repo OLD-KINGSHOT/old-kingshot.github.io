@@ -737,6 +737,10 @@
   "Catat": "Log",
   "⏱️ Sebulan ke depan": "⏱️ The month ahead",
   "⏳ Memuat jadwal…": "⏳ Loading schedule…",
-  "Jadwal live belum termuat. Buka tab Event → 📡 Jadwal Live, atau cek koneksi.": "Live schedule not loaded yet. Open the Event tab → 📡 Live Schedule, or check your connection."
+  "Jadwal live belum termuat. Buka tab Event → 📡 Jadwal Live, atau cek koneksi.": "Live schedule not loaded yet. Open the Event tab → 📡 Live Schedule, or check your connection.",
+  "HoG berikutnya": "Next HoG",
+  "Jadwal sebulan": "This month",
+  "Tak ada yang berjalan.": "Nothing running.",
+  "Tak ada HoG terjadwal.": "No HoG scheduled."
 }
 

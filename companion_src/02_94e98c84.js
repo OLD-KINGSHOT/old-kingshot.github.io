@@ -346,17 +346,39 @@ async function fillSoonEvents(age){
   const list=(typeof evUpcoming==='function')?evUpcoming():[];
   const active=list.filter(x=>x.active);
   const upcoming=list.filter(x=>!x.active&&x.startUTC!=null).sort((a,b)=>a.startUTC-b.startUTC);
-  const dLeft=ms=>Math.max(1,Math.ceil(ms/86400000));
   if(!active.length&&!upcoming.length){
     h.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div>'
       +'<div class="gc-note">Jadwal live belum termuat. Buka tab Event → 📡 Jadwal Live, atau cek koneksi.</div></div>';
     return;
   }
-  const actLine=active.length?('<div class="kv"><span class="dim">Sedang berjalan</span><b class="f2p">'+active.map(x=>esc(x.title)).join(', ')+'</b></div>'):'';
-  const rows=upcoming.map(x=>'<div class="kv"><span>'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
-    +'<b class="acc">'+dLeft(x.startUTC-now)+' hari lagi</b></div>').join('');
-  h.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div>'+actLine+rows+'</div>';
-  if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
+  /* Hitung mundur LIVE hari:jam:menit via .sk-cd (di-tick tiap detik oleh tickClock).
+     Satuan h/j/m (hari/jam/menit) dipilih saat render menurut bahasa — angka ticking,
+     hurufnya statis; toggle bahasa me-render ulang lewat activate→renderSekarang. */
+  const EN=(typeof __getLang==='function'&&__getLang()==='en');
+  const U=EN?['d','h','m']:['h','j','m'];
+  const cd=t=>'<span class="sk-cd" data-t="'+t+'" data-u="d">-</span>'+U[0]+' '
+    +'<span class="sk-cd" data-t="'+t+'" data-u="h">-</span>'+U[1]+' '
+    +'<span class="sk-cd" data-t="'+t+'" data-u="m">-</span>'+U[2];
+  const evRow=(x,t)=>'<div class="kv"><span>'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
+    +'<b class="acc tabular">'+cd(t)+'</b></div>';
+  /* KIRI: event AKTIF + hitung mundur SELESAI (endUTC) */
+  const leftRows=active.length?active.map(x=>evRow(x,x.endUTC!=null?x.endUTC:now)).join('')
+    :'<div class="gc-note">Tak ada yang berjalan.</div>';
+  /* KANAN: HoG berikutnya (atau HoG yg sedang aktif) */
+  const hog=active.find(x=>x.id==='hog')||upcoming.find(x=>x.id==='hog');
+  const rightRows=hog?evRow(hog,hog.active?(hog.endUTC!=null?hog.endUTC:now):hog.startUTC)
+    :'<div class="gc-note">Tak ada HoG terjadwal.</div>';
+  /* BAWAH: SEMUA event mendatang, hitung mundur ke MULAI (startUTC) */
+  const monthRows=upcoming.map(x=>evRow(x,x.startUTC)).join('');
+  h.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div>'
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px">'
+    +'<div style="flex:1;min-width:150px"><div class="lbl">Sedang berjalan</div>'+leftRows+'</div>'
+    +'<div style="flex:1;min-width:150px"><div class="lbl">HoG berikutnya</div>'+rightRows+'</div>'
+    +'</div>'
+    +'<div class="lbl">Jadwal sebulan</div>'+monthRows
+    +'</div>';
+  if(typeof tickClock==='function') tickClock();          /* isi angka countdown seketika */
+  if(EN&&window.__translate) window.__translate();
 }
 
 /* "Lakukan SEKARANG" ikut menampilkan event mingguan kingdom yang berjalan HARI INI
