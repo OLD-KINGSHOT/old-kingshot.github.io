@@ -354,30 +354,47 @@ async function fillSoonEvents(age){
   /* Hitung mundur LIVE hari:jam:menit via .sk-cd (di-tick tiap detik oleh tickClock).
      Satuan h/j/m (hari/jam/menit) dipilih saat render menurut bahasa — angka ticking,
      hurufnya statis; toggle bahasa me-render ulang lewat activate→renderSekarang. */
+  const {start}=profileAge();
+  const nextWk=(typeof nextWkStarts==='function')?nextWkStarts(35):new Map();
   const EN=(typeof __getLang==='function'&&__getLang()==='en');
   const U=EN?['d','h','m']:['h','j','m'];
   const cd=t=>'<span class="sk-cd" data-t="'+t+'" data-u="d">-</span>'+U[0]+' '
     +'<span class="sk-cd" data-t="'+t+'" data-u="h">-</span>'+U[1]+' '
     +'<span class="sk-cd" data-t="'+t+'" data-u="m">-</span>'+U[2];
-  const evRow=(x,t)=>'<div class="kv"><span>'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
-    +'<b class="acc tabular">'+cd(t)+'</b></div>';
-  /* KIRI: event AKTIF + hitung mundur SELESAI (endUTC) */
-  const leftRows=active.length?active.map(x=>evRow(x,x.endUTC!=null?x.endUTC:now)).join('')
-    :'<div class="gc-note">Tak ada yang berjalan.</div>';
-  /* KANAN: HoG berikutnya (atau HoG yg sedang aktif) */
-  const hog=active.find(x=>x.id==='hog')||upcoming.find(x=>x.id==='hog');
-  const rightRows=hog?evRow(hog,hog.active?(hog.endUTC!=null?hog.endUTC:now):hog.startUTC)
-    :'<div class="gc-note">Tak ada HoG terjadwal.</div>';
-  /* BAWAH: SEMUA event mendatang, hitung mundur ke MULAI (startUTC) */
-  const monthRows=upcoming.map(x=>evRow(x,x.startUTC)).join('');
+  /* Kemunculan BERIKUTNYA dari event yg SEDANG berjalan (kapan dia muncul lagi).
+     HoG dihitung dari jadwalnya (berhenti setelah iterasi terakhir → Strongest Governor);
+     event rotasi dari sapuan nextWkStarts (siklus 4-minggu berikutnya). */
+  const nextOccur=x=>{
+    if(x.id==='hog'){
+      if(!start||typeof hogNoForDay!=='function'||typeof age!=='number') return null;
+      const no=hogNoForDay(age)+1;
+      if(typeof hogExists==='function'&&!hogExists(no)) return {done:true};
+      return { startUTC:start.getTime()+((6+(no-1)*14)-1)*86400000, no:no };
+    }
+    const w=nextWk.get(x.srcKey||x.id);
+    return w?{ startUTC:w.startUTC }:null;
+  };
+  const clk=(id,name)=>' class="kv sk-evrow" style="cursor:pointer" data-id="'+esc(id)+'" data-name="'+esc(name)+'"';
+  /* SEDANG BERJALAN: selesai dalam … · muncul lagi … */
+  const runRows=active.length?active.map(x=>{
+    const nx=nextOccur(x);
+    const back=!nx?'<span class="dim">—</span>'
+      :nx.done?'<span class="dim">Selesai · Strongest Governor</span>'
+      :cd(nx.startUTC)+(nx.no?' <span class="dim">#'+nx.no+'</span>':'');
+    return '<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
+      +'<b class="acc tabular" style="white-space:nowrap">'+cd(x.endUTC!=null?x.endUTC:now)+'</b>'
+      +'<b class="dim tabular" style="margin-left:10px;white-space:nowrap">'+back+'</b> <span class="dim">›</span></div>';
+  }).join(''):'<div class="gc-note">Tak ada yang berjalan.</div>';
+  /* BERIKUTNYA: event yg belum berjalan, hitung mundur ke MULAI */
+  const soonRows=upcoming.map(x=>'<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
+    +'<b class="acc tabular" style="white-space:nowrap">'+cd(x.startUTC)+'</b> <span class="dim">›</span></div>').join('');
   h.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div>'
-    +'<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px">'
-    +'<div style="flex:1;min-width:150px"><div class="lbl">Sedang berjalan</div>'+leftRows+'</div>'
-    +'<div style="flex:1;min-width:150px"><div class="lbl">HoG berikutnya</div>'+rightRows+'</div>'
-    +'</div>'
-    +'<div class="lbl">Jadwal sebulan</div>'+monthRows
+    +'<div class="lbl">Sedang berjalan <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· selesai · muncul lagi</span></div>'+runRows
+    +(soonRows?'<div class="lbl" style="margin-top:10px">Berikutnya</div>'+soonRows:'')
+    +'<div class="muted small" style="margin-top:8px">Ketuk event untuk tips &amp; cara skor besar.</div>'
     +'</div>';
-  if(typeof tickClock==='function') tickClock();          /* isi angka countdown seketika */
+  $$('.sk-evrow',h).forEach(b=>b.onclick=()=>{ window.__evJump=(b.dataset.id==='hog')?{sub:'hog'}:{sub:'ency',name:b.dataset.name}; if(typeof activate==='function') activate('event'); });
+  if(typeof tickClock==='function') tickClock();
   if(EN&&window.__translate) window.__translate();
 }
 

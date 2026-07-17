@@ -268,7 +268,14 @@ function renderEvent(){
     }
     if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
   $$('#ev_sub button',el).forEach(b=>b.onclick=()=>showSub(b.dataset.s));
-  showSub(store.get('evSub','adv'));
+  /* Lompatan dari kartu "Sebulan ke depan" (tab Sekarang): buka sub-tab yg diminta,
+     lalu buka + gulir ke entri ensiklopedia yg cocok namanya. */
+  const _jump=window.__evJump; window.__evJump=null;
+  showSub(_jump&&_jump.sub?_jump.sub:store.get('evSub','adv'));
+  if(_jump&&_jump.name){ setTimeout(()=>{ const c=$('#ev_subc',el); if(!c) return;
+    const want=String(_jump.name).toLowerCase();
+    const ds=$$('details',c); for(let i=0;i<ds.length;i++){ const s=ds[i].querySelector('summary');
+      if(s&&s.textContent.toLowerCase().indexOf(want)>=0){ ds[i].open=true; ds[i].scrollIntoView({block:'center'}); break; } } },60); }
 }
 
 /* ── Hall of Governors sub-tab (data: HOG_DETAIL) ── */
