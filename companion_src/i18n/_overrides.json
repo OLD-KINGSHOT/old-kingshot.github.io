@@ -734,6 +734,9 @@
   "Catat event musiman": "Log a seasonal event",
   "Nama event (mis. Football Fiesta)": "Event name (e.g. Football Fiesta)",
   "@ph:Nama event (mis. Football Fiesta)": "@ph:Event name (e.g. Football Fiesta)",
-  "Catat": "Log"
+  "Catat": "Log",
+  "⏱️ Sebulan ke depan": "⏱️ The month ahead",
+  "⏳ Memuat jadwal…": "⏳ Loading schedule…",
+  "Jadwal live belum termuat. Buka tab Event → 📡 Jadwal Live, atau cek koneksi.": "Live schedule not loaded yet. Open the Event tab → 📡 Live Schedule, or check your connection."
 }
 

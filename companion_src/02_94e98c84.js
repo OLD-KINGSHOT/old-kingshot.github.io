@@ -225,18 +225,11 @@ function renderSekarang(){
     +'<span class="gc-id">ID <b>'+pid+'</b><button class="cpy" data-c="'+pid+'">salin</button></span></div>'
     +'<div class="gc-list" id="sk_codes"><div class="gc-note">⏳ Memuat kode aktif…</div></div>'
     +'<div class="gc-note">Otomatis dari kingshot.net · <b>Redeem</b> menukar kode ke Player ID kamu (hadiah masuk mail in-game).</div></div>';
-  /* ---- 3 event terdekat (mesin countdown terpadu) ---- */
-  let soonHTML='';
-  if(typeof evUpcoming==='function'){
-    const now=ksClock.now().getTime();
-    const soon=evUpcoming().filter(x=>x.active||x.startUTC!=null).slice(0,3);
-    if(soon.length) soonHTML='<div class="card"><div class="gc-head">⏱️ Event terdekat</div>'
-      +soon.map(x=>{ const ms=x.active?(x.endUTC-now):(x.startUTC-now);
-        const d=Math.max(0,Math.floor(ms/86400000)), h=Math.max(0,Math.floor(ms%86400000/3600000));
-        return '<div class="kv"><span>'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
-          +'<b class="'+(x.active?'acc':'')+'">'+(x.active?'AKTIF · sisa ':'')+(d>0?d+' hr ':'')+h+' jam'+(x.active?'':' lagi')+'</b></div>'; }).join('')
-      +'</div>';
-  }
+  /* ---- Sebulan ke depan: SEMUA event mendatang + countdown "X hari lagi" ----
+     Placeholder; diisi async oleh fillSoonEvents SETELAH cache live termuat.
+     Kalau dibangun sinkron di sini, cache DINGIN = evUpcoming tanpa event rotasi
+     = kartu kosong (bug: "banyak event tidak muncul"). */
+  const soonHTML='<div id="sk_soon"></div>';
   const prepSection='<div class="eyebrow"><h2>Siapkan Berikutnya</h2><span class="hint">event terdekat + tukar kode</span></div>'
     +'<div class="prep-row">'+heroHTML+giftHTML+'</div>'+soonHTML;
 
@@ -338,6 +331,32 @@ function renderSekarang(){
     $$('.redeem',host).forEach(b=>b.onclick=async()=>{ const fid=(p.pid||p.id||'').toString(); if(!fid){ activate('kode'); return; } b.textContent='…'; b.disabled=true; try{ const r=await ksRedeem(fid,b.dataset.code); b.textContent=r&&r.cls==='ok'?'✓ ok':(r?r.txt:'gagal'); if(r&&r.cls==='ok')b.classList.add('done'); }catch(e){ b.textContent='gagal'; } setTimeout(()=>{b.textContent='Redeem';b.disabled=false;b.classList.remove('done');},2000); });
   })();
   fillNowLive(age);
+  fillSoonEvents(age);
+}
+
+/* "Sebulan ke depan": SEMUA event mendatang dgn countdown "X hari lagi", diurut
+   paling dekat dulu. Async: WAJIB muat cache live dulu (evUpcoming butuh feed rotasi)
+   — kalau tidak, cache dingin bikin kartu kosong. Event aktif diringkas satu baris. */
+async function fillSoonEvents(age){
+  const host=$('#sk_soon'); if(!host) return;
+  host.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div><div class="gc-note">⏳ Memuat jadwal…</div></div>';
+  try{ if(typeof ksLiveEvents==='function') await ksLiveEvents(); }catch(e){}
+  const h=$('#sk_soon'); if(!h) return;                 /* tab bisa berganti saat fetch */
+  const now=ksClock.now().getTime();
+  const list=(typeof evUpcoming==='function')?evUpcoming():[];
+  const active=list.filter(x=>x.active);
+  const upcoming=list.filter(x=>!x.active&&x.startUTC!=null).sort((a,b)=>a.startUTC-b.startUTC);
+  const dLeft=ms=>Math.max(1,Math.ceil(ms/86400000));
+  if(!active.length&&!upcoming.length){
+    h.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div>'
+      +'<div class="gc-note">Jadwal live belum termuat. Buka tab Event → 📡 Jadwal Live, atau cek koneksi.</div></div>';
+    return;
+  }
+  const actLine=active.length?('<div class="kv"><span class="dim">Sedang berjalan</span><b class="f2p">'+active.map(x=>esc(x.title)).join(', ')+'</b></div>'):'';
+  const rows=upcoming.map(x=>'<div class="kv"><span>'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
+    +'<b class="acc">'+dLeft(x.startUTC-now)+' hari lagi</b></div>').join('');
+  h.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div>'+actLine+rows+'</div>';
+  if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
 
 /* "Lakukan SEKARANG" ikut menampilkan event mingguan kingdom yang berjalan HARI INI
