@@ -1391,6 +1391,17 @@ window.__splashT0=Date.now();setTimeout(function(){var s=document.getElementById
     [/siapkan untuk tanggal ini/g, 'prep for this date'],
     [/\baktif\b/g, 'active'],
     [/Menuju Age of Truegold/g, 'Toward Age of Truegold'],
+    /* countdown durations (schedule tab + Sekarang card): "N hr M jam" = N days M hours.
+       Composite forms first so English word order reads naturally. */
+    [/AKTIF · sisa (\d+) hr (\d+) jam/g, 'ACTIVE · $1d $2h left'],
+    [/AKTIF · sisa (\d+) jam/g, 'ACTIVE · $1h left'],
+    [/sisa (\d+) hr (\d+) jam/g, '$1d $2h left'],
+    [/sisa (\d+) jam/g, '$1h left'],
+    [/(\d+) hr (\d+) jam lagi/g, 'in $1d $2h'],
+    [/(\d+) jam lagi/g, 'in $1h'],
+    [/(\d+) hr (\d+) jam/g, '$1d $2h'],
+    [/(\d+) jam\b/g, '$1h'],
+    [/\bAKTIF\b/g, 'ACTIVE'],
     [/\bsisa\b/g, 'left'],
     [/\btercapai\b/g, 'reached'],
     [/\bhari\b/g, 'days'],
