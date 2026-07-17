@@ -32,6 +32,7 @@
     [/mulai ~hari (\d+)/g, 'starts ~day $1'],
     [/buka H(\d+)/g, 'unlocks D$1'],
     [/\bterkunci\b/g, 'locked'],
+    [/Event awal-kingdom \(Gen 1\), tak berulang\./g, 'Early-kingdom event (Gen 1), does not recur.'],
     [/~hari (\d+)/g, '~day $1'],
     [/Simpan persiapan\./g, 'Save your prep.'],
     [/\b1 hari lagi/g, '1 day left'],

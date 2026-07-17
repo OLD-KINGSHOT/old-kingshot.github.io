@@ -158,7 +158,7 @@ async function fillLiveEvents(force){
   $$('.evlog_add',host).forEach(b=>b.onclick=()=>{ if(typeof evLogAdd==='function'){ evLogAdd(b.dataset.id,evTodayISO()); fillLiveEvents(false); } });
   $$('.evlog_del',host).forEach(b=>b.onclick=()=>{ if(typeof evLogRemoveLast==='function'){ evLogRemoveLast(b.dataset.id); fillLiveEvents(false); } });
   const sa=$('#seas_add',host); if(sa) sa.onclick=()=>{ const nm=$('#seas_name').value.trim(), dt=$('#seas_date').value;
-    if(!nm){$('#seas_name').focus();return;} if(!dt){$('#seas_date').focus();return;}
+    if(!nm||!slug(nm)){$('#seas_name').focus();return;} if(!dt){$('#seas_date').focus();return;}
     if(typeof evLogAdd==='function') evLogAdd('seasonal:'+slug(nm),dt,nm); fillLiveEvents(false); };
   const b=$('#evlive_r'); if(b) b.onclick=()=>fillLiveEvents(true);
 }
@@ -1504,8 +1504,19 @@ function init(){
   migrateProfiles();
   ksClock.load();
   /* Derivasi tanggal buka diperbaiki (UTC+8) — buang cache kdates lama yg dihitung
-     pakai tanggal UTC (bisa meleset 1 hari utk server yg buka sore UTC, mis. 2184). */
-  if(store.get('kdatesVer',0)<2){ store.set('kdates',{}); store.set('kdatesVer',2); }
+     pakai tanggal UTC (bisa meleset 1 hari utk server yg buka sore UTC, mis. 2184).
+     PENTING: `profile.start` yg TERSIMPAN juga bisa memakai tanggal UTC lama; cache
+     bersih saja tak cukup (autoDetect hanya refresh saat kingdom berubah). Selaraskan
+     ulang start tiap profil dari seed KINGDOM_DATES yg sudah benar. */
+  if(store.get('kdatesVer',0)<2){ store.set('kdates',{}); store.set('kdatesVer',2);
+    try{
+      const _profs=store.get('profiles',[])||[]; let _ch=false;
+      _profs.forEach(p=>{ if(!p) return; const s=KINGDOM_DATES[String(p.kingdom||'')]; if(s&&p.start!==s){ p.start=s; _ch=true; } });
+      if(_ch) store.set('profiles',_profs);
+      const _ap=store.get('profile',{})||{}; const _s=KINGDOM_DATES[String(_ap.kingdom||'')];
+      if(_s&&_ap.start!==_s){ _ap.start=_s; store.set('profile',_ap); }
+    }catch(e){}
+  }
   Object.assign(KINGDOM_DATES,store.get('kdates',{}));
   buildNav();
   const g=$('#gear'); if(g) g.onclick=()=>activate('profil'); /* gear removed from topbar (profile lives bottom-left) */
