@@ -93,9 +93,29 @@ async function fillLiveEvents(force){
   const now=ksClock.now().getTime();
   const CONF={ingame:['✅','terverifikasi in-game'],live:['📡','feed live kingshot.net'],
     wiki:['📖','kingshotwiki'],community:['💬','satu sumber, belum terkonfirmasi'],
-    inferred:['🔢','perkiraan hitungan app'],unknown:['❔','tidak diketahui']};
+    inferred:['🔢','perkiraan hitungan app'],unknown:['❔','tidak diketahui'],
+    observed:['👁️','dari catatanmu sendiri (perkiraan)']};
   const dur=ms=>{ if(ms<0)ms=0; const d=Math.floor(ms/86400000), h=Math.floor(ms%86400000/3600000);
     return d>0?(d+' hr '+h+' jam'):(h+' jam'); };
+  const daysAgo=ms=>Math.max(0,Math.floor((now-ms)/86400000));
+  function obsHTML(it){
+    const o=it.observed||{count:0}, age=profileAge().age, oc=CONF.observed;
+    let line;
+    if(it.recur==='recurring'){
+      if(!o.count) line='Belum ada catatan. Tekan ✏️ saat event ini muncul.';
+      else if(o.count<3) line='Terakhir muncul '+daysAgo(o.lastUTC)+' hari lalu · '+o.count+' catatan (butuh 3 untuk estimasi).';
+      else { const m=Math.floor((o.nextEstUTC-now)/86400000);
+        line='<span title="'+esc(oc[1])+'">'+oc[0]+'</span> Biasanya tiap ~'+o.medianGapDays+' hari · terakhir '+daysAgo(o.lastUTC)+' hari lalu · '
+          +(m>0?('perkiraan ~'+m+' hari lagi'):('perkiraan sudah terlewat (~'+Math.abs(m)+' hari)')); }
+    } else {
+      const passed=(age!=null&&age>21);
+      line=(age!=null?('Event awal-kingdom (Gen 1) — di H'+age+(passed?' kemungkinan sudah lewat; tak berulang.':' pantau minggu-minggu ini.')):'Event awal-kingdom (Gen 1), tak berulang.')
+        +(o.count?(' · tercatat '+daysAgo(o.lastUTC)+' hari lalu'):'');
+    }
+    const undo=o.count?' <button class="btn sec sm evlog_del" data-id="'+esc(it.id)+'">↩ hapus catatan terakhir</button>':'';
+    return '<div class="obs small dim" style="margin-top:4px">'+line+'</div>'
+      +'<div class="row" style="margin-top:4px"><button class="btn sec sm evlog_add" data-id="'+esc(it.id)+'">✏️ Muncul hari ini</button>'+undo+'</div>';
+  }
   const row=it=>{
     const c=CONF[it.conf]||CONF.unknown;
     /* WEEKLY_GUIDE di-key pakai titleKey ASLI -> coba srcKey dulu, baru id kanonik */
@@ -108,7 +128,8 @@ async function fillLiveEvents(force){
     const lock=it.locked?' <span class="pill c">🔒 ~hari '+it.gate.minDay+'</span>':'';
     return '<div class="check note"'+(it.locked?' style="opacity:.6"':'')+'><div style="flex:1;min-width:0">'
       +'<div class="t">'+esc(it.title)+' <span title="'+esc(c[1])+'">'+c[0]+'</span> '+when+lock+'</div>'
-      +'<div class="d">'+esc(it.why||guide||WEEKLY_GUIDE_DEFAULT)+'</div></div></div>';
+      +'<div class="d">'+esc(it.why||guide||WEEKLY_GUIDE_DEFAULT)+'</div>'
+      +(it.unpredictable?obsHTML(it):'')+'</div></div>';
   };
   const sec=(label,arr)=>arr.length?('<div class="lbl" style="margin:12px 0 4px">'+label+'</div>'+arr.map(row).join('')):'';
   const n=(typeof EV_SEASONAL_NOTE!=='undefined')?EV_SEASONAL_NOTE:null;
@@ -120,6 +141,8 @@ async function fillLiveEvents(force){
         +'<br><a href="'+esc(n.discord)+'" target="_blank" rel="noopener">Discord resmi Kingshot</a></div>':'')
     +'<div class="alert inf small" style="margin-top:6px">📌 Hitungan umur (H-x, gerbang 🔒) mengikuti KINGDOM-mu. Rotasi mingguan bersifat GLOBAL untuk kingdom dewasa — kingdom muda belum sinkron penuh, event bisa muncul di luar daftar. Acuan final = tab Events in-game.</div>'
     +'<div class="row" style="margin-top:8px"><button class="btn sec sm" id="evlive_r">↻ Muat ulang</button></div>';
+  $$('.evlog_add',host).forEach(b=>b.onclick=()=>{ if(typeof evLogAdd==='function'){ evLogAdd(b.dataset.id,evTodayISO()); fillLiveEvents(false); } });
+  $$('.evlog_del',host).forEach(b=>b.onclick=()=>{ if(typeof evLogRemoveLast==='function'){ evLogRemoveLast(b.dataset.id); fillLiveEvents(false); } });
   const b=$('#evlive_r'); if(b) b.onclick=()=>fillLiveEvents(true);
 }
 

@@ -15,6 +15,15 @@
   /* Dynamic-string rules: applied (in order) only when a text node has
      no exact dictionary match. Handle templated text + date words. */
   var RULES = [
+    /* catat kemunculan (observed lines) — MUST run before the generic
+       "hari"/"lagi" word rules below, which would otherwise mangle these
+       full phrases before this composite regex gets a chance to match. */
+    [/Biasanya tiap ~(\d+) hari · terakhir (\d+) hari lalu · perkiraan ~(\d+) hari lagi/g, 'Usually every ~$1 days · last seen $2 days ago · est. ~$3 days to go'],
+    [/Biasanya tiap ~(\d+) hari · terakhir (\d+) hari lalu · perkiraan sudah terlewat \(~(\d+) hari\)/g, 'Usually every ~$1 days · last seen $2 days ago · est. overdue (~$3 days)'],
+    [/Terakhir muncul (\d+) hari lalu · (\d+) catatan \(butuh 3 untuk estimasi\)\./g, 'Last seen $1 days ago · $2 record(s) (needs 3 to estimate).'],
+    [/Event awal-kingdom \(Gen 1\) — di H(\d+) kemungkinan sudah lewat; tak berulang\./g, 'Early-kingdom event (Gen 1) — at D$1 it has likely passed; does not recur.'],
+    [/Event awal-kingdom \(Gen 1\) — di H(\d+) pantau minggu-minggu ini\./g, 'Early-kingdom event (Gen 1) — at D$1 watch these first weeks.'],
+    [/ · tercatat (\d+) hari lalu/g, ' · recorded $1 days ago'],
     [/\bHari ke-(\d+)/g, 'Day $1'],
     [/\bServer hari\b/g, 'Server day'],
     [/\bserver hari\b/g, 'server day'],
