@@ -225,8 +225,20 @@ function renderSekarang(){
     +'<span class="gc-id">ID <b>'+pid+'</b><button class="cpy" data-c="'+pid+'">salin</button></span></div>'
     +'<div class="gc-list" id="sk_codes"><div class="gc-note">⏳ Memuat kode aktif…</div></div>'
     +'<div class="gc-note">Otomatis dari kingshot.net · <b>Redeem</b> menukar kode ke Player ID kamu (hadiah masuk mail in-game).</div></div>';
+  /* ---- 3 event terdekat (mesin countdown terpadu) ---- */
+  let soonHTML='';
+  if(typeof evUpcoming==='function'){
+    const now=ksClock.now().getTime();
+    const soon=evUpcoming().filter(x=>x.active||x.startUTC!=null).slice(0,3);
+    if(soon.length) soonHTML='<div class="card"><div class="gc-head">⏱️ Event terdekat</div>'
+      +soon.map(x=>{ const ms=x.active?(x.endUTC-now):(x.startUTC-now);
+        const d=Math.max(0,Math.floor(ms/86400000)), h=Math.max(0,Math.floor(ms%86400000/3600000));
+        return '<div class="kv"><span>'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
+          +'<b class="'+(x.active?'acc':'')+'">'+(x.active?'AKTIF · sisa ':'')+(d>0?d+' hr ':'')+h+' jam'+(x.active?'':' lagi')+'</b></div>'; }).join('')
+      +'</div>';
+  }
   const prepSection='<div class="eyebrow"><h2>Siapkan Berikutnya</h2><span class="hint">event terdekat + tukar kode</span></div>'
-    +'<div class="prep-row">'+heroHTML+giftHTML+'</div>';
+    +'<div class="prep-row">'+heroHTML+giftHTML+'</div>'+soonHTML;
 
   /* ---- Event Kamu ---- */
   const adv=activeAdvisories(start,age); const advTypes=new Set(adv.map(a=>a.type));
