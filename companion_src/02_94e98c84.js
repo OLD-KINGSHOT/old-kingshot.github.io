@@ -371,27 +371,38 @@ async function fillSoonEvents(age){
       if(typeof hogExists==='function'&&!hogExists(no)) return {done:true};
       return { startUTC:start.getTime()+((6+(no-1)*14)-1)*86400000, no:no };
     }
-    const w=nextWk.get(x.srcKey||x.id);
-    return w?{ startUTC:w.startUTC }:null;
+    /* rotasi: kejadian berikutnya dari sapuan; kalau yg ketemu = kejadian yg SEDANG
+       berjalan (mulai ≤ selesai sekarang), ambil siklus 4-minggu berikutnya. */
+    const w=nextWk.get(x.srcKey||x.id); let nt=w?w.startUTC:null;
+    if(nt==null||(x.endUTC!=null&&nt<=x.endUTC)) nt=(x.startUTC!=null)?x.startUTC+28*86400000:nt;
+    return nt?{startUTC:nt}:null;
   };
+  const MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  /* Event TERKUNCI: tampilkan tanggal-BUKA PER-SERVER (start + gate hari), BUKAN tanggal
+     feed global yg tak bisa dicapai server muda. Ini derivasi per-kingdom yg akurat. */
+  const unlockTxt=g=>{ if(!start||!g||g.minDay==null) return 'terkunci'; const d=new Date(start.getTime()+(g.minDay-1)*86400000);
+    return 'buka H'+g.minDay+' · ~'+d.getUTCDate()+' '+MON[d.getUTCMonth()]; };
   const clk=(id,name)=>' class="kv sk-evrow" style="cursor:pointer" data-id="'+esc(id)+'" data-name="'+esc(name)+'"';
+  const rightCell=(x,t)=> x.locked
+    ? '<b class="dim tabular" style="white-space:nowrap">🔒 '+esc(unlockTxt(x.gate))+'</b>'
+    : '<b class="acc tabular" style="white-space:nowrap">'+cd(t)+'</b>';
   /* SEDANG BERJALAN: selesai dalam … · muncul lagi … */
   const runRows=active.length?active.map(x=>{
     const nx=nextOccur(x);
     const back=!nx?'<span class="dim">—</span>'
       :nx.done?'<span class="dim">Selesai · Strongest Governor</span>'
       :cd(nx.startUTC)+(nx.no?' <span class="dim">#'+nx.no+'</span>':'');
-    return '<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
+    return '<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span>'
       +'<b class="acc tabular" style="white-space:nowrap">'+cd(x.endUTC!=null?x.endUTC:now)+'</b>'
       +'<b class="dim tabular" style="margin-left:10px;white-space:nowrap">'+back+'</b> <span class="dim">›</span></div>';
   }).join(''):'<div class="gc-note">Tak ada yang berjalan.</div>';
-  /* BERIKUTNYA: event yg belum berjalan, hitung mundur ke MULAI */
-  const soonRows=upcoming.map(x=>'<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+(x.locked?' <span class="pill c">🔒</span>':'')+'</span>'
-    +'<b class="acc tabular" style="white-space:nowrap">'+cd(x.startUTC)+'</b> <span class="dim">›</span></div>').join('');
+  /* BERIKUTNYA: event yg belum berjalan (terkunci → tanggal buka per-server) */
+  const soonRows=upcoming.map(x=>'<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span>'
+    +rightCell(x,x.startUTC)+' <span class="dim">›</span></div>').join('');
   h.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div>'
     +'<div class="lbl">Sedang berjalan <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· selesai · muncul lagi</span></div>'+runRows
     +(soonRows?'<div class="lbl" style="margin-top:10px">Berikutnya</div>'+soonRows:'')
-    +'<div class="muted small" style="margin-top:8px">Ketuk event untuk tips &amp; cara skor besar.</div>'
+    +'<div class="muted small" style="margin-top:8px">HoG · KvK · Strongest Governor dihitung dari UMUR server-mu (akurat per-kingdom). Event lain ikut rotasi GLOBAL — kingdom muda bisa beda; acuan final tab Events in-game. Ketuk event untuk tips.</div>'
     +'</div>';
   $$('.sk-evrow',h).forEach(b=>b.onclick=()=>{ window.__evJump=(b.dataset.id==='hog')?{sub:'hog'}:{sub:'ency',name:b.dataset.name}; if(typeof activate==='function') activate('event'); });
   if(typeof tickClock==='function') tickClock();

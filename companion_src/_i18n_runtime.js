@@ -30,6 +30,8 @@
     [/\(server hari (\d+)\)/g, '(server day $1)'],
     [/Belum aktif/g, 'Not active yet'],
     [/mulai ~hari (\d+)/g, 'starts ~day $1'],
+    [/buka H(\d+)/g, 'unlocks D$1'],
+    [/\bterkunci\b/g, 'locked'],
     [/~hari (\d+)/g, '~day $1'],
     [/Simpan persiapan\./g, 'Save your prep.'],
     [/\b1 hari lagi/g, '1 day left'],

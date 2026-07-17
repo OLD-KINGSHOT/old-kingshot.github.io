@@ -638,6 +638,13 @@ function predictedEvents(start,age){
   const klen=(EVENT_TEMPLATES.kvk&&EVENT_TEMPLATES.kvk.len)||5;
   if(age>=kvk+klen) kvk+=28; /* current cycle already over → predict the next one */
   out.push({type:'kvk',day:kvk,date:addDaysISO(start,kvk),conf:'sedang'});
+  /* Strongest Governor = kompetitif berbasis UMUR (gate H75, siklus 28 hari) — sama
+     modelnya dgn KvK/HoG & dgn kalender. Tanpa ini SG jatuh ke feed rotasi GLOBAL →
+     tanggal sama utk semua server (salah lintas-kingdom). */
+  let sg=age<75?75:75+Math.floor((age-75)/28)*28;
+  const slen=(EVENT_TEMPLATES.sg&&EVENT_TEMPLATES.sg.len)||7;
+  if(age>=sg+slen) sg+=28;
+  out.push({type:'sg',day:sg,date:addDaysISO(start,sg),conf:'sedang'});
   return out;
 }
 /* HoG durasi & tema per-ITERASI (bukan template len=7) — biar advisory & kalender akurat lintas-server */
