@@ -386,8 +386,16 @@ async function fillSoonEvents(age){
   const rightCell=(x,t)=> x.locked
     ? '<b class="dim tabular" style="white-space:nowrap">🔒 '+esc(unlockTxt(x.gate))+'</b>'
     : '<b class="acc tabular" style="white-space:nowrap">'+cd(t)+'</b>';
-  /* SEDANG BERJALAN: selesai dalam … · muncul lagi … */
-  const runRows=active.length?active.map(x=>{
+  const dateTxt=t=>{ const d=new Date(t); return d.getUTCDate()+' '+MON[d.getUTCMonth()]; };
+  /* PER-SERVER = model umur (HoG/KvK/SG) + ralat manual → akurat per-kingdom, countdown penuh.
+     GLOBAL = feed rotasi kingshot.net → tanggal SAMA utk semua server; kingdom muda sering
+     BEDA, jadi JANGAN kasih hitung-mundur per-server yg menyesatkan (mis. "Fishing 3 hari
+     lagi" itu jadwal server tua, bukan server-mu). Tampilkan tanggal global apa adanya. */
+  const perSrv=x=>(x.source==='age'||x.source==='user');
+  const psActive=active.filter(perSrv), psSoon=upcoming.filter(perSrv);
+  const glob=list.filter(x=>x.source==='live'&&(x.active||x.startUTC!=null))
+    .sort((a,b)=>(a.active===b.active?((a.startUTC||0)-(b.startUTC||0)):(a.active?-1:1)));
+  const psRunRows=psActive.map(x=>{
     const nx=nextOccur(x);
     const back=!nx?'<span class="dim">—</span>'
       :nx.done?'<span class="dim">Selesai · Strongest Governor</span>'
@@ -395,14 +403,26 @@ async function fillSoonEvents(age){
     return '<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span>'
       +'<b class="acc tabular" style="white-space:nowrap">'+cd(x.endUTC!=null?x.endUTC:now)+'</b>'
       +'<b class="dim tabular" style="margin-left:10px;white-space:nowrap">'+back+'</b> <span class="dim">›</span></div>';
-  }).join(''):'<div class="gc-note">Tak ada yang berjalan.</div>';
-  /* BERIKUTNYA: event yg belum berjalan (terkunci → tanggal buka per-server) */
-  const soonRows=upcoming.map(x=>'<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span>'
+  }).join('');
+  const psSoonRows=psSoon.map(x=>'<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span>'
     +rightCell(x,x.startUTC)+' <span class="dim">›</span></div>').join('');
-  h.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div>'
-    +'<div class="lbl">Sedang berjalan <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· selesai · muncul lagi</span></div>'+runRows
-    +(soonRows?'<div class="lbl" style="margin-top:10px">Berikutnya</div>'+soonRows:'')
-    +'<div class="muted small" style="margin-top:8px">HoG · KvK · Strongest Governor dihitung dari UMUR server-mu (akurat per-kingdom). Event lain ikut rotasi GLOBAL — kingdom muda bisa beda; acuan final tab Events in-game. Ketuk event untuk tips.</div>'
+  const globRows=glob.map(x=>{
+    /* event global TERKUNCI: tampilkan cuma UMUR kelayakan (~H gate), TANPA tanggal
+       kalender — event ini rotasi global, tak jalan tepat di "start+gate" server-mu
+       (mis. Armament ≠ H65-mu; itu proyeksi palsu). Yg terbuka: tanggal global apa adanya. */
+    let r = x.locked ? ('🔒 buka ~H'+(((x.gate&&x.gate.minDay)!=null)?x.gate.minDay:'?'))
+      : x.active ? '<span class="pill f2p">AKTIF</span>'
+      : ('~'+esc(dateTxt(x.startUTC))+' <span class="dim">global</span>');
+    return '<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span><b class="dim tabular" style="white-space:nowrap">'+r+'</b> <span class="dim">›</span></div>';
+  }).join('');
+  h.innerHTML='<div class="card"><div class="gc-head">⏱️ Event server-mu</div>'
+    +(psRunRows?'<div class="lbl">Sedang berjalan <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· selesai · muncul lagi</span></div>'+psRunRows:'')
+    +(psSoonRows?'<div class="lbl" style="margin-top:10px">Berikutnya</div>'+psSoonRows:'')
+    +((!psRunRows&&!psSoonRows)?'<div class="gc-note">Hubungkan Player ID untuk jadwal per-kingdom (HoG/KvK/SG).</div>':'')
+    +'<div class="muted small" style="margin-top:6px">↑ Dihitung dari UMUR server-mu — akurat per-kingdom.</div>'
+    +(globRows?'<div class="lbl" style="margin-top:14px">Rotasi global <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· acuan, cek in-game</span></div>'
+        +'<div class="muted small" style="margin-bottom:4px">Tanggal dari feed GLOBAL — SAMA utk semua server; kingdom muda sering BEDA. Bukan hitung mundur server-mu.</div>'+globRows:'')
+    +'<div class="muted small" style="margin-top:8px">Ketuk event untuk tips.</div>'
     +'</div>';
   $$('.sk-evrow',h).forEach(b=>b.onclick=()=>{ window.__evJump=(b.dataset.id==='hog')?{sub:'hog'}:{sub:'ency',name:b.dataset.name}; if(typeof activate==='function') activate('event'); });
   if(typeof tickClock==='function') tickClock();

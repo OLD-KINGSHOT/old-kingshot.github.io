@@ -745,6 +745,13 @@
   "· selesai · muncul lagi": "· ends · returns",
   "Selesai · Strongest Governor": "Done · Strongest Governor",
   "Ketuk event untuk tips & cara skor besar.": "Tap an event for tips & how to score big.",
-  "HoG · KvK · Strongest Governor dihitung dari UMUR server-mu (akurat per-kingdom). Event lain ikut rotasi GLOBAL — kingdom muda bisa beda; acuan final tab Events in-game. Ketuk event untuk tips.": "HoG · KvK · Strongest Governor are computed from YOUR server's age (accurate per-kingdom). Other events follow the GLOBAL rotation — young kingdoms may differ; final reference is the in-game Events tab. Tap an event for tips."
+  "HoG · KvK · Strongest Governor dihitung dari UMUR server-mu (akurat per-kingdom). Event lain ikut rotasi GLOBAL — kingdom muda bisa beda; acuan final tab Events in-game. Ketuk event untuk tips.": "HoG · KvK · Strongest Governor are computed from YOUR server's age (accurate per-kingdom). Other events follow the GLOBAL rotation — young kingdoms may differ; final reference is the in-game Events tab. Tap an event for tips.",
+  "⏱️ Event server-mu": "⏱️ Your server's events",
+  "Hubungkan Player ID untuk jadwal per-kingdom (HoG/KvK/SG).": "Connect your Player ID for a per-kingdom schedule (HoG/KvK/SG).",
+  "↑ Dihitung dari UMUR server-mu — akurat per-kingdom.": "↑ Computed from YOUR server's age — accurate per-kingdom.",
+  "Rotasi global": "Global rotation",
+  "· acuan, cek in-game": "· reference, check in-game",
+  "Tanggal dari feed GLOBAL — SAMA utk semua server; kingdom muda sering BEDA. Bukan hitung mundur server-mu.": "Dates from the GLOBAL feed — SAME for every server; young kingdoms often DIFFER. Not your server's countdown.",
+  "Ketuk event untuk tips.": "Tap an event for tips."
 }
 
