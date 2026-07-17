@@ -316,7 +316,7 @@ async function fetchKingdomDate(kid){
         t=hi[0]===lo[0]?Date.parse(lo[1])
           :Date.parse(lo[1])+(Date.parse(hi[1])-Date.parse(lo[1]))*(k-lo[0])/(hi[0]-lo[0]);
       }
-      const dt=new Date(t); window._kdateEst=true;
+      const dt=new Date(t+8*3600000); window._kdateEst=true;   /* zona server UTC+8, konsisten dgn jalur exact */
       return dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate());
     }
   }

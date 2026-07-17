@@ -1423,12 +1423,18 @@ async function autoDetectProfiles(){
         if(!p.nick && j.data.nickname) p.nick=j.data.nickname;      /* nama: isi kalau kosong (jangan timpa kustom) */
         const nk=String(j.data.kid||'');                             /* Kingdom & TC: selalu segarkan (otoritatif) */
         if(nk){
-          /* Kingdom beda = SERVER LAIN = tanggal buka lain. Tanpa ini `start` tetap
-             milik server lama → umur server & semua tanggal HoG salah diam-diam. */
-          if(nk!==String(p.kingdom||'')||!p.start){
-            if(nk!==String(p.kingdom||'')) moved.add(p.pid);
-            p.start=(await fetchKingdomDate(nk))||'';
-          }
+          /* Kingdom beda = SERVER LAIN = tanggal buka lain. Selalu rekonsiliasi tanggal
+             buka: seed/cache = instan (nyaris tanpa network), jadi murah tiap load.
+             Tanggal PASTI dari API bersifat OTORITATIF → menang atas start tersimpan
+             (perkiraan lama / tanggal UTC salah / manual keliru) supaya umur & HoG akurat.
+             Perkiraan (offline) hanya mengisi start yg masih kosong; ditandai startEst
+             agar di-refresh lagi lain kali sampai dapat tanggal pasti. */
+          const kchanged=(nk!==String(p.kingdom||''));
+          if(kchanged) moved.add(p.pid);
+          const nd=await fetchKingdomDate(nk);
+          if(nd){ if(!window._kdateEst){ if(p.start!==nd){ p.start=nd; changed=true; } if(p.startEst){ delete p.startEst; changed=true; } }
+            else if(kchanged||!p.start){ p.start=nd; p.startEst=true; changed=true; } }   /* pindah / kosong: terima perkiraan (jangan simpan tanggal server LAMA); sama-kingdom: perkiraan tak menimpa tanggal yg sudah ada */
+          else if(kchanged){ if(p.start){ p.start=''; changed=true; } if(p.startEst){ delete p.startEst; changed=true; } }   /* pindah tapi tak diketahui → kosongkan */
           p.kingdom=nk;
         }
         const nt=String(j.data.stove_lv||''); if(nt) p.tc=nt;
