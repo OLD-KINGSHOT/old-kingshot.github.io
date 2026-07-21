@@ -178,5 +178,14 @@
     "bytes": 265368,
     "file": "19_island.webp",
     "otherKeys": []
+  },
+  {
+    "i": 20,
+    "id": "3f9a2c17-58b4-4e6a-9d21-7c04ab8e5f30",
+    "mime": "application/javascript",
+    "compressed": true,
+    "bytes": 0,
+    "file": "06_3f9a2c17.js",
+    "otherKeys": []
   }
 ]

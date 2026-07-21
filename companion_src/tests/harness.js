@@ -62,7 +62,7 @@ function createEnv(opts = {}) {
   sandbox.globalThis = sandbox;
   const ctx = vm.createContext(sandbox);
 
-  const files = ['00_fbbc01a0.js', '01_fa4c6c09.js', '02_94e98c84.js', '03_7897e180.js', '04_0ce30e21.js', '05_8b5b9238.js'];
+  const files = ['00_fbbc01a0.js', '01_fa4c6c09.js', '02_94e98c84.js', '03_7897e180.js', '04_0ce30e21.js', '05_8b5b9238.js', '06_3f9a2c17.js'];
   for (const f of files) {
     if (f.startsWith('00_')) continue; // loader/bootstrap, needs a real DOM
     const code = fs.readFileSync(path.join(SRC, f), 'utf8');

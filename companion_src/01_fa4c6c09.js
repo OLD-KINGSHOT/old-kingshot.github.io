@@ -489,11 +489,11 @@ function buildCalcCard(){
        <label class="calcf"><span>Base — Menit</span><input id="cd_m" type="number" min="0" max="59" value="0" inputmode="numeric"></label>
        <label class="calcf"><span>Construction Speed %</span><input id="cd_p" type="number" min="0" value="0" inputmode="numeric"></label>
        <label class="calcf"><span>Speedup dimiliki (menit)</span><input id="cd_su" type="number" min="0" value="0" inputmode="numeric"></label>
-       <label class="calcf chk"><input id="cd_dt" type="checkbox"> Double Time Decree (−50%)</label>
+       <label class="calcf chk"><input id="cd_dt" type="checkbox"> Double Time Decree (−20%)</label>
      </div>
      <div id="cd_out" class="calcout"></div>
      <div class="alert inf small">💡 Simpan upgrade besar untuk hari <b>City Construction</b> (KvK D1/D5, SG D1, stage City Construction HoG) → dobel manfaat: naik level + poin event. Aktifkan <b>Double Time</b> + pet <b>Gray Wolf</b> SEBELUM mulai (window 5 mnt).</div>
-     <div class="muted small">Rumus: Double Time diterapkan ke base dulu (×0.5), lalu Construction Speed menumpuk (÷ (1 + %/100)) — sesuai mekanik in-game, bukan stack flat.</div>`,
+     <div class="muted small">Rumus: Construction Speed membagi base (÷ (1 + %/100)), lalu Double Time memotong 20% (×0.8) — bukan stack flat. Double Time TIDAK termasuk dalam stat Construction Speed di Power Panel, jadi dihitung terpisah.</div>`,
     null,true);
 }
 function wireCalc(root){
@@ -504,7 +504,7 @@ function wireCalc(root){
     var base=num('cd_d')*1440+num('cd_h')*60+num('cd_m');
     if(base<=0){ out.innerHTML='<div class="muted small">'+(en?'Enter the base time from the upgrade screen to start calculating.':'Isi base time dari layar upgrade untuk mulai menghitung.')+'</div>'; return; }
     var p=num('cd_p'); var dt=$('#cd_dt',el)&&$('#cd_dt',el).checked;
-    var eff=base*(dt?0.5:1)/(1+p/100); var saved=base-eff; var own=num('cd_su'); var rem=eff-own;
+    var eff=base/(1+p/100)*(dt?0.8:1); var saved=base-eff; var own=num('cd_su'); var rem=eff-own;
     var suLine = own>0
       ? (rem<=0 ? '<b class="ok">'+(en?'Enough speedups':'Speedup cukup')+'</b>'+(en?' — finishes instantly ('+_fmtMin(-rem)+' speedups left).':' — selesai instan (sisa '+_fmtMin(-rem)+' speedup).')
                 : (en?'Use all speedups → still wait <b>'+_fmtMin(rem)+'</b>.':'Pakai semua speedup → sisa nunggu <b>'+_fmtMin(rem)+'</b>.'))

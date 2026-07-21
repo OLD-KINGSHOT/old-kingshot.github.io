@@ -430,6 +430,74 @@ async function ksRedeem(fid,code,kid){
   return {cls:'inf',txt:String(j.msg==null?'?':j.msg)};
 }
 
+/* ── Rencana upgrade TC ──────────────────────────────────────────────────────
+   Fungsi MURNI: tanpa DOM, tanpa localStorage — parameter masuk, daftar keluar.
+   Datanya di 06_*.js (dibangkitkan dari scraper). Pemisahan ini disengaja:
+   risiko terbesar fitur ini ada di ANGKA, bukan tampilan, dan angka hanya bisa
+   diuji murah kalau mesinnya tidak menyentuh browser. */
+
+/* Rencana dari TC `dari` ke TC `ke`, hanya yang BELUM dimiliki.
+   `dimiliki` = {namaBangunan: levelTertinggi}, mis. {Academy:27}. */
+function tcPlan(dari,ke,dimiliki){
+  dimiliki=dimiliki||{}; dari=Number(dari)||0; ke=Number(ke)||0;
+  if(typeof TC_LEVELS==='undefined') return [];
+  const out=[], sudah=new Set(), sedang=new Set();
+  const punya=(n,lv)=>Number(dimiliki[n]||0)>=lv;
+  /* Bangunan juga mensyaratkan TC (Embassy 9 butuh TC9), jadi grafnya MEMANG
+     bisa melingkar. `sedang` membuat penelusuran berhenti alih-alih kehabisan
+     stack — tanpa ini, data yang sah pun bisa menggantungkan app. */
+  function bangun(nama,lv){
+    if(lv<1||punya(nama,lv)) return;
+    const k=nama+' '+lv;
+    if(sudah.has(k)||sedang.has(k)) return;
+    const tbl=(typeof TC_BUILDINGS!=='undefined')?TC_BUILDINGS[nama]:null;
+    const row=tbl?tbl.find(x=>x.lv===lv):null;
+    sedang.add(k);
+    bangun(nama,lv-1);            /* level bangunan wajib berurutan */
+    sedang.delete(k);
+    if(!row) return;              /* tabel biayanya belum ada — lihat TC_TANPA_DATA */
+    sudah.add(k); out.push({jenis:'B',nama:nama,lv:lv,c:row.c,sec:row.sec,k:row.k||0});
+  }
+  for(let lv=dari+1;lv<=ke;lv++){
+    const row=TC_LEVELS.find(x=>x.lv===lv); if(!row) continue;
+    for(const pr of row.p) bangun(pr[0],pr[1]);   /* prasyarat DULU, baru TC-nya */
+    const k='TownCenter '+lv; if(sudah.has(k)) continue;
+    sudah.add(k); out.push({jenis:'TC',nama:'TownCenter',lv:lv,c:row.c,sec:row.sec,k:0});
+  }
+  return out;
+}
+
+/* Potongan BIAYA skill Resourceful milik Saul, per level skill 1-5 (dua sumber
+   sepakat: 3/6/9/12/15%). Bagian SPEED-nya sengaja TIDAK dipakai di sini —
+   stat Construction Speed di Power Panel sudah menjumlahkannya, jadi
+   menambahkannya lagi berarti dobel-hitung. */
+const TC_SAUL_CUT=[0,3,6,9,12,15];
+const TC_RES=['b','w','s','i'];   /* Truegold (t) sengaja di luar: tak kena potongan */
+
+function tcApplyBuffs(daftar,buff){
+  buff=buff||{};
+  const spd=(Number(buff.speed)||0)+(Number(buff.wolf)||0)+(Number(buff.posisi)||0);
+  /* input ngawur (mis. -300%) tak boleh menghasilkan durasi negatif/tak hingga */
+  const bagi=Math.max(0.01,1+spd/100);
+  const cut=(TC_SAUL_CUT[Number(buff.saulSkill)||0]||0)/100;
+  const baris=(daftar||[]).map(function(r){
+    let sec=r.sec/bagi;
+    if(buff.doubleTime) sec*=0.8;               /* terpisah dari stat Power Panel */
+    const cb={t:(r.c&&r.c.t)||0};
+    for(const k of TC_RES) cb[k]=Math.round(((r.c&&r.c[k])||0)*(1-cut));
+    return Object.assign({},r,{secBuff:Math.round(sec),cb:cb});
+  });
+  const kosong=()=>({b:0,w:0,s:0,i:0,t:0});
+  const total={c:kosong(),sec:0}, totalDasar={c:kosong(),sec:0};
+  for(const r of baris){
+    total.sec+=r.secBuff; totalDasar.sec+=r.sec;
+    for(const k of TC_RES.concat('t')){
+      total.c[k]+=r.cb[k]||0; totalDasar.c[k]+=(r.c&&r.c[k])||0;
+    }
+  }
+  return {baris:baris,total:total,totalDasar:totalDasar};
+}
+
 /* ── Auto-redeem multi-karakter: helper ──────────────────────────────────────
    Riwayat redeem SUDAH per-profil: 'codesDone' ada di PROFILE_KEYS, jadi
    tersimpan sebagai ks_p_<pid>_codesDone. Tapi `store` selalu memakai profil
