@@ -5,13 +5,13 @@
 /* ── Bangun / Upgrade ── */
 const BUILD_ORDER=[
   {t:'Town Center (TC) \u2014 SELALU prioritas #1',d:'Begitu satu selesai, langsung mulai berikutnya. Rush ke TC30 (buka T10 + Truegold). Jangan biarkan antrian kosong.'},
-  {t:'Wall = level TC',d:'Wall wajib sama dengan level TC tiap mau naik TC. Naikkan duluan.'},
-  {t:'Academy (riset)',d:'Prasyarat TC + pengali pertumbuhan. Fokus Growth (kecepatan konstruksi/riset) > Economy.'},
-  {t:'Bangunan militer (Barracks/Range/Stable)',d:'Naikkan sesuai prasyarat TC berikutnya.'},
-  {t:'Hospital / Clinic',d:'Murah & penting \u2014 kapasitas wounded. JANGAN cap Lv10 — jaga ~1 level di bawah TC (juga prasyarat upgrade TC).'},
+  {t:'Embassy = level TC − 1',d:'Prasyarat SETIAP upgrade TC dari 9 ke atas, tanpa kecuali. Ini yang paling sering menyendat progres. Naikkan duluan, jangan tunggu terhalang.'},
+  {t:'Academy (riset)',d:'Prasyarat TC di Lv10/16/20/24/28 + pengali pertumbuhan. Fokus Growth (kecepatan konstruksi/riset) > Economy.'},
+  {t:'Bangunan militer (Barracks/Range/Stable)',d:'Berputar jadi prasyarat TC: Barracks → Range → Stable → Academy, satu tiap level. Cek prasyarat TC berikutnya sebelum menaikkan.'},
+  {t:'Infirmary',d:'Murah & penting \u2014 kapasitas wounded. Prasyarat TC hanya sekali (Infirmary 1 untuk TC9); selebihnya murni buat menampung korban. Jangan cap Lv10.'},
   {t:'Kitchen & Houses',d:'Murah, kasih Gold gratis untuk riset & populasi. Worth dinaikkan.'},
   {t:'\u26d4 Produksi (Mill/Sawmill/Quarry/Iron Mine)',d:'SKIP! Gathering di map 10-100\u00d7 lebih untung. Naikkan HANYA jika jadi prasyarat TC.',warn:true},
-  {t:'\u26d4 Embassy / Scout Camp / Command Center',d:'Prioritas rendah untuk solo. Command Center hanya jika kamu MEMIMPIN rally.',warn:true},
+  {t:'\u26d4 Command Center',d:'Prioritas rendah untuk solo \u2014 hanya jika kamu MEMIMPIN rally. Catatan: Command Center 1 tetap prasyarat TC12, jadi naikkan sekali lalu tinggalkan.',warn:true},
 ];
 const DECREES=[
   ['Double Time','\u221220% waktu konstruksi (bertahan s/d build selesai)','\u2605 WAJIB tiap upgrade besar. ~800k Contentment, cd ~23 jam. Aktifkan SEBELUM mulai.'],
@@ -21,12 +21,50 @@ const DECREES=[
   ['Productivity Day','Produktivitas 100% selama 24 jam, \u221210 mood','Cd ~12 jam'],
   ['Festivities','+50 mood / +30 comfort','Cd ~1 hari'],
 ];
+/* Prasyarat upgrade Town Center, TC2-30.
+
+   Data LAMA di sini salah dan menyesatkan: menyuruh menaikkan "Wall" dan
+   "Hospital", padahal Kingshot tidak punya bangunan bernama Wall maupun
+   Hospital (yang ada Infirmary). Dua database bangunan lengkap (kingshot.net,
+   kingshotguide.org) tak memuat keduanya — hampir pasti tersalin dari game
+   lain. Dikonfirmasi user dari dalam game bahwa tabel lama itu ngaco.
+
+   Pengganti disilang-cek di dua sumber untuk SETIAP level (21-22 Jul 2026):
+   TC2-15 & TC16-24 = kingshotdata.kr + kingshotdata.com (+ kingshot.net utk 16-24),
+   TC25-30 = kingshotdata.kr + kingshotguide.org.
+
+   Dari TC13 ke atas polanya tetap: Embassy (level-1) + satu bangunan yang
+   berputar Barracks -> Range -> Stable -> Academy. Dijaga oleh test. */
 const TC_PREREQ=[
-  ['TC10','Wall 10 + Academy 9 + Barracks 9'],
-  ['TC15','Wall 15 + Academy 14 + Hospital 14'],
-  ['TC20','Wall 20 + Academy 19 + semua militer 19'],
-  ['TC25','Wall 25 + Academy 24 (buka Charms / Master Academy)'],
-  ['TC30','Wall 30 + Academy 29 + bangunan inti 29 (buka Truegold & T10)'],
+  ['TC2','Sawmill 1'],
+  ['TC3','House 2'],
+  ['TC4','Quarry 3'],
+  ['TC5','Hero Hall + House 3'],
+  ['TC6','Iron Mine 5'],
+  ['TC7','Mill 6'],
+  ['TC8','Barracks 7'],
+  ['TC9','Embassy 8 + Infirmary 1'],
+  ['TC10','Range 9 + Academy'],
+  ['TC11','Embassy 10 + Stable 10'],
+  ['TC12','Embassy 11 + Command Center 1'],
+  ['TC13','Embassy 12 + Barracks 12'],
+  ['TC14','Embassy 13 + Range 13'],
+  ['TC15','Embassy 14 + Stable 14'],
+  ['TC16','Embassy 15 + Academy 15'],
+  ['TC17','Embassy 16 + Barracks 16'],
+  ['TC18','Embassy 17 + Range 17'],
+  ['TC19','Embassy 18 + Stable 18'],
+  ['TC20','Embassy 19 + Academy 19'],
+  ['TC21','Embassy 20 + Barracks 20'],
+  ['TC22','Embassy 21 + Range 21'],
+  ['TC23','Embassy 22 + Stable 22'],
+  ['TC24','Embassy 23 + Academy 23'],
+  ['TC25','Embassy 24 + Barracks 24'],
+  ['TC26','Embassy 25 + Range 25'],
+  ['TC27','Embassy 26 + Stable 26'],
+  ['TC28','Embassy 27 + Academy 27'],
+  ['TC29','Embassy 28 + Barracks 28'],
+  ['TC30','Embassy 29 + Range 29'],
 ];
 const RESEARCH_ORDER=[
   ['1. Tool Enhancement (Research Speed)','Compound ke SEMUA riset berikutnya \u2014 rush pertama'],
