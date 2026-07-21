@@ -160,10 +160,18 @@ const KVK_BATTLE_UTC_HOUR=12;
 /* ── Authoritative clock (server UTC; daily reset 00:00 UTC = 07:00 WIB) ── */
 const ksClock={
   offset:0, nudge:0, synced:false,
-  load(){ this.offset=Number(store.get('clockOffset',0))||0; this.nudge=Number(store.get('clockNudge',0))||0;
-    /* a persisted offset is only trustworthy for ~24h (device clock may have been corrected since) */
+  load(){ this.nudge=Number(store.get('clockNudge',0))||0;
+    /* Offset tersimpan hanya dipercaya kalau (a) dibuat oleh aturan KORROBORASI
+       yang baru (clockOffsetV=2) dan (b) umurnya < 24 jam (jam perangkat bisa
+       sudah dibetulkan sejak itu). Penanda versi itu penting: offset dari aturan
+       LAMA bisa berasal dari satu sumber yang salah — persis yang terjadi 21 Jul
+       2026, saat timeapi.io meleset -9 menit dan nilainya mengendap di perangkat
+       user. Tanpa pembatalan ini, offset beracun itu tetap hidup 24 jam dan tiap
+       redeem gagal walau kodenya sudah benar. */
+    const v=Number(store.get('clockOffsetV',0))||0;
     const at=Number(store.get('clockSyncAt',0))||0;
-    if(at&&Date.now()-at<86400000){ this.synced=true; } else { this.offset=0; }
+    if(v>=2&&at&&Date.now()-at<86400000){ this.offset=Number(store.get('clockOffset',0))||0; this.synced=true; }
+    else { this.offset=0; this.synced=false; }
   },
   now(){ return new Date(Date.now()+this.offset+this.nudge*60000); },
   /* Waktu untuk MENANDATANGANI permintaan API — offset server saja, TANPA nudge.
@@ -171,26 +179,57 @@ const ksClock={
      masuk ke sign, `time` yang dikirim jadi bergeser sesuai selera user. */
   signNow(){ return Date.now()+this.offset; },
   setNudge(min){ this.nudge=Number(min)||0; store.set('clockNudge',this.nudge); },
-  _apply(srvEpoch){ if(isNaN(srvEpoch)) return false; this.offset=srvEpoch-Date.now(); store.set('clockOffset',this.offset); store.set('clockSyncAt',Date.now()); this.synced=true; return true; },
   _race(u){ return Promise.race([fetch(u),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000))]); },
-  /* Jalur 1 = server sendiri. Waktu dikirim di BODY (/time -> {now}); header `Date`
-     TIDAK bisa dipakai lintas-origin (bukan CORS-safelisted, tak di-expose) — dulu
-     app mengandalkannya dan diam-diam selalu dapat null. */
-  async _srvTime(){
-    try{ const r=await this._race(KS_DATA_API+'/time'); if(!r.ok) return false; const j=await r.json();
-      if(j&&typeof j.now==='number') return this._apply(j.now);
-    }catch(e){}
-    return false;
-  },
-  async sync(){
-    if(await this._srvTime()) return true;
-    /* cadangan: timeapi.io (kadang diblokir di jaringan HP) */
+  _applyOffset(off){ if(!isFinite(off)) return false; this.offset=off;
+    store.set('clockOffset',off); store.set('clockSyncAt',Date.now()); store.set('clockOffsetV',2); this.synced=true; return true; },
+  /* sync gagal = tak ada yang lebih tahu dari jam perangkat. Buang offset yang
+     tak terkonfirmasi, jangan biarkan nilai lama menyetir tanda tangan API. */
+  _dropOffset(){ this.offset=0; this.synced=false; store.set('clockOffset',0); store.set('clockOffsetV',0); },
+  /* Ukur SATU sumber → offset (waktu server − jam perangkat), dikoreksi dengan
+     titik tengah round-trip supaya latensi jaringan tak terhitung sebagai selisih. */
+  async _probe(fn){
     try{
-      const res=await this._race('https://timeapi.io/api/time/current/zone?timeZone=UTC'); const j=await res.json();
-      if(j&&j.year){ return this._apply(Date.UTC(j.year,(j.month||1)-1,j.day||1,j.hour||0,j.minute||0,j.seconds||0,j.milliSeconds||0)); }
-      if(j&&j.dateTime){ return this._apply(Date.parse(j.dateTime.replace(/(\.\d{3})\d*$/,'$1')+'Z')); }
-    }catch(e){}
-    return false;
+      const t0=Date.now(); const v=await fn.call(this); const t1=Date.now();
+      if(typeof v!=='number'||!isFinite(v)) return null;
+      return v-(t0+t1)/2;
+    }catch(e){ return null; }
+  },
+  /* Sumber-sumber independen. Waktu selalu diambil dari BODY, tak pernah dari
+     header `Date`: header itu bukan CORS-safelisted dan tidak di-expose, jadi di
+     browser selalu null — app dulu mengandalkannya dan diam-diam gagal terus. */
+  _sources:[
+    async function(){ const r=await this._race(KS_DATA_API+'/time'); const j=await r.json();
+      return (j&&typeof j.now==='number')?j.now:NaN; },
+    /* cloudflare cdn-cgi/trace: teks "ts=<epoch detik>", CORS terbuka, akurat */
+    async function(){ const r=await this._race('https://cloudflare.com/cdn-cgi/trace'); const t=await r.text();
+      const m=String(t).match(/ts=([\d.]+)/); return m?Math.round(parseFloat(m[1])*1000):NaN; },
+    async function(){ const r=await this._race('https://timeapi.io/api/time/current/zone?timeZone=UTC'); const j=await r.json();
+      if(j&&j.year) return Date.UTC(j.year,(j.month||1)-1,j.day||1,j.hour||0,j.minute||0,j.seconds||0,j.milliSeconds||0);
+      if(j&&j.dateTime) return Date.parse(j.dateTime.replace(/(\.\d{3})\d*$/,'$1')+'Z');
+      return NaN; },
+  ],
+  /* Dua sumber dianggap sepakat bila selisihnya <= 30 detik. */
+  _agreeMs:30000,
+  /* Sinkronisasi butuh KORROBORASI: minimal dua sumber independen yang sepakat.
+
+     Kenapa seketat itu — jendela `time` API gift code Century menyempit dari
+     ±24 jam jadi ~±5 menit (terukur 21 Jul 2026: ±300 dtk diterima, ±600 dtk
+     ditolak "time Expired"). Pada tanggal itu /time worker produksi balas 404
+     dan satu-satunya sumber tersisa, timeapi.io, meleset -554 detik: app memasang
+     offset -9 menit dan SEMUA redeem gagal, padahal jam perangkat sudah benar.
+     Dengan jendela sesempit ini, offset SALAH lebih berbahaya daripada tanpa
+     offset — kalau ragu, percayai jam perangkat. */
+  async sync(){
+    const offs=(await Promise.all(this._sources.map(f=>this._probe(f))))
+      .filter(o=>o!==null&&isFinite(o));
+    /* ambil kelompok terbesar yang saling sepakat — bukan rata-rata, supaya satu
+       sumber menyimpang tak bisa menarik hasilnya */
+    let best=[];
+    for(const c of offs){ const grp=offs.filter(o=>Math.abs(o-c)<=this._agreeMs);
+      if(grp.length>best.length) best=grp; }
+    if(best.length<2){ this._dropOffset(); return false; }
+    const sorted=best.slice().sort((a,b)=>a-b);
+    return this._applyOffset(sorted[Math.floor(sorted.length/2)]);
   }
 };
 function daysBetween(a,b){ return Math.floor((b-a)/86400000); }
@@ -274,14 +313,18 @@ function md5(str){
   return rh(a)+rh(b)+rh(c)+rh(d);
 }
 
-/* ── Player API: login-style detect (run once, remembers) ── */
-async function ksPlayerLookup(fid){
-  /* sign with the SERVER-corrected clock, minus the manual nudge (signNow). */
-  const time=ksClock.signNow();
-  const sign=md5('fid='+fid+'&time='+time+KS_SALT);
-  const body='sign='+sign+'&fid='+encodeURIComponent(fid)+'&time='+time;
-  const res=await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
-  return res.json();
+/* ── Player API: DIHAPUS OLEH CENTURY (terverifikasi 21 Jul 2026) ──
+   /api/player sekarang balas 404, dan halaman 404-nya tidak mengirim header
+   CORS — di browser fetch-nya REJECT, bukan sekadar gagal. Itulah "Gagal
+   terhubung" yang muncul saat redeem. Situs gift-code resmi Century juga sudah
+   tidak memanggilnya sama sekali: mereka kini meminta user MENGETIK Kingdom.
+   Jadi nickname/Kingdom/TC tidak bisa lagi dideteksi dari Player ID.
+
+   Fungsi dipertahankan (dipanggil dari beberapa tempat) tapi gagal LOKAL —
+   menembak endpoint mati tiap app dibuka cuma menambah jeda dan error konsol. */
+const KS_PLAYER_API_GONE=true;
+async function ksPlayerLookup(){
+  throw new Error('ksPlayerLookup: /api/player dihapus Century — Kingdom harus diisi manual');
 }
 async function fetchKingdomDate(kid){
   /* flag "ini cuma perkiraan" harus menggambarkan lookup INI — dulu hanya di-reset di
@@ -323,20 +366,48 @@ async function fetchKingdomDate(kid){
   return null;
 }
 /* Redeem one code. Returns {cls,txt}. */
-async function ksRedeem(fid,code){
-  /* 1) hit "login" dulu \u2014 /api/gift_code menolak (40004/40009) kalau fid belum
-        punya sesi login di server. INI penyebab error itu, bukan jam perangkat. */
-  let t=ksClock.signNow(); let s=md5('fid='+fid+'&time='+t+KS_SALT);
-  await fetch(KS_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'sign='+s+'&fid='+encodeURIComponent(fid)+'&time='+t});
-  /* 2) redeem */
-  t=ksClock.signNow(); s=md5('cdk='+code+'&fid='+fid+'&time='+t+KS_SALT);
-  const body='sign='+s+'&fid='+encodeURIComponent(fid)+'&cdk='+encodeURIComponent(code)+'&time='+t;
+/* Protokol Century per 21 Jul 2026, disadap langsung dari situs resmi
+   ks-giftcode.centurygame.com lalu direproduksi dari nol:
+
+     POST /api/gift_code   sign=<md5>&fid=..&cdk=..&kid=..&time=<epoch DETIK>
+     sign = md5( params urut abjad, "k=v" digabung "&", + KS_SALT )
+
+   Tiga perubahan dari protokol lama:
+   - Langkah "login" ke /api/player DIHAPUS oleh Century. Endpoint-nya kini 404,
+     dan halaman 404-nya tidak mengirim header CORS, jadi di browser fetch-nya
+     REJECT \u2014 itulah "Gagal terhubung" yang muncul ke user (dari CLI cuma
+     kelihatan 404 biasa karena CORS tidak ditegakkan di sana).
+   - `kid` (Kingdom) jadi wajib; tanpa/salah \u2192 40020 USER INFO ERROR.
+   - `time` dalam DETIK; kalau dikirim milidetik \u2192 msg "time Expired". */
+async function ksRedeem(fid,code,kid){
+  kid=String(kid==null?'':kid).trim();
+  /* gagal cepat: tanpa kid server pasti menolak, jangan buang jatah rate limit
+     (30/menit) dan jangan tampilkan error server yang membingungkan. */
+  if(!kid) return {cls:'warn',txt:'Isi Kingdom (nomor server) dulu \u2014 redeem sekarang wajib pakai Kingdom'};
+  const p={cdk:String(code),fid:String(fid),kid,time:Math.floor(ksClock.signNow()/1000)};
+  /* sign dihitung dari nilai MENTAH (bukan yang ter-encode), sesuai request asli */
+  const s=md5(Object.keys(p).sort().map(k=>k+'='+p[k]).join('&')+KS_SALT);
+  const body='sign='+s+'&'+Object.keys(p).map(k=>k+'='+encodeURIComponent(p[k])).join('&');
   const r=await fetch(KS_GIFT_API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
   const j=await r.json();
   const m=String(j.msg==null?'':j.msg).toUpperCase();   /* msg can come back as the NUMBER 40004 -> String() first, else .toUpperCase() throws */
   const ec=Number(j.err_code)||0;
+  /* `done:true` = jangan pernah dicoba ulang untuk karakter ini (lihat ksMarkCode).
+     Dipisah dari `cls` karena cls hanya mengatur warna di UI. */
   if(j.code===0||m.includes('SUCCESS')) return {cls:'ok',txt:'Berhasil'};
-  if(m.includes('RECEIVED')||m.includes('USED')) return {cls:'warn',txt:'Sudah dipakai'};
+  if(m.includes('RECEIVED')||m.includes('USED')) return {cls:'warn',txt:'Sudah dipakai',done:true};
+  /* Terlihat langsung dari akun 330300846 (21 Jul 2026) untuk kode "Kingshot888":
+     akun sudah menukar kode lain dari kelompok hadiah yang sama. Permanen, jadi
+     ditandai selesai — kalau tidak, kode ini ditembak ulang tiap 12 jam selamanya. */
+  if(m.includes('SAME TYPE')) return {cls:'warn',txt:'Sudah ambil kode sejenis',done:true};
+  /* 40020 = pasangan fid+kid tidak dikenal. Error paling mungkin dilihat user
+     sekarang: Kingdom di profil kosong/salah (dulu terisi otomatis lewat
+     /api/player, yang sudah dihapus Century — kini harus diketik manual). */
+  if(ec===40020||m.includes('USER INFO'))
+    return {cls:'bad',txt:'Player ID / Kingdom tidak cocok — cek nomor Kingdom di profil'};
+  /* dicek SEBELUM aturan EXPIRE di bawah, kalau tidak terbaca "Kedaluwarsa" */
+  if(m.includes('TIME EXPIRED'))
+    return {cls:'bad',txt:'Format waktu ditolak server — laporkan sebagai bug app'};
   if(m.includes('CDK')||m.includes('NOT FOUND')) return {cls:'bad',txt:'Kode salah/tak ada'};
   if(m.includes('CAPTCHA')) return {cls:'warn',txt:'Butuh captcha \u2014 redeem in-game'};
   if(m.includes('EXPIRE')) return {cls:'bad',txt:'Kedaluwarsa'};
@@ -350,6 +421,54 @@ async function ksRedeem(fid,code){
   /* hanya kalau server BENAR-BENAR bilang soal waktu (window-nya \u00b124 jam, jadi ini langka) */
   if(m.includes('TIME')) return {cls:'bad',txt:'Jam perangkat meleset jauh \u2014 sinkronkan jam lalu coba lagi'};
   return {cls:'inf',txt:String(j.msg==null?'?':j.msg)};
+}
+
+/* ── Auto-redeem multi-karakter: helper ──────────────────────────────────────
+   Riwayat redeem SUDAH per-profil: 'codesDone' ada di PROFILE_KEYS, jadi
+   tersimpan sebagai ks_p_<pid>_codesDone. Tapi `store` selalu memakai profil
+   AKTIF, padahal kita perlu membaca/menulis riwayat milik SETIAP karakter —
+   makanya di sini dibaca langsung per pid. */
+function codesDoneGet(pid){
+  try{ return JSON.parse(localStorage.getItem('ks_p_'+pid+'_codesDone'))||{}; }catch(e){ return {}; }
+}
+function codesDoneSet(pid,v){
+  try{ localStorage.setItem('ks_p_'+pid+'_codesDone',JSON.stringify(v)); }catch(e){}
+}
+/* Semua karakter terdaftar. Profil lama bisa punya kingdom kosong (dulu diisi
+   otomatis oleh /api/player yang kini dihapus) — tetap dikembalikan supaya UI
+   bisa menandainya "butuh Kingdom", bukan diam-diam dilewati. */
+function ksRedeemTargets(){
+  const seen=new Set(), out=[];
+  for(const p of (store.get('profiles',[])||[])){
+    const pid=String((p&&p.pid)||'').trim(); if(!pid||seen.has(pid)) continue;
+    seen.add(pid); out.push({pid,nick:(p.nick||''),kingdom:String(p.kingdom||'').trim()});
+  }
+  return out;
+}
+/* Kode yang masih perlu ditembak untuk satu karakter: yang belum pernah ok/used,
+   dan yang gagal baru dicoba lagi setelah 12 jam (buka tab berulang = gratis). */
+const KS_REDEEM_RETRY=12*3600*1000;
+function ksCodesTodo(pid,codes){
+  const done=codesDoneGet(pid);
+  return (codes||[]).filter(g=>{ const d=done[String(g.code).toLowerCase()];
+    return !d||(d.r!=='ok'&&d.r!=='used'&&ksClock.signNow()-d.t>KS_REDEEM_RETRY); });
+}
+function ksMarkCode(pid,code,r){
+  const done=codesDoneGet(pid);
+  done[String(code).toLowerCase()]={r:r.cls==='ok'?'ok':(r.done?'used':r.cls),t:ksClock.signNow()};
+  codesDoneSet(pid,done);
+}
+/* Server membatasi 30 permintaan/menit (header X-RateLimit-Limit). Auto-redeem
+   multi-karakter gampang menembusnya (karakter x kode), dan kena limit = semua
+   sisanya gagal. Jaga jarak >= 2,1 detik antar panggilan, global. */
+let KS_REDEEM_GAP=2100, _ksLastRedeem=0;   /* `let` supaya test bisa menolkan jeda */
+async function ksRedeemThrottled(fid,code,kid){
+  /* kid kosong ditolak lokal tanpa jaringan -> jangan buang jatah/waktu tunggu */
+  if(!String(kid==null?'':kid).trim()) return ksRedeem(fid,code,kid);
+  const wait=_ksLastRedeem+KS_REDEEM_GAP-Date.now();
+  if(wait>0) await new Promise(s=>setTimeout(s,wait));
+  _ksLastRedeem=Date.now();
+  return ksRedeem(fid,code,kid);
 }
 /* Live gift codes — aggregated from TWO sources (kingshot.net's API regularly lags
    behind: per 2026-06 it listed 1 active code while kingshotwiki.com had 2).

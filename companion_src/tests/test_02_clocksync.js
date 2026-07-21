@@ -1,33 +1,47 @@
-/* Fix #2 — the clock resync must actually run in a browser.
-   Verified against the live API (curl, Jul 2026): responses carry
-   `Access-Control-Allow-Origin: *` but NO `Access-Control-Expose-Headers`, and
-   `Date` is not a CORS-safelisted response header. So in a browser
-   `res.headers.get('date')` is ALWAYS null and the "this is what kills the 40004"
-   resync at 03_*.js:252/:299 never ran. Node's fetch doesn't enforce CORS, which
-   is why it looked fine when probed from the CLI.
-   Fix: sync from our OWN worker (/time, JSON body — no header exposure needed),
-   fall back to timeapi.io. */
+/* Fix #2 — sumber jam untuk menandatangani permintaan API.
+
+   Sejarah: dulu app menyinkronkan jam dari header `Date` respons. Terverifikasi
+   (Jul 2026) respons Century mengirim `Access-Control-Allow-Origin: *` tapi TANPA
+   `Access-Control-Expose-Headers`, dan `Date` bukan header CORS-safelisted — jadi
+   di browser `res.headers.get('date')` SELALU null dan resync itu tak pernah
+   jalan. Node tidak menegakkan CORS, makanya lolos saat diprobe dari CLI.
+
+   Babak kedua (21 Jul 2026) — kenapa berkas ini berubah lagi:
+   Century mempersempit jendela `time` gift code dari ±24 jam jadi ~±5 menit
+   (terukur: ±300 detik diterima, ±600 detik "time Expired"). Pada saat yang sama
+   /time worker produksi balas 404 (versi ter-deploy lebih tua dari repo) dan
+   SATU-SATUNYA sumber yang hidup, timeapi.io, meleset -554 detik. Hasilnya app
+   memasang offset -9 menit dan SETIAP redeem gagal, padahal jam perangkat benar
+   (dikonfirmasi: cloudflare trace +0 dtk, header Date GitHub -9 dtk).
+
+   Pelajarannya: dengan jendela ±5 menit, offset yang SALAH jauh lebih berbahaya
+   daripada tanpa offset. Jadi offset hanya dipakai kalau DUA sumber independen
+   sepakat; kalau tidak, percayai jam perangkat. */
 const { createEnv, t, eq, ok, done } = require('./harness.js');
 
 const OWN = 'old-kingshot-api.old-kingshot.workers.dev';
-const SRV_NOW = Date.UTC(2026, 6, 16, 12, 0, 0); // authoritative "server" time
+const CF = 'cdn-cgi/trace';
+const TAPI = 'timeapi.io';
 
-/* fetch stub: records calls, replays per-host canned responses */
+/* fetch stub: mencatat panggilan, membalas per-host.
+   - objek  -> dibalas sebagai JSON
+   - string -> dibalas sebagai teks mentah (dipakai cloudflare trace)
+   - 'fail' -> reject */
 function stubFetch(routes) {
   const calls = [];
   return {
     calls,
-    fetch: (url, init) => {
+    fetch: url => {
       calls.push(String(url));
       for (const [pat, res] of routes) {
         if (String(url).includes(pat)) {
           if (res === 'fail') return Promise.reject(new Error('network'));
+          const isText = typeof res === 'string';
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve(res),
-            text: () => Promise.resolve(JSON.stringify(res)),
-            /* browser reality: Date header is not exposed cross-origin */
-            headers: { get: () => null },
+            json: () => (isText ? Promise.reject(new Error('not json')) : Promise.resolve(res)),
+            text: () => Promise.resolve(isText ? res : JSON.stringify(res)),
+            headers: { get: () => null },   // realita browser: Date tidak di-expose
           });
         }
       }
@@ -36,80 +50,183 @@ function stubFetch(routes) {
   };
 }
 
-console.log('Fix #2 — clock sync source');
+/* sumber-sumber yang melaporkan jam = jam perangkat + `skewMs` */
+const worker = skew => ({ now: Date.now() + skew });
+const cfTrace = skew => 'fl=1\nh=cloudflare.com\nts=' + ((Date.now() + skew) / 1000).toFixed(3) + '\n';
+const timeapi = skew => {
+  const d = new Date(Date.now() + skew);
+  return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate(),
+    hour: d.getUTCHours(), minute: d.getUTCMinutes(), seconds: d.getUTCSeconds(), milliSeconds: d.getUTCMilliseconds() };
+};
+
+function envSync(routes) {
+  const s = stubFetch(routes);
+  const env = createEnv({ fetch: s.fetch });
+  const ksClock = env.evalIn('ksClock');
+  ksClock.offset = 0; ksClock.nudge = 0; ksClock.synced = false;
+  return { s, env, ksClock };
+}
+
+console.log('Fix #2 — sumber jam (butuh korroborasi)');
 
 (async () => {
-  /* ---- 1. own worker is the primary source ---- */
+  /* ---- 1. dua sumber sepakat -> offset dipakai ---- */
   {
-    const s = stubFetch([[OWN + '/time', { now: SRV_NOW }]]);
-    const env = createEnv({ fetch: s.fetch });
-    const ksClock = env.evalIn('ksClock');
-    ksClock.offset = 0; ksClock.nudge = 0;
+    const SKEW = 4 * 60000;   // kedua sumber bilang jam perangkat telat 4 menit
+    const { ksClock } = envSync([[OWN + '/time', worker(SKEW)], [CF, cfTrace(SKEW)], [TAPI, 'fail']]);
     const okRes = await ksClock.sync();
-    t('sync() succeeds from our own worker /time', () => ok(okRes === true, 'sync returned ' + okRes));
-    t('sync() hits /time before any third party', () => {
-      ok(s.calls.length >= 1, 'no fetch at all');
-      ok(s.calls[0].includes(OWN + '/time'), 'first call was ' + s.calls[0]);
+    t('dua sumber sepakat -> sync berhasil', () => ok(okRes === true, 'sync mengembalikan ' + okRes));
+    t('offset mendarat di waktu yang disepakati', () => {
+      const drift = ksClock.now().getTime() - (Date.now() + SKEW);
+      ok(Math.abs(drift) < 2000, 'meleset ' + drift + 'ms');
     });
-    t('offset lands on server time', () => {
-      const drift = ksClock.now().getTime() - SRV_NOW;
-      ok(Math.abs(drift) < 2000, 'clock is ' + drift + 'ms off server time');
-    });
-    t('sync marks the clock as synced', () => ok(ksClock.synced === true));
+    t('sync menandai jam sudah tersinkron', () => ok(ksClock.synced === true));
   }
 
-  /* ---- 2. timeapi.io is the fallback when our worker is down ---- */
+  /* ---- 2. SATU sumber saja tidak cukup ----
+     Inilah bug 21 Jul 2026: cuma timeapi.io yang hidup, dan dia meleset 9 menit.
+     Satu sumber tanpa pembanding TIDAK BOLEH menggeser jam. */
   {
-    const s = stubFetch([
-      [OWN + '/time', 'fail'],
-      ['timeapi.io', { year: 2026, month: 7, day: 16, hour: 12, minute: 0, seconds: 0, milliSeconds: 0 }],
+    const { ksClock } = envSync([[OWN + '/time', 'fail'], [CF, 'fail'], [TAPI, timeapi(-554000)]]);
+    const okRes = await ksClock.sync();
+    t('satu sumber sendirian ditolak (tak ada pembanding)', () => {
+      ok(okRes === false, 'sync mengembalikan ' + okRes);
+      eq(ksClock.offset, 0, 'offset dari sumber tunggal terpasang');
+      ok(ksClock.synced === false, 'salah mengaku tersinkron');
+    });
+    t('jam perangkat dipertahankan, bukan digeser 9 menit', () => {
+      const drift = ksClock.now().getTime() - Date.now();
+      ok(Math.abs(drift) < 2000, 'jam bergeser ' + Math.round(drift / 1000) + ' detik');
+    });
+  }
+
+  /* ---- 3. sumber menyimpang kalah suara ----
+     timeapi.io meleset 9 menit sementara worker + cloudflare sepakat: yang dua
+     itu yang menang, bukan rata-rata (rata-rata akan tertarik ke yang salah). */
+  {
+    const SKEW = 2 * 60000;
+    const { ksClock } = envSync([[OWN + '/time', worker(SKEW)], [CF, cfTrace(SKEW)], [TAPI, timeapi(-554000)]]);
+    const okRes = await ksClock.sync();
+    t('sumber menyimpang diabaikan, mayoritas menang', () => {
+      ok(okRes === true, 'sync mengembalikan ' + okRes);
+      const drift = ksClock.now().getTime() - (Date.now() + SKEW);
+      ok(Math.abs(drift) < 2000, 'tertarik ke sumber menyimpang, meleset ' + Math.round(drift / 1000) + ' detik');
+    });
+  }
+
+  /* ---- 4. semua sumber saling tidak sepakat -> jangan tebak ---- */
+  {
+    const { ksClock } = envSync([
+      [OWN + '/time', worker(600000)], [CF, cfTrace(-600000)], [TAPI, timeapi(1800000)],
     ]);
-    const env = createEnv({ fetch: s.fetch });
-    const ksClock = env.evalIn('ksClock');
-    ksClock.offset = 0; ksClock.nudge = 0;
     const okRes = await ksClock.sync();
-    t('falls back to timeapi.io when our worker fails', () => {
-      ok(okRes === true, 'sync returned ' + okRes);
-      ok(s.calls.some(c => c.includes('timeapi.io')), 'timeapi.io was never tried');
-      const drift = ksClock.now().getTime() - SRV_NOW;
-      ok(Math.abs(drift) < 2000, 'fallback clock is ' + drift + 'ms off');
+    t('sumber saling bertentangan -> tolak, pakai jam perangkat', () => {
+      ok(okRes === false, 'sync mengembalikan ' + okRes);
+      eq(ksClock.offset, 0);
+      ok(ksClock.synced === false);
     });
   }
 
-  /* ---- 3. both sources down -> honest failure, device clock, no false "synced" ---- */
+  /* ---- 5. semua mati -> gagal jujur, jam perangkat, tak mengaku synced ---- */
   {
-    const s = stubFetch([[OWN + '/time', 'fail'], ['timeapi.io', 'fail']]);
-    const env = createEnv({ fetch: s.fetch });
-    const ksClock = env.evalIn('ksClock');
-    ksClock.offset = 0; ksClock.nudge = 0; ksClock.synced = false;
+    const { ksClock } = envSync([[OWN + '/time', 'fail'], [CF, 'fail'], [TAPI, 'fail']]);
     const okRes = await ksClock.sync();
-    t('all sources down -> sync() reports failure and does not claim synced', () => {
-      ok(okRes === false, 'sync returned ' + okRes);
-      ok(ksClock.synced === false, 'wrongly marked synced');
+    t('semua sumber mati -> sync melapor gagal dan tidak mengaku synced', () => {
+      ok(okRes === false, 'sync mengembalikan ' + okRes);
+      ok(ksClock.synced === false, 'salah mengaku tersinkron');
+      eq(ksClock.offset, 0);
     });
   }
 
-  /* ---- 4. the dead Date-header path is gone (no reliance on a hidden header) ---- */
+  /* ---- 6. worker produksi 404 (kondisi nyata 21 Jul 2026) ---- */
+  {
+    const SKEW = 90000;
+    const { ksClock } = envSync([
+      [OWN + '/time', { error: 'notfound' }],   // 404 body, tanpa `now`
+      [CF, cfTrace(SKEW)], [TAPI, timeapi(SKEW)],
+    ]);
+    const okRes = await ksClock.sync();
+    t('worker 404 tidak merusak sinkronisasi selama 2 sumber lain sepakat', () => {
+      ok(okRes === true, 'sync mengembalikan ' + okRes);
+      const drift = ksClock.now().getTime() - (Date.now() + SKEW);
+      ok(Math.abs(drift) < 2000, 'meleset ' + drift + 'ms');
+    });
+  }
+
+  /* ---- 7. cloudflare trace memang dipakai (sumber tanpa-CORS-drama) ---- */
+  {
+    const { s, ksClock } = envSync([[OWN + '/time', 'fail'], [CF, cfTrace(0)], [TAPI, timeapi(0)]]);
+    await ksClock.sync();
+    t('cloudflare cdn-cgi/trace ikut ditanya', () =>
+      ok(s.calls.some(c => c.includes(CF)), 'tidak pernah menanyakan ' + CF));
+  }
+
+  /* ---- 7b. offset beracun yang SUDAH tersimpan di perangkat harus mati ----
+     User yang sempat menjalankan versi lama menyimpan offset -554 dtk hasil
+     sumber tunggal. Tanpa pembatalan, nilai itu hidup 24 jam lagi dan tiap
+     redeem gagal — jadi offset lama (tanpa penanda versi) harus diabaikan. */
+  {
+    const env = createEnv({
+      storage: {
+        ks_clockOffset: JSON.stringify(-553770),
+        ks_clockSyncAt: JSON.stringify(Date.now() - 60000),   // baru saja, "masih segar"
+      },
+    });
+    const ksClock = env.evalIn('ksClock');
+    ksClock.load();
+    t('offset tersimpan dari aturan LAMA diabaikan', () => {
+      eq(ksClock.offset, 0, 'offset beracun masih terpakai');
+      ok(ksClock.synced === false, 'mengaku tersinkron berdasarkan offset lama');
+    });
+  }
+
+  /* offset yang dibuat aturan BARU tetap dipercaya (jangan sinkron ulang tiap buka) */
+  {
+    const env = createEnv({
+      storage: {
+        ks_clockOffset: JSON.stringify(45000),
+        ks_clockOffsetV: JSON.stringify(2),
+        ks_clockSyncAt: JSON.stringify(Date.now() - 60000),
+      },
+    });
+    const ksClock = env.evalIn('ksClock');
+    ksClock.load();
+    t('offset ber-korroborasi yang masih segar tetap dipakai', () => {
+      eq(ksClock.offset, 45000);
+      ok(ksClock.synced === true);
+    });
+  }
+
+  /* sync yang gagal harus MEMBUANG offset, bukan membiarkannya menyetir tanda tangan */
+  {
+    const { ksClock } = envSync([[OWN + '/time', 'fail'], [CF, 'fail'], [TAPI, timeapi(-554000)]]);
+    ksClock.offset = -553770;            // nilai beracun dari sesi sebelumnya
+    const okRes = await ksClock.sync();
+    t('sync gagal -> offset lama dibuang, bukan dipertahankan', () => {
+      ok(okRes === false);
+      eq(ksClock.offset, 0, 'offset beracun bertahan setelah sync gagal');
+    });
+  }
+
+  /* ---- 8. jalur header Date yang mati sudah tidak ada ---- */
   {
     const fs = require('fs'), path = require('path');
     const src = fs.readFileSync(path.join(__dirname, '..', '03_7897e180.js'), 'utf8');
-    t('no code reads the CORS-hidden Date response header', () => {
+    t('tak ada kode yang membaca header Date (disembunyikan CORS)', () => {
       const hits = src.split('\n')
         .map((l, i) => [i + 1, l])
         .filter(([, l]) => /headers\.get\(\s*['"]date['"]\s*\)/i.test(l));
-      ok(hits.length === 0, 'still reading Date header at line(s) ' + hits.map(h => h[0]).join(', '));
+      ok(hits.length === 0, 'masih membaca header Date di baris ' + hits.map(h => h[0]).join(', '));
     });
   }
 
-  /* ---- 5. redeem still works end-to-end with no Date header present ---- */
+  /* ---- 9. redeem tetap jalan tanpa header Date sama sekali ---- */
   {
-    const s = stubFetch([
-      ['api/player', { code: 0, data: {} }],
-      ['api/gift_code', { code: 1, msg: 'CDK NOT FOUND.', err_code: 40014 }],
-    ]);
+    const s = stubFetch([['api/gift_code', { code: 1, msg: 'CDK NOT FOUND.', err_code: 40014 }]]);
     const env = createEnv({ fetch: s.fetch });
-    const res = await env.evalIn('ksRedeem')('330300846', 'ABC123');
-    t('regression: ksRedeem works without any Date header', () => eq(res.cls, 'bad'));
+    /* kid wajib sejak protokol Century berubah (Jul 2026) — lihat test_01 */
+    const res = await env.evalIn('ksRedeem')('330300846', 'ABC123', '2114');
+    t('regresi: ksRedeem jalan tanpa header Date', () => eq(res.cls, 'bad'));
   }
 
   done();

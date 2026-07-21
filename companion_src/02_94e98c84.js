@@ -328,7 +328,11 @@ function renderSekarang(){
   (async function(){ let codes=null; try{ codes=await ksLiveCodes(); }catch(e){} const host=$('#sk_codes',el); if(!host) return;
     if(!codes||!codes.length){ host.innerHTML='<div class="gc-note">Tak ada kode aktif / gagal memuat. Cek tab Gift Code.</div>'; return; }
     host.innerHTML=codes.slice(0,4).map(g=>'<div class="gc-row"><code>'+esc(g.code)+'</code><span class="exp">'+(g.exp&&g.exp!=='-'?'s/d '+esc(g.exp):'')+'</span><button class="redeem" data-code="'+esc(g.code)+'">Redeem</button></div>').join('');
-    $$('.redeem',host).forEach(b=>b.onclick=async()=>{ const fid=(p.pid||p.id||'').toString(); if(!fid){ activate('kode'); return; } b.textContent='…'; b.disabled=true; try{ const r=await ksRedeem(fid,b.dataset.code); b.textContent=r&&r.cls==='ok'?'✓ ok':(r?r.txt:'gagal'); if(r&&r.cls==='ok')b.classList.add('done'); }catch(e){ b.textContent='gagal'; } setTimeout(()=>{b.textContent='Redeem';b.disabled=false;b.classList.remove('done');},2000); });
+    /* Kingdom kini wajib (protokol gift-code Century, Jul 2026). Kalau profil aktif
+       belum punya, lempar user ke tab Kode yang punya kolom Kingdom. */
+    $$('.redeem',host).forEach(b=>b.onclick=async()=>{ const fid=(p.pid||p.id||'').toString(); const kid=String(p.kingdom||'').trim();
+      if(!fid||!kid){ activate('kode'); return; } b.textContent='…'; b.disabled=true;
+      try{ const r=await ksRedeemThrottled(fid,b.dataset.code,kid); if(r) ksMarkCode(fid,b.dataset.code,r); b.textContent=r&&r.cls==='ok'?'✓ ok':(r?r.txt:'gagal'); if(r&&r.cls==='ok')b.classList.add('done'); }catch(e){ b.textContent='gagal'; } setTimeout(()=>{b.textContent='Redeem';b.disabled=false;b.classList.remove('done');},2000); });
   })();
   fillNowLive(age);
   fillSoonEvents(age);

@@ -100,19 +100,15 @@ console.log('Fix #3 — profile switching');
       eq(env.evalIn('store').get('profile', {}).start, B.start));
   }
 
-  /* ---- 5. autoDetectProfiles must refresh `start` when the kingdom changes ---- */
+  /* ---- 5. autoDetectProfiles must refresh `start` when the kingdom changes ----
+     Sejak Century menghapus /api/player (Jul 2026), Kingdom tidak lagi datang
+     otoritatif dari server — user yang mengetiknya. Jadi "pindah server" kini =
+     user mengubah Kingdom, sementara `startKid` masih menunjuk server LAMA. */
   {
-    /* player API now reports this fid in a DIFFERENT kingdom than stored */
-    const fetchImpl = url => {
-      if (/api\/player/.test(String(url)))
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({ code: 0, data: { nickname: 'A', kid: B.kid, stove_lv: 22 } }), headers: { get: () => null } });
-      return kingdomFetch({ [A.kid]: A.start, [B.kid]: B.start })(url);
-    };
     const env = envWith(
-      [{ pid: A.pid, nick: 'A', kingdom: A.kid, tc: '20', start: A.start }],
+      [{ pid: A.pid, nick: 'A', kingdom: B.kid, tc: '20', start: A.start, startKid: A.kid }],
       A.pid,
-      { [A.pid]: { pid: A.pid, kingdom: A.kid, tc: '20', start: A.start } },
-      fetchImpl,
+      { [A.pid]: { pid: A.pid, kingdom: B.kid, tc: '20', start: A.start } },
     );
     await env.ctx.autoDetectProfiles();
     const p = env.evalIn('store').get('profile', {});
@@ -126,16 +122,11 @@ console.log('Fix #3 — profile switching');
 
   /* ---- 6. kingdom changed but the date lookup failed -> no stale date ---- */
   {
-    const fetchImpl = url => {
-      if (/api\/player/.test(String(url)))
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({ code: 0, data: { nickname: 'A', kid: '999999', stove_lv: 22 } }), headers: { get: () => null } });
-      return Promise.reject(new Error('offline')); // kingdom-tracker unreachable, no anchor match
-    };
     const env = envWith(
-      [{ pid: A.pid, nick: 'A', kingdom: A.kid, tc: '20', start: A.start }],
+      [{ pid: A.pid, nick: 'A', kingdom: '999999', tc: '20', start: A.start, startKid: A.kid }],
       A.pid,
-      { [A.pid]: { pid: A.pid, kingdom: A.kid, tc: '20', start: A.start } },
-      fetchImpl,
+      { [A.pid]: { pid: A.pid, kingdom: '999999', tc: '20', start: A.start } },
+      () => Promise.reject(new Error('offline')), // kingdom-tracker unreachable, no anchor match
     );
     await env.ctx.autoDetectProfiles();
     const p = env.evalIn('store').get('profile', {});
@@ -146,20 +137,31 @@ console.log('Fix #3 — profile switching');
 
   /* ---- 7. same kingdom, transient lookup failure -> keep what we have ---- */
   {
-    const fetchImpl = url => {
-      if (/api\/player/.test(String(url)))
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({ code: 0, data: { nickname: 'A', kid: A.kid, stove_lv: 22 } }), headers: { get: () => null } });
-      return Promise.reject(new Error('offline'));
-    };
     const env = envWith(
-      [{ pid: A.pid, nick: 'A', kingdom: A.kid, tc: '20', start: A.start }],
+      [{ pid: A.pid, nick: 'A', kingdom: A.kid, tc: '20', start: A.start, startKid: A.kid }],
       A.pid,
       { [A.pid]: { pid: A.pid, kingdom: A.kid, tc: '20', start: A.start } },
-      fetchImpl,
+      () => Promise.reject(new Error('offline')),
     );
     await env.ctx.autoDetectProfiles();
     t('same kingdom + offline keeps the known open date', () =>
       eq(env.evalIn('store').get('profile', {}).start, A.start));
+  }
+
+  /* ---- 8. profil LAMA (belum punya startKid) tak boleh dianggap pindah ---- */
+  {
+    const env = envWith(
+      [{ pid: A.pid, nick: 'A', kingdom: A.kid, tc: '20', start: A.start }],   // tanpa startKid
+      A.pid,
+      { [A.pid]: { pid: A.pid, kingdom: A.kid, tc: '20', start: A.start } },
+      () => Promise.reject(new Error('offline')),
+    );
+    await env.ctx.autoDetectProfiles();
+    const meta = env.evalIn('store').get('profiles', []).find(x => x.pid === A.pid);
+    t('profil lama: startKid di-backfill, tanggal buka tidak dihapus', () => {
+      eq(meta.start, A.start, 'tanggal buka profil lama hilang');
+      eq(String(meta.startKid), A.kid, 'startKid tidak di-backfill');
+    });
   }
 
   done();

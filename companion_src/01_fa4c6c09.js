@@ -1130,10 +1130,11 @@ function renderKode(){
   el.innerHTML=pageHead('Gift Code','Redeem langsung lewat server resmi game \u2014 hadiah masuk mail in-game.')
     +card('Redeem','\u2726',
       `<label class="fl">Player ID</label><input id="cd_fid" value="${esc(p.pid||'')}" inputmode="numeric">
+       <label class="fl">Kingdom (nomor server)</label><input id="cd_kid" value="${esc(p.kingdom||'')}" inputmode="numeric" placeholder="mis. 2114">
        <label class="fl">Kode</label><input id="cd_code" placeholder="mis. VIP777" autocapitalize="characters">
        <div class="row" style="margin-top:12px"><button class="btn" id="cd_go">Redeem</button></div><div id="cd_out"></div>`,null,true)
     +card('Kode Aktif (live)','\u25c9',
-      `<p class="muted small">Diambil live dari kingshot.net + kingshotwiki.com. Kode baru otomatis di-redeem ke Player ID-mu.</p>
+      `<p class="muted small">Diambil live dari kingshot.net + kingshotwiki.com. Kode baru otomatis di-redeem ke semua karakter yang terdaftar di tab Profil.</p>
        <div class="row" style="margin-bottom:10px"><button class="btn sec sm" id="cd_refresh">\u21bb Muat ulang</button><button class="btn sm" id="cd_all">\u26a1 Redeem semua (paksa)</button><button class="btn sm" id="cd_allprof">\ud83d\udc65 Redeem ke semua profil</button></div>
        <div id="cd_live"><div class="muted small">\u23f3 Memuat kode aktif\u2026</div></div>
        <div id="cd_auto"></div>
@@ -1145,34 +1146,39 @@ function renderKode(){
   $('#cd_allprof',el).onclick=()=>redeemAllProfilesUI();
   fetchCodesUI(); /* auto-load on open; chains into auto-redeem of new codes */
 }
-/* Redeem semua kode live ke SEMUA profil tersimpan (loop pid × code). Tidak menyentuh
-   codesDone (per-profil) — itu ditangani auto-redeem saat tiap profil aktif. */
+/* Redeem PAKSA semua kode live ke SEMUA karakter (loop pid × code), mengabaikan
+   riwayat — dipakai kalau user curiga ada yang terlewat. Hasilnya tetap dicatat
+   ke riwayat per-karakter supaya auto-redeem berikutnya tidak mengulanginya. */
 async function redeemAllProfilesUI(){
   const out=$('#cd_allprof_out'); const btn=$('#cd_allprof'); if(btn&&btn.disabled) return;
-  const profs=store.get('profiles',[]).filter(p=>p&&p.pid);
+  const profs=ksRedeemTargets();
   if(!profs.length){ out.innerHTML='<div class="alert warn small">Belum ada profil tersimpan (tab Profil).</div>'; return; }
   if(!_liveCodes.length){ await fetchCodesUI(); }
   if(!_liveCodes.length){ out.innerHTML='<div class="alert warn small">Tidak ada kode untuk di-redeem.</div>'; return; }
   if(_codesFallback){ out.innerHTML='<div class="alert warn small">Daftar live gagal dimuat — redeem manual dari tabel.</div>'; return; }
   if(btn) btn.disabled=true;
-  out.innerHTML='<div class="alert inf small">⏳ Redeem '+_liveCodes.length+' kode ke '+profs.length+' profil…</div>';
+  out.innerHTML='<div class="alert inf small">⏳ Redeem '+_liveCodes.length+' kode ke '+profs.length+' karakter…</div>';
   let html='';
   for(const pr of profs){
-    html+=`<div class="lbl" style="margin:10px 0 4px">${esc(pr.nick||'(tanpa nama)')} · ${esc(pr.pid)}</div>`;
-    for(const g of _liveCodes){ let r; try{ r=await ksRedeem(pr.pid,g.code); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+    html+=`<div class="lbl" style="margin:10px 0 4px">${esc(pr.nick||'(tanpa nama)')} <span class="muted small">#${esc(pr.kingdom||'?')} · ${esc(pr.pid)}</span></div>`;
+    for(const g of _liveCodes){
+      let r; try{ r=await ksRedeemThrottled(pr.pid,g.code,pr.kingdom); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+      if(pr.kingdom) ksMarkCode(pr.pid,g.code,r);
       html+=`<div class="kv"><span class="mono">${esc(g.code)}</span><b style="color:${r.cls==='ok'?'var(--profit)':r.cls==='warn'?'var(--warn)':'var(--loss)'}">${esc(r.txt)}</b></div>`;
-      out.innerHTML=html; await new Promise(s=>setTimeout(s,350)); }
+      out.innerHTML=html; }
   }
   out.innerHTML=html+'<div class="muted small" style="margin-top:6px">Hadiah masuk mail in-game tiap akun.</div>';
   if(btn) btn.disabled=false;
 }
 async function redeemUI(){
   const out=$('#cd_out'),fid=($('#cd_fid').value||'').trim(),code=($('#cd_code').value||'').trim();
+  const kid=(($('#cd_kid')||{}).value||'').trim();
   const btn=$('#cd_go'); if(btn&&btn.disabled) return; /* guard double-click */
   if(!fid||!code){ out.innerHTML='<div class="alert warn small">Isi Player ID & kode dulu.</div>'; return; }
+  if(!kid){ out.innerHTML='<div class="alert warn small">Isi Kingdom (nomor server) \u2014 server game sekarang mewajibkannya.</div>'; return; }
   if(btn) btn.disabled=true;
   out.innerHTML='<div class="alert inf small">\u23f3 Memproses\u2026</div>';
-  try{ const r=await ksRedeem(fid,code); out.innerHTML=`<div class="alert ${r.cls} small">${esc(r.txt)}${r.cls==='ok'?' \u2014 cek mail in-game.':''}</div>`; }
+  try{ const r=await ksRedeemThrottled(fid,code,kid); out.innerHTML=`<div class="alert ${r.cls} small">${esc(r.txt)}${r.cls==='ok'?' \u2014 cek mail in-game.':''}</div>`; }
   catch(e){ out.innerHTML='<div class="alert bad small">Gagal terhubung. Redeem di game (avatar\u2192Settings\u2192Gift Code).</div>'; }
   if(btn) btn.disabled=false;
 }
@@ -1194,43 +1200,53 @@ function codeTable(codes){
       const st=d&&(d.r==='ok'||d.r==='used')?' <span class="small" style="color:var(--profit)">\u2714</span>':'';
       return `<tr><td><b class="mono">${esc(g.code)}</b>${st}</td><td class="small">s/d ${esc(g.exp)}</td><td><button class="btn ghost sm useco" data-c="${esc(g.code)}">pakai</button></td></tr>`;}).join(''):'<tr><td colspan="3" class="muted small">Tidak ada kode aktif.</td></tr>')+'</tbody></table></div>';
 }
-/* Auto-redeem: runs after every live fetch. Only hits the API for codes without a
-   recorded ok/used result (failed ones retry after 12h) \u2014 so reopening the tab is free. */
+/* Auto-redeem: jalan tiap kali daftar kode live selesai dimuat, untuk SEMUA
+   karakter terdaftar (bukan cuma profil aktif). Hanya menembak API untuk kode
+   yang belum ber-hasil ok/used pada karakter ITU \u2014 riwayatnya per-karakter
+   (ks_p_<pid>_codesDone), jadi karakter kedua tidak ikut ter-skip gara-gara
+   karakter pertama sudah redeem. Membuka tab berulang kali tetap gratis. */
 async function autoRedeemNew(){
   const host=$('#cd_auto'); if(!host||_codesFallback||!_liveCodes.length) return;
-  const {p}=profileAge(); const fid=((p&&p.pid)||'').trim();
-  if(!fid){ host.innerHTML='<div class="alert inf small">Hubungkan Player ID (tab Profil) untuk auto-redeem kode baru.</div>'; return; }
-  const done=store.get('codesDone',{}); const RETRY=12*3600*1000;
-  const todo=_liveCodes.filter(g=>{ const d=done[g.code.toLowerCase()];
-    return !d||(d.r!=='ok'&&d.r!=='used'&&Date.now()-d.t>RETRY); });
-  if(!todo.length){ host.innerHTML='<div class="muted small">\u2714 Semua kode aktif sudah pernah di-redeem.</div>'; return; }
-  host.innerHTML='<div class="alert inf small">\u23f3 Auto-redeem '+todo.length+' kode baru\u2026</div>';
-  const res=[];
-  for(const g of todo){ let r; try{ r=await ksRedeem(fid,g.code); }catch(e){ r={cls:'bad',txt:'gagal'}; }
-    done[g.code.toLowerCase()]={r:r.cls==='ok'?'ok':(r.txt==='Sudah dipakai'?'used':r.cls),t:Date.now()};
-    res.push([g.code,r]); }
-  store.set('codesDone',done);
-  host.innerHTML='<div class="lbl" style="margin:8px 0 4px">Auto-redeem kode baru</div>'
-    +res.map(([c,r])=>`<div class="kv"><span class="mono">${esc(c)}</span><b style="color:${r.cls==='ok'?'var(--profit)':r.cls==='warn'?'var(--warn)':'var(--loss)'}">${esc(r.txt)}</b></div>`).join('')
-    +'<div class="muted small" style="margin-top:4px">Hadiah masuk mail in-game.</div>';
+  const targets=ksRedeemTargets();
+  if(!targets.length){ host.innerHTML='<div class="alert inf small">Hubungkan Player ID (tab Profil) untuk auto-redeem kode baru.</div>'; return; }
+  const work=targets.map(t=>({t,todo:ksCodesTodo(t.pid,_liveCodes)})).filter(w=>w.todo.length);
+  const noKid=targets.filter(t=>!t.kingdom);
+  const kidWarn=noKid.length?'<div class="alert warn small">Kingdom belum diisi untuk '
+    +noKid.map(t=>esc(t.nick||t.pid)).join(', ')+' \u2014 isi di tab Profil, tanpa itu server menolak redeem.</div>':'';
+  if(!work.length){ host.innerHTML=kidWarn+'<div class="muted small">\u2714 Semua kode aktif sudah di-redeem ke '+targets.length+' karakter.</div>'; return; }
+  const total=work.reduce((n,w)=>n+w.todo.length,0);
+  host.innerHTML=kidWarn+'<div class="alert inf small">\u23f3 Auto-redeem '+total+' kode ke '+work.length+' karakter\u2026</div>';
+  let html='<div class="lbl" style="margin:8px 0 4px">Auto-redeem kode baru</div>';
+  for(const w of work){
+    html+=`<div class="lbl" style="margin:10px 0 4px">${esc(w.t.nick||'(tanpa nama)')} <span class="muted small">#${esc(w.t.kingdom||'?')} \u00b7 ${esc(w.t.pid)}</span></div>`;
+    for(const g of w.todo){
+      let r; try{ r=await ksRedeemThrottled(w.t.pid,g.code,w.t.kingdom); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+      /* hasil hanya dicatat kalau benar-benar sampai ke server; "Kingdom kosong"
+         bukan alasan menandai kode ini selesai untuk karakter tsb. */
+      if(w.t.kingdom) ksMarkCode(w.t.pid,g.code,r);
+      html+=`<div class="kv"><span class="mono">${esc(g.code)}</span><b style="color:${r.cls==='ok'?'var(--profit)':r.cls==='warn'?'var(--warn)':'var(--loss)'}">${esc(r.txt)}</b></div>`;
+      host.innerHTML=kidWarn+html;
+    }
+  }
+  host.innerHTML=kidWarn+html+'<div class="muted small" style="margin-top:4px">Hadiah masuk mail in-game tiap karakter.</div>';
   const lv=$('#cd_live'); if(lv){ lv.innerHTML=`<div class="alert ok small">\u2705 <b class="num">${_liveCodes.length}</b> kode aktif (live).</div>`+codeTable(_liveCodes); wireCodes(lv); }
 }
 function wireCodes(host){ $$('.useco',host).forEach(b=>b.onclick=()=>{ $('#cd_code').value=b.dataset.c; window.scrollTo(0,0); $('#cd_code').focus(); }); }
 async function redeemAllUI(){
   const out=$('#cd_out'),fid=($('#cd_fid').value||'').trim();
+  const kid=(($('#cd_kid')||{}).value||'').trim();
   const btn=$('#cd_all'); if(btn&&btn.disabled) return; /* guard double-click */
   if(!fid){ out.innerHTML='<div class="alert warn small">Isi Player ID dulu.</div>'; return; }
+  if(!kid){ out.innerHTML='<div class="alert warn small">Isi Kingdom (nomor server) dulu.</div>'; return; }
   if(!_liveCodes.length){ await fetchCodesUI(); }
   if(!_liveCodes.length){ out.innerHTML='<div class="alert warn small">Tidak ada kode untuk di-redeem.</div>'; return; }
   if(_codesFallback){ out.innerHTML='<div class="alert warn small">Daftar live gagal dimuat \u2014 daftar cadangan mungkin kedaluwarsa. Redeem manual satu-satu dari tabel.</div>'; return; }
   if(btn) btn.disabled=true;
   out.innerHTML='<div class="alert inf small">\u23f3 Redeem '+_liveCodes.length+' kode\u2026</div>';
-  const done=store.get('codesDone',{});
   const res=[];
-  for(const g of _liveCodes){ let r; try{ r=await ksRedeem(fid,g.code); }catch(e){ r={cls:'bad',txt:'gagal'}; }
-    done[g.code.toLowerCase()]={r:r.cls==='ok'?'ok':(r.txt==='Sudah dipakai'?'used':r.cls),t:Date.now()};
+  for(const g of _liveCodes){ let r; try{ r=await ksRedeemThrottled(fid,g.code,kid); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+    ksMarkCode(fid,g.code,r);
     res.push([g.code,r]); }
-  store.set('codesDone',done);
   out.innerHTML='<div class="lbl" style="margin:8px 0 4px">Hasil redeem otomatis</div>'+res.map(([c,r])=>`<div class="kv"><span class="mono">${esc(c)}</span><b style="color:${r.cls==='ok'?'var(--profit)':r.cls==='warn'?'var(--warn)':'var(--loss)'}">${esc(r.txt)}</b></div>`).join('');
   if(btn) btn.disabled=false;
 }
@@ -1246,7 +1262,7 @@ function renderProfil(){
       +`<span class="row" style="gap:6px">${isA?'<span class="muted small">aktif</span>':`<button class="btn sec sm" data-sw="${esc(pr.pid)}">Pakai</button>`}`
       +`${_profs.length>1?`<button class="btn ghost sm" data-rm="${esc(pr.pid)}" style="color:var(--loss);border-color:rgba(255,70,85,.45)">Hapus</button>`:''}</span></div>`;
     }).join(''))
-    +`<label class="fl" style="margin-top:10px">Tambah Player ID</label><div class="row"><input id="pf_add" inputmode="numeric" placeholder="mis. 12345678" style="flex:1"><button class="btn sec sm" id="pf_addbtn">\uff0b Tambah</button></div><div id="pf_addstatus" class="muted small"></div>`;
+    +`<label class="fl" style="margin-top:10px">Tambah karakter (Player ID + Kingdom)</label><div class="row"><input id="pf_add" inputmode="numeric" placeholder="Player ID" style="flex:2"><input id="pf_addk" inputmode="numeric" placeholder="Kingdom" style="flex:1"><button class="btn sec sm" id="pf_addbtn">\uff0b Tambah</button></div><div id="pf_addstatus" class="muted small">Kingdom wajib \u2014 redeem gift code sekarang menolak tanpa itu.</div>`;
   el.innerHTML=pageHead('Profil & Koneksi','Hubungkan Player ID sekali \u2014 app baca Kingdom, TC & tanggal server otomatis dan mengingatnya.')
     +card('Profil Tersimpan (multi-akun)','\ud83d\udc65',_profListHtml)
     +card('Player ID (login)','\u25c9',
@@ -1299,13 +1315,16 @@ function renderProfil(){
   });
   const _ab=$('#pf_addbtn',el); if(_ab) _ab.onclick=async()=>{
     const v=($('#pf_add',el).value||'').trim(); const st=$('#pf_addstatus',el);
+    const k=(($('#pf_addk',el)||{}).value||'').trim();
     if(!v){ st.textContent='Isi Player ID.'; return; }
+    if(!k){ st.textContent='Isi Kingdom juga — redeem gift code menolak tanpa itu.'; return; }
     if(store.get('profiles',[]).some(p=>p.pid===v)){ st.textContent='ID sudah ada di daftar.'; return; }
-    st.textContent='⏳ Cek ke server…'; let meta={pid:v,nick:'',kingdom:'',tc:'',start:''};
-    try{ const j=await ksPlayerLookup(v); if(j&&j.code===0&&j.data){ const d=j.data; meta.nick=d.nickname||''; meta.kingdom=String(d.kid||''); meta.tc=String(d.stove_lv||'');
-      /* tanggal buka ikut diambil DI SINI — tanpa ini profil baru dipakai tanpa umur
-         server, dan tab Sekarang/kalender/HoG kosong sampai user tekan "Deteksi" */
-      if(meta.kingdom) meta.start=(await fetchKingdomDate(meta.kingdom))||''; } }catch(e){}
+    /* nama & TC tak bisa lagi diambil dari server (/api/player dihapus Century);
+       tanggal buka MASIH bisa, dan wajib diambil di sini — tanpa itu profil baru
+       tak punya umur server dan tab Sekarang/kalender/HoG kosong. */
+    st.textContent='⏳ Cek tanggal buka Kingdom…'; const meta={pid:v,nick:'',kingdom:k,tc:'',start:''};
+    try{ meta.start=(await fetchKingdomDate(k))||''; }catch(e){}
+    st.textContent=meta.start?'':'Tanggal buka Kingdom tak ketemu — isi manual di atas.';
     const ps=store.get('profiles',[]); ps.push(meta); store.set('profiles',ps);
     renderProfil(); if(typeof updateSideProf==='function') updateSideProf();
   };
@@ -1410,35 +1429,45 @@ function connectProfileTo(fid,d,openDate){
   const oldP=store.get('profile',{});
   store.set('profile',Object.assign({},oldP,{pid:fid,nick:(d&&d.nickname)||oldP.nick||'',kingdom:String((d&&d.kid)||oldP.kingdom||''),tc:String((d&&d.stove_lv)||oldP.tc||''),start:openDate||oldP.start||''}));
 }
-/* Auto-deteksi nama/Kingdom/TC untuk profil yg belum ber-nama (saat load, non-blok). */
+/* Rekonsiliasi tanggal buka server tiap profil (saat load, non-blok).
+
+   Dulu fungsi ini juga menyegarkan nick/Kingdom/TC lewat /api/player — endpoint
+   itu dihapus Century (lihat ksPlayerLookup), jadi Kingdom sekarang milik user:
+   diketik di tab Profil. Yang MASIH bisa diambil otomatis, dan yang paling
+   penting untuk umur server + HoG, adalah tanggal buka kingdom (sumber:
+   kingshot.net) — itu yang dikerjakan di sini.
+
+   Tanggal PASTI bersifat OTORITATIF → menang atas start tersimpan (perkiraan
+   lama / manual keliru), sekaligus otomatis membetulkan profil yang Kingdom-nya
+   baru diubah user. Perkiraan (offline) hanya mengisi start yang masih kosong,
+   ditandai startEst agar di-refresh lagi sampai dapat tanggal pasti. */
 async function autoDetectProfiles(){
-  /* Refresh nick/Kingdom/TC dari server game. TC & Kingdom BISA berubah seiring waktu
-     (TC naik) → JANGAN skip profil yang sudah punya nama; refresh tiap buka app. */
   const profs=store.get('profiles',[]); let changed=false;
   const apid=(typeof _ksActivePid==='function')?_ksActivePid():'';
-  const moved=new Set();   /* pid yang PINDAH kingdom → tanggal buka lama tak berlaku lagi */
+  const moved=new Set();   /* dipertahankan untuk sinkronisasi ke slot aktif di bawah */
   for(const p of profs){ if(!p.pid) continue;
-    try{ const j=await ksPlayerLookup(p.pid);
-      if(j&&j.code===0&&j.data){
-        if(!p.nick && j.data.nickname) p.nick=j.data.nickname;      /* nama: isi kalau kosong (jangan timpa kustom) */
-        const nk=String(j.data.kid||'');                             /* Kingdom & TC: selalu segarkan (otoritatif) */
-        if(nk){
-          /* Kingdom beda = SERVER LAIN = tanggal buka lain. Selalu rekonsiliasi tanggal
-             buka: seed/cache = instan (nyaris tanpa network), jadi murah tiap load.
-             Tanggal PASTI dari API bersifat OTORITATIF → menang atas start tersimpan
-             (perkiraan lama / tanggal UTC salah / manual keliru) supaya umur & HoG akurat.
-             Perkiraan (offline) hanya mengisi start yg masih kosong; ditandai startEst
-             agar di-refresh lagi lain kali sampai dapat tanggal pasti. */
-          const kchanged=(nk!==String(p.kingdom||''));
-          if(kchanged) moved.add(p.pid);
-          const nd=await fetchKingdomDate(nk);
-          if(nd){ if(!window._kdateEst){ if(p.start!==nd){ p.start=nd; changed=true; } if(p.startEst){ delete p.startEst; changed=true; } }
-            else if(kchanged||!p.start){ p.start=nd; p.startEst=true; changed=true; } }   /* pindah / kosong: terima perkiraan (jangan simpan tanggal server LAMA); sama-kingdom: perkiraan tak menimpa tanggal yg sudah ada */
-          else if(kchanged){ if(p.start){ p.start=''; changed=true; } if(p.startEst){ delete p.startEst; changed=true; } }   /* pindah tapi tak diketahui → kosongkan */
-          p.kingdom=nk;
-        }
-        const nt=String(j.data.stove_lv||''); if(nt) p.tc=nt;
-        changed=true; } }catch(e){} }
+    const kid=String(p.kingdom||'').trim(); if(!kid) continue;
+    /* `startKid` = Kingdom ASAL tanggal buka tersimpan. Dulu tak perlu: Kingdom
+       datang otoritatif dari /api/player bareng tanggalnya. Sekarang Kingdom
+       diketik user, jadi tanpa penanda ini profil yang pindah server diam-diam
+       memakai tanggal buka server LAMA → umur & seluruh tanggal HoG meleset.
+       Profil lama belum punya penanda: backfill dengan Kingdom-nya sekarang
+       (dulu memang selalu konsisten), sehingga perpindahan BERIKUTNYA terdeteksi. */
+    if(p.startKid===undefined){ p.startKid=kid; changed=true; }
+    const kchanged=(String(p.startKid)!==kid);
+    try{
+      const nd=await fetchKingdomDate(kid);
+      if(nd){
+        if(!window._kdateEst){ if(p.start!==nd){ p.start=nd; changed=true; } if(p.startEst){ delete p.startEst; changed=true; } }
+        else if(kchanged||!p.start){ p.start=nd; p.startEst=true; changed=true; }   /* perkiraan hanya untuk yg pindah / masih kosong */
+        if(String(p.startKid)!==kid){ p.startKid=kid; changed=true; }
+      }else if(kchanged){   /* pindah tapi tanggalnya tak diketahui → lebih baik kosong daripada salah */
+        if(p.start){ p.start=''; changed=true; }
+        if(p.startEst){ delete p.startEst; changed=true; }
+        p.startKid=kid; changed=true; moved.add(p.pid);
+      }
+      if(kchanged) moved.add(p.pid);
+    }catch(e){} }
   if(changed){ store.set('profiles',profs);
     /* sinkronkan ke profil AKTIF (sumber tampilan profileAge) — kalau tidak, TC di layar tetap basi */
     const act=profs.find(p=>p.pid===apid);
@@ -1462,23 +1491,27 @@ function saveProfile(){
     if(e){ e.kingdom=np.kingdom||e.kingdom; e.tc=np.tc||e.tc; if(np.start) e.start=np.start; store.set('profiles',profs); } }catch(err){}
   renderProfil();
 }
+/* "Deteksi": dulu menanyakan nama/Kingdom/TC ke /api/player dari Player ID saja.
+   Endpoint itu dihapus Century, jadi Kingdom sekarang WAJIB diketik user; yang
+   masih bisa dideteksi otomatis adalah tanggal buka server dari Kingdom itu \u2014
+   dan itulah yang menggerakkan umur server, kalender, dan HoG. */
 async function autoDetectUI(){
   const st=$('#pf_status'),fid=($('#pf_id').value||'').trim();
+  const kid=(($('#pf_k')||{}).value||'').trim();
   if(!fid){ st.innerHTML='<div class="alert warn small">Isi Player ID dulu.</div>'; return; }
-  st.innerHTML='<div class="alert inf small">\u23f3 Menghubungi server game\u2026</div>';
+  if(!kid){ st.innerHTML='<div class="alert warn small">Isi Kingdom (nomor server) dulu \u2014 sejak Juli 2026 server game tak lagi membocorkannya dari Player ID.</div>'; return; }
+  st.innerHTML='<div class="alert inf small">\u23f3 Mencari tanggal buka Kingdom #'+esc(kid)+'\u2026</div>';
   try{
-    const j=await ksPlayerLookup(fid);
-    if(j.code!==0||!j.data){ st.innerHTML='<div class="alert bad small">Player ID tidak ditemukan ('+esc(j.msg||'error')+').</div>'; return; }
-    const d=j.data;
-    let dateMsg='';
-    const openDate=await fetchKingdomDate(d.kid);
-    if(openDate) dateMsg=' \u00b7 server buka '+esc(openDate)+(window._kdateEst?' <span style="color:var(--warn)">(perkiraan \u00b12-3 hari \u2014 offline)</span>':'');
-    else dateMsg=' \u00b7 <span style="color:var(--warn)">tanggal buka tak ketemu, isi manual</span>';
-    /* save via multi-profil helper (sejajarkan slot aktif = ID ini + isi nama) */
-    connectProfileTo(fid,d,openDate);
+    const openDate=await fetchKingdomDate(kid);
+    if(!openDate){ st.innerHTML='<div class="alert warn small">Tanggal buka Kingdom #'+esc(kid)+' tak ketemu (offline/diblokir). Isi manual di kolom "Tanggal buka".</div>'; return; }
+    /* simpan lewat helper multi-profil (slot aktif = ID ini). Nama & TC tidak
+       bisa lagi diambil dari server \u2014 biarkan yang sudah ada, user yang isi. */
+    connectProfileTo(fid,{kid},openDate);
     renderProfil(); renderTopClock();
-    const st2=$('#pf_status'); if(st2) st2.innerHTML='<div class="alert ok small">\u2705 <b>'+esc(d.nickname)+'</b> \u00b7 Kingdom #'+esc(d.kid)+' \u00b7 TC '+esc(d.stove_lv)+dateMsg+'</div>';
-  }catch(e){ const stE=$('#pf_status'); if(stE) stE.innerHTML='<div class="alert bad small">Gagal menghubungi server (offline/diblokir). Isi manual saja.</div>'; }
+    const st2=$('#pf_status'); if(st2) st2.innerHTML='<div class="alert ok small">\u2705 Kingdom #'+esc(kid)+' \u00b7 server buka '+esc(openDate)
+      +(window._kdateEst?' <span style="color:var(--warn)">(perkiraan \u00b12-3 hari \u2014 offline)</span>':'')
+      +'<br><span class="muted small">Nama & level TC isi manual \u2014 server game tak lagi menyediakannya.</span></div>';
+  }catch(e){ const stE=$('#pf_status'); if(stE) stE.innerHTML='<div class="alert bad small">Gagal mengambil tanggal buka (offline/diblokir). Isi manual saja.</div>'; }
 }
 /* (removed dead updateHeaderSub \u2014 the Companion topbar has no #hdrsub element) */
 

@@ -5,7 +5,10 @@
    ============================================================ */
 
 /* ── Kalibrasi & API ── */
-const KS_API='https://kingshot-giftcode.centurygame.com/api/player';
+/* /api/player DIHAPUS Century (terverifikasi 21 Jul 2026: 404, dan halaman
+   404-nya tanpa header CORS sehingga fetch REJECT di browser). Sengaja tidak
+   didefinisikan lagi supaya tak ada yang memakainya kembali — lihat
+   ksPlayerLookup. Kingdom sekarang diketik user, bukan dideteksi. */
 const KS_GIFT_API='https://kingshot-giftcode.centurygame.com/api/gift_code';
 const KS_SALT='mN4!pQs6JrYwV9';
 /* Seed tanggal buka. 2114: API kingdom-tracker = 2026-05-27T00:06Z; dengan konvensi
