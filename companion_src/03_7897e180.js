@@ -11,7 +11,7 @@ const parseNum=v=>{ if(v==null) return 0; v=(''+v).replace(/[.\s]/g,'').replace(
 /* ── Multi-profil: kunci per-profil disimpan ks_p_<pid>_<key>; sisanya global.
    (lastSit sengaja TIDAK per-profil — ephemeral & ada di ksSync._skip.) ── */
 const PROFILE_KEYS=new Set(['profile','roster','trackProg','buildDone','codesDone',
-  'islandMarks','islandSeedV','daily','events','notifFlags','evLog']);
+  'islandMarks','islandSeedV','daily','events','notifFlags','evLog','tcOwned','tcBuffs']);
 function _ksActivePid(){ try{ return JSON.parse(localStorage.getItem('ks_activePid'))||''; }catch(e){ return ''; } }
 function _ksRealKey(k){ return PROFILE_KEYS.has(k) ? ('p_'+_ksActivePid()+'_'+k) : k; }
 const store={

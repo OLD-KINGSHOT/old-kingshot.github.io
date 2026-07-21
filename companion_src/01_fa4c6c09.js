@@ -480,6 +480,111 @@ function _fmtMin(mins){
   if(d) out.push(d+' '+U[0]); if(h) out.push(h+' '+U[1]); if(m||!out.length) out.push(m+' '+U[2]);
   return out.join(' ');
 }
+/* ── Rencana Upgrade TC ──────────────────────────────────────────────────────
+   TC dan bangunan lain sengaja DIPISAH jadi dua tabel dengan subtotal
+   masing-masing: keduanya bersaing memperebutkan antrian bangun yang sama, jadi
+   "berapa lama TC-nya" dan "berapa lama prasyaratnya" adalah dua pertanyaan
+   berbeda yang perlu dijawab terpisah. */
+const TC_NAMA_TAMPIL={TownCenter:'Town Center',Embassy:'Embassy',Academy:'Academy',
+  Barracks:'Barracks',Range:'Range',Stable:'Stable',CommandCenter:'Command Center',
+  Storehouse:'Storehouse',GuardStation:'Guard Station',Infirmary:'Infirmary',
+  HeroHall:'Hero Hall',House1:'House 1',House3:'House 3',IronMine:'Iron Mine',
+  Mill:'Mill',Quarry:'Quarry',Sawmill:'Sawmill'};
+/* bangunan yang levelnya bisa di-custom user (yang punya tabel biaya) */
+const TC_CUSTOM=['Embassy','Academy','Barracks','Range','Stable','CommandCenter'];
+
+function tcFmtDur(s){ s=Math.max(0,Math.round(s));
+  const h=Math.floor(s/86400), j=Math.floor(s%86400/3600), m=Math.floor(s%3600/60);
+  if(h) return h+'h '+j+'j';
+  if(j) return j+'j '+m+'m';
+  return m+'m';
+}
+function tcFmtNum(n){ n=Math.round(n||0);
+  if(n>=1e6) return (n/1e6).toFixed(n>=1e7?0:1).replace('.',',')+'M';
+  if(n>=1e3) return (n/1e3).toFixed(0)+'k';
+  return String(n);
+}
+function tcCostHtml(c){
+  const bag=[['b','Bread'],['w','Wood'],['s','Stone'],['i','Iron'],['t','TG']]
+    .filter(x=>c[x[0]]>0)
+    .map(x=>`<span class="tcres" title="${x[1]}">${x[1].charAt(0)}&nbsp;${tcFmtNum(c[x[0]])}</span>`);
+  return bag.length?bag.join(' '):'<span class="muted">—</span>';
+}
+function tcTabelHtml(baris,judul,kosongMsg){
+  if(!baris.length) return `<div class="lbl" style="margin:10px 0 4px">${esc(judul)}</div><div class="muted small">${esc(kosongMsg)}</div>`;
+  const sub=baris.reduce((a,r)=>({sec:a.sec+r.secBuff,b:a.b+r.cb.b,w:a.w+r.cb.w,s:a.s+r.cb.s,i:a.i+r.cb.i,t:a.t+r.cb.t}),{sec:0,b:0,w:0,s:0,i:0,t:0});
+  return `<div class="lbl" style="margin:10px 0 4px">${esc(judul)} <span class="muted small">· ${baris.length} upgrade</span></div>`
+    +'<div class="scrollx"><table class="tctab"><thead><tr><th>Bangunan</th><th>Bahan</th><th>Durasi</th></tr></thead><tbody>'
+    +baris.map(r=>`<tr><td><b>${esc(TC_NAMA_TAMPIL[r.nama]||r.nama)}</b> <span class="muted">${r.lv}</span>${r.k?' <span title="dua sumber data berbeda di baris ini" style="color:var(--warn)">⚠</span>':''}</td><td class="small">${tcCostHtml(r.cb)}</td><td class="small mono">${tcFmtDur(r.secBuff)}</td></tr>`).join('')
+    +`<tr class="tcsub"><td><b>Subtotal</b></td><td class="small">${tcCostHtml(sub)}</td><td class="small mono"><b>${tcFmtDur(sub.sec)}</b></td></tr>`
+    +'</tbody></table></div>';
+}
+function tcCalcCard(){
+  const bf=store.get('tcBuffs',{}), owned=store.get('tcOwned',{});
+  const {p}=profileAge();
+  const dari=Number(bf.dari||p.tc||1)||1;
+  const ke=Number(bf.ke||Math.min(30,dari+1))||Math.min(30,dari+1);
+  const opt=(sel,min,max)=>{ let o=''; for(let i=min;i<=max;i++) o+=`<option value="${i}"${i===sel?' selected':''}>${i}</option>`; return o; };
+  const rencana=(typeof tcPlan==='function')?tcPlan(dari,ke,owned):[];
+  const hasil=(typeof tcApplyBuffs==='function')?tcApplyBuffs(rencana,bf):{baris:[],total:{c:{b:0,w:0,s:0,i:0,t:0},sec:0},totalDasar:{c:{},sec:0}};
+  const barisTC=hasil.baris.filter(r=>r.jenis==='TC');
+  const barisB=hasil.baris.filter(r=>r.jenis!=='TC');
+  const hemat=hasil.totalDasar.sec>0?Math.round((1-hasil.total.sec/hasil.totalDasar.sec)*100):0;
+  const tanpaData=(typeof TC_TANPA_DATA!=='undefined')?TC_TANPA_DATA:[];
+  /* Prasyarat TC2-12 memakai bangunan yang tabel biayanya belum ada. Diam soal
+     ini akan membuat total terlihat lengkap padahal kurang. */
+  const peringatan=(dari<12&&tanpaData.length)
+    ? `<div class="alert warn small">Rentang TC di bawah 12 memakai bangunan yang biayanya belum ada di data (${tanpaData.map(n=>esc(TC_NAMA_TAMPIL[n]||n)).join(', ')}). Baris itu dilewati, jadi total di bawah <b>lebih kecil</b> dari kenyataan.</div>` : '';
+  return card('Rencana Upgrade TC','▲',
+    `<p class="muted small">Isi TC sekarang → target, lalu level bangunan yang sudah kamu punya. Yang muncul hanya yang masih kurang.</p>
+     <div class="tcwrap">
+       <div class="tccol">
+         <div class="calcgrid" style="margin-bottom:8px">
+           <label class="calcf"><span>TC sekarang</span><select id="tp_dari">${opt(dari,1,30)}</select></label>
+           <label class="calcf"><span>TC target</span><select id="tp_ke">${opt(ke,1,30)}</select></label>
+         </div>
+         ${peringatan}
+         ${tcTabelHtml(barisTC,'Town Center','Tidak ada upgrade TC di rentang ini.')}
+         ${tcTabelHtml(barisB,'Bangunan prasyarat','Semua prasyarat sudah terpenuhi.')}
+         <div class="tctotal">
+           <div class="lbl">TOTAL</div>
+           <div class="kv"><span>Bahan</span><b>${tcCostHtml(hasil.total.c)}</b></div>
+           <div class="kv"><span>Durasi</span><b class="mono">${tcFmtDur(hasil.total.sec)}</b></div>
+           <div class="kv"><span class="muted small">Tanpa buff</span><span class="muted small mono">${tcFmtDur(hasil.totalDasar.sec)}${hemat>0?' · hemat '+hemat+'%':''}</span></div>
+         </div>
+       </div>
+       <div class="tcbuff">
+         <div class="lbl">Buff</div>
+         <label class="calcf"><span>Construction Speed %</span><input id="tp_speed" type="number" min="0" inputmode="numeric" value="${esc(String(bf.speed||0))}"></label>
+         <div class="muted small" style="margin:-4px 0 8px">Salin dari Power Panel — angka itu sudah termasuk riset, gear, King's Position, dan bagian <b>waktu</b> milik Saul.</div>
+         <label class="calcf"><span>Gray Wolf %</span><input id="tp_wolf" type="number" min="0" inputmode="numeric" value="${esc(String(bf.wolf||0))}"></label>
+         <label class="calcf"><span>Posisi/Kingdom %</span><input id="tp_posisi" type="number" min="0" inputmode="numeric" value="${esc(String(bf.posisi||0))}"></label>
+         <label class="calcf"><span>Saul — level skill</span><select id="tp_saul">${[0,1,2,3,4,5].map(i=>`<option value="${i}"${i===Number(bf.saulSkill||0)?' selected':''}>${i?'Lv'+i+' (−'+TC_SAUL_CUT[i]+'% bahan)':'tidak dipakai'}</option>`).join('')}</select></label>
+         <div class="muted small" style="margin:-4px 0 8px">Memotong <b>bahan</b> saja (bukan Truegold). Potongan waktunya sudah ikut di Construction Speed.</div>
+         <label class="calcf chk"><input id="tp_dt" type="checkbox"${bf.doubleTime?' checked':''}> Double Time (−20% durasi)</label>
+         <div class="lbl" style="margin-top:12px">Level yang sudah dipunya</div>
+         ${TC_CUSTOM.map(n=>`<label class="calcf"><span>${esc(TC_NAMA_TAMPIL[n])}</span><select data-own="${n}">${'<option value="0">—</option>'+opt(Number(owned[n]||0),1,30)}</select></label>`).join('')}
+       </div>
+     </div>`,null,true);
+}
+function wireTc(el){
+  const simpan=()=>{
+    const g=id=>{ const e=$('#'+id,el); return e?e.value:''; };
+    const bf={dari:Number(g('tp_dari'))||1,ke:Number(g('tp_ke'))||1,
+      speed:Number(g('tp_speed'))||0,wolf:Number(g('tp_wolf'))||0,
+      posisi:Number(g('tp_posisi'))||0,saulSkill:Number(g('tp_saul'))||0,
+      doubleTime:!!($('#tp_dt',el)||{}).checked};
+    const owned={};
+    $$('[data-own]',el).forEach(s=>{ const v=Number(s.value)||0; if(v) owned[s.dataset.own]=v; });
+    store.set('tcBuffs',bf); store.set('tcOwned',owned);
+    renderKalkulator();          /* render ulang: rencana ikut berubah */
+  };
+  ['tp_dari','tp_ke','tp_speed','tp_wolf','tp_posisi','tp_saul','tp_dt'].forEach(id=>{
+    const e=$('#'+id,el); if(e) e.onchange=simpan;
+  });
+  $$('[data-own]',el).forEach(s=>s.onchange=simpan);
+}
+
 function buildCalcCard(){
   return card('Kalkulator Waktu Bangun & Speedup','🧮',
     `<p class="muted small">Hitung waktu upgrade sebenarnya setelah bonus <b>Construction Speed</b>, dan berapa speedup yang dibutuhkan. Baca <b>base time</b> di layar upgrade dan total <b>Construction Speed %</b> di profil buff-mu (VIP + Research + Chief Minister + pet Gray Wolf + decree).</p>
@@ -581,13 +686,14 @@ function renderKalkulator(){
   const el=$('[data-tab=kalkulator]'); if(!el) return;
   el.innerHTML=pageHead('Kalkulator','Alat hitung: waktu bangun & speedup, dan statistik tempur (power & rasio formasi).')
     +`<div class="seg" id="kk_sub" style="flex-wrap:wrap;margin:4px 0 10px">
-        <button data-s="build">🧮 Building</button><button data-s="stat">⚔ Statistik</button>
+        <button data-s="tc">▲ Rencana TC</button><button data-s="build">🧮 Building</button><button data-s="stat">⚔ Statistik</button>
       </div><div id="kk_subc"></div>`;
-  const KK_SUBS={ build:buildCalcCard(), stat:statCalcCard() };
+  const KK_SUBS={ tc:tcCalcCard(), build:buildCalcCard(), stat:statCalcCard() };
   const showSub=k=>{ if(!KK_SUBS[k]) k='build'; const c=$('#kk_subc',el); if(!c) return;
     c.innerHTML=KK_SUBS[k];
     $$('#kk_sub button',el).forEach(b=>b.classList.toggle('active',b.dataset.s===k));
     store.set('kkSub',k);
+    if(k==='tc') wireTc(el);
     if(k==='build') wireCalc(el);
     if(k==='stat') wireStat(el);
     if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
