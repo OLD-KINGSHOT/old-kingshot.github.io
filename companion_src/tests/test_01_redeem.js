@@ -139,6 +139,24 @@ console.log('Fix #1 — protokol redeem baru (kid + detik + tanpa login)');
     });
   }
 
+  /* TOO FREQUENT = batas laju PER AKUN, terpisah dari X-RateLimit 30/menit.
+     Terukur 21 Jul 2026 (fid 330300846): 6 permintaan berjarak 2,1 dtk sudah
+     memicunya pada permintaan ke-7 padahal header masih sisa 23/30; pulih
+     setelah ~60 detik menganggur; jarak 10 dtk aman untuk 10 permintaan.
+     Ini KEGAGALAN SEMENTARA: jangan ditandai selesai, dan jangan disamakan
+     dengan kode salah. */
+  {
+    const { env } = envWithGiftResponse({ code: 1, data: [], msg: 'TOO FREQUENT.', err_code: 40101 });
+    const res = await env.evalIn('ksRedeem')(FID, CDK, KID);
+    t('TOO FREQUENT dikenali sebagai pembatasan sementara', () => {
+      ok(res.tooFrequent === true, 'tidak ditandai tooFrequent: ' + JSON.stringify(res));
+      ok(!res.done, 'salah ditandai selesai — kode ini tak akan pernah ditebus');
+      eq(res.cls, 'warn');
+    });
+    t('TOO FREQUENT tidak dibaca sebagai kode salah', () =>
+      ok(!/salah|tak ada/i.test(res.txt), 'pesan menyesatkan: ' + res.txt));
+  }
+
   /* Hasil yang permanen harus ditandai `done` supaya auto-redeem berhenti
      mengulangnya tiap 12 jam (lihat ksMarkCode / test_09). */
   for (const c of [

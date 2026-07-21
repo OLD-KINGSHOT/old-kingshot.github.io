@@ -44,7 +44,11 @@ function envWith(profiles, fetchImpl) {
     fetch: fetchImpl,
   });
   env.evalIn('ksClock').offset = 0;
-  env.ctx.KS_REDEEM_GAP = 0;      // jangan tunggu throttle 2,1 detik di test
+  /* HARUS lewat evalIn: KS_REDEEM_GAP dideklarasikan `let` di top-level, jadi ia
+     hidup di lexical scope vm dan BUKAN properti objek global — `env.ctx.X = 0`
+     cuma membuat global baru yang tak pernah dibaca kode, dan test diam-diam
+     berjalan dengan jeda produksi (11 detik). */
+  env.evalIn('KS_REDEEM_GAP = 0; KS_REDEEM_COOLDOWN = 0; _ksLastRedeem = 0; _ksCooldownUntil = 0');
   return env;
 }
 
@@ -170,24 +174,63 @@ console.log('Auto-redeem ke semua karakter');
     });
   }
 
+  /* ---- 5b. TOO FREQUENT: berhenti, jangan tandai, lanjutkan lain kali ----
+     Batas per-akun (terukur: ~6 permintaan/menit, pulih setelah ~60 dtk). Kalau
+     kena, meneruskan penembakan cuma memperpanjang hukuman — dan menandai
+     hasilnya berarti kode yang BELUM ditebus dianggap selesai. */
+  {
+    let n = 0;
+    const { fetch, calls } = redeemFetch(() => (++n <= 1
+      ? { code: 0, msg: 'SUCCESS' }
+      : { code: 1, data: [], msg: 'TOO FREQUENT.', err_code: 40101 }));
+    const env = envWith([A, B], fetch);
+    env.evalIn('_liveCodes = ' + JSON.stringify(CODES));
+    env.evalIn('_codesFallback = false');
+    await env.ctx.autoRedeemNew();
+
+    t('kena TOO FREQUENT -> berhenti menembak, tidak dilanjutkan membabi buta', () => {
+      ok(calls.length <= 2, 'masih menembak ' + calls.length + ' kali setelah dibatasi');
+    });
+    t('hanya yang BENAR-BENAR berhasil yang ditandai', () => {
+      const recA = JSON.parse(env.storage.get(doneKey(A.pid)) || '{}');
+      eq(Object.keys(recA), ['alpha1'], 'riwayat A');
+      eq(recA.alpha1.r, 'ok');
+    });
+    t('kode yang kena batas tetap tersisa untuk dicoba lagi', () => {
+      ok(env.ctx.ksCodesTodo(A.pid, CODES).some(g => g.code === 'BETA2'), 'BETA2 hilang dari antrean');
+      eq(env.ctx.ksCodesTodo(B.pid, CODES).length, 2, 'antrean B');
+    });
+  }
+
   /* ---- 6. throttle rate limit ---- */
   {
     const { fetch } = redeemFetch();
     const env = envWith([A], fetch);
-    env.ctx.KS_REDEEM_GAP = 150;
+    env.evalIn('KS_REDEEM_GAP = 150');
     const t0 = Date.now();
     await env.ctx.ksRedeemThrottled(A.pid, 'ALPHA1', A.kingdom);
     await env.ctx.ksRedeemThrottled(A.pid, 'BETA2', A.kingdom);
     const el = Date.now() - t0;
-    t('panggilan berurutan diberi jeda (lindungi limit 30/menit)', () =>
-      ok(el >= 140, 'hanya ' + el + 'ms — throttle tidak berlaku'));
+    t('panggilan berurutan diberi jeda (lindungi batas per-akun)', () =>
+      ok(el >= 140 && el < 3000, 'elapsed ' + el + 'ms — jeda tidak sesuai setelan'));
+  }
+
+  /* jeda produksi harus cukup lebar untuk batas yang TERUKUR (~6/menit) */
+  {
+    const env = envWith([A]);
+    env.evalIn('KS_REDEEM_GAP = 11000');   // kembalikan ke nilai produksi
+    t('jeda produksi menjaga laju di bawah ~6 permintaan/menit', () => {
+      const gap = env.evalIn('KS_REDEEM_GAP');
+      const perMenit = 60000 / gap;
+      ok(perMenit <= 6, 'jeda ' + gap + 'ms = ' + perMenit.toFixed(1) + '/menit, di atas batas terukur');
+    });
   }
 
   /* kid kosong tidak boleh ikut kena jeda: itu ditolak lokal, bukan permintaan */
   {
     const { fetch, calls } = redeemFetch();
     const env = envWith([A], fetch);
-    env.ctx.KS_REDEEM_GAP = 5000;
+    env.evalIn('KS_REDEEM_GAP = 5000');
     const t0 = Date.now();
     const r = await env.ctx.ksRedeemThrottled(A.pid, 'ALPHA1', '');
     t('kid kosong ditolak instan tanpa jaringan', () => {

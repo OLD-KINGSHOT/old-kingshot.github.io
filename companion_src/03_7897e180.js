@@ -400,6 +400,13 @@ async function ksRedeem(fid,code,kid){
      akun sudah menukar kode lain dari kelompok hadiah yang sama. Permanen, jadi
      ditandai selesai — kalau tidak, kode ini ditembak ulang tiap 12 jam selamanya. */
   if(m.includes('SAME TYPE')) return {cls:'warn',txt:'Sudah ambil kode sejenis',done:true};
+  /* Batas laju PER AKUN, terpisah dari X-RateLimit 30/menit di header. Terukur
+     21 Jul 2026 (fid 330300846): 6 permintaan berjarak 2,1 dtk sudah memicunya
+     pada permintaan ke-7, padahal header masih melaporkan sisa 23/30; pulih
+     setelah ~60 detik menganggur; jarak 10 dtk aman untuk 10 permintaan.
+     SEMENTARA — jangan ditandai selesai, kalau tidak kode yang belum ditebus
+     hilang dari antrean selamanya. */
+  if(m.includes('TOO FREQUENT')) return {cls:'warn',txt:'Dibatasi server — dilanjut otomatis nanti',tooFrequent:true};
   /* 40020 = pasangan fid+kid tidak dikenal. Error paling mungkin dilihat user
      sekarang: Kingdom di profil kosong/salah (dulu terisi otomatis lewat
      /api/player, yang sudah dihapus Century — kini harus diketik manual). */
@@ -458,17 +465,25 @@ function ksMarkCode(pid,code,r){
   done[String(code).toLowerCase()]={r:r.cls==='ok'?'ok':(r.done?'used':r.cls),t:ksClock.signNow()};
   codesDoneSet(pid,done);
 }
-/* Server membatasi 30 permintaan/menit (header X-RateLimit-Limit). Auto-redeem
-   multi-karakter gampang menembusnya (karakter x kode), dan kena limit = semua
-   sisanya gagal. Jaga jarak >= 2,1 detik antar panggilan, global. */
-let KS_REDEEM_GAP=2100, _ksLastRedeem=0;   /* `let` supaya test bisa menolkan jeda */
+/* Ada DUA batas, dan yang mengikat bukan yang tertulis di header:
+     - header X-RateLimit-Limit: 30/menit (longgar), dan
+     - batas per-akun tak terdokumentasi yang membalas "TOO FREQUENT".
+   Terukur langsung 21 Jul 2026 (fid 330300846): jarak 2,1 detik memicu TOO
+   FREQUENT pada permintaan ke-7 padahal header masih sisa 23/30 — jadi header
+   itu menyesatkan. Jarak 10 detik lolos 10 permintaan beruntun; pulih setelah
+   ~60 detik menganggur. Dipakai 11 detik (~5,5/menit) sebagai margin. */
+let KS_REDEEM_GAP=11000, KS_REDEEM_COOLDOWN=60000;   /* `let` supaya test bisa menolkannya */
+let _ksLastRedeem=0, _ksCooldownUntil=0;
 async function ksRedeemThrottled(fid,code,kid){
   /* kid kosong ditolak lokal tanpa jaringan -> jangan buang jatah/waktu tunggu */
   if(!String(kid==null?'':kid).trim()) return ksRedeem(fid,code,kid);
-  const wait=_ksLastRedeem+KS_REDEEM_GAP-Date.now();
+  const wait=Math.max(_ksLastRedeem+KS_REDEEM_GAP,_ksCooldownUntil)-Date.now();
   if(wait>0) await new Promise(s=>setTimeout(s,wait));
   _ksLastRedeem=Date.now();
-  return ksRedeem(fid,code,kid);
+  const r=await ksRedeem(fid,code,kid);
+  /* sudah terlanjur kena: diamkan satu putaran penuh sebelum menembak lagi */
+  if(r&&r.tooFrequent) _ksCooldownUntil=Date.now()+KS_REDEEM_COOLDOWN;
+  return r;
 }
 /* Live gift codes — aggregated from TWO sources (kingshot.net's API regularly lags
    behind: per 2026-06 it listed 1 active code while kingshotwiki.com had 2).

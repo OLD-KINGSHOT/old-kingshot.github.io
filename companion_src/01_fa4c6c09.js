@@ -1163,6 +1163,7 @@ async function redeemAllProfilesUI(){
     html+=`<div class="lbl" style="margin:10px 0 4px">${esc(pr.nick||'(tanpa nama)')} <span class="muted small">#${esc(pr.kingdom||'?')} · ${esc(pr.pid)}</span></div>`;
     for(const g of _liveCodes){
       let r; try{ r=await ksRedeemThrottled(pr.pid,g.code,pr.kingdom); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+      if(r&&r.tooFrequent){ html+='<div class="alert warn small">Server membatasi laju — sisanya belum ditebus, coba lagi ~1 menit lagi.</div>'; out.innerHTML=html; break; }
       if(pr.kingdom) ksMarkCode(pr.pid,g.code,r);
       html+=`<div class="kv"><span class="mono">${esc(g.code)}</span><b style="color:${r.cls==='ok'?'var(--profit)':r.cls==='warn'?'var(--warn)':'var(--loss)'}">${esc(r.txt)}</b></div>`;
       out.innerHTML=html; }
@@ -1194,11 +1195,25 @@ async function fetchCodesUI(){
   autoRedeemNew();
 }
 function codeTable(codes){
-  const done=store.get('codesDone',{});
+  /* Status ditampilkan per KARAKTER, bukan cuma profil aktif: dengan auto-redeem
+     multi-karakter, "\u2714" yang hanya mewakili satu profil menyesatkan \u2014 kode bisa
+     sudah masuk ke karakter A tapi belum ke B. */
+  const targets=(typeof ksRedeemTargets==='function')?ksRedeemTargets():[];
+  const dones=targets.map(t=>codesDoneGet(t.pid));
+  const status=code=>{
+    if(!targets.length) return '';
+    const k=code.toLowerCase();
+    const n=dones.filter(d=>d[k]&&(d[k].r==='ok'||d[k].r==='used')).length;
+    if(!n) return '';
+    if(n===targets.length) return targets.length>1
+      ? ` <span class="small" style="color:var(--profit)">\u2714 semua (${n})</span>`
+      : ' <span class="small" style="color:var(--profit)">\u2714</span>';
+    return ` <span class="small" style="color:var(--warn)">\u2714 ${n}/${targets.length}</span>`;
+  };
   return '<div class="scrollx"><table><thead><tr><th>Kode</th><th>Berlaku</th><th></th></tr></thead><tbody>'+
-    (codes.length?codes.map(g=>{ const d=done[g.code.toLowerCase()];
-      const st=d&&(d.r==='ok'||d.r==='used')?' <span class="small" style="color:var(--profit)">\u2714</span>':'';
-      return `<tr><td><b class="mono">${esc(g.code)}</b>${st}</td><td class="small">s/d ${esc(g.exp)}</td><td><button class="btn ghost sm useco" data-c="${esc(g.code)}">pakai</button></td></tr>`;}).join(''):'<tr><td colspan="3" class="muted small">Tidak ada kode aktif.</td></tr>')+'</tbody></table></div>';
+    (codes.length?codes.map(g=>
+      `<tr><td><b class="mono">${esc(g.code)}</b>${status(g.code)}</td><td class="small">s/d ${esc(g.exp)}</td><td><button class="btn ghost sm useco" data-c="${esc(g.code)}">pakai</button></td></tr>`).join('')
+      :'<tr><td colspan="3" class="muted small">Tidak ada kode aktif.</td></tr>')+'</tbody></table></div>';
 }
 /* Auto-redeem: jalan tiap kali daftar kode live selesai dimuat, untuk SEMUA
    karakter terdaftar (bukan cuma profil aktif). Hanya menembak API untuk kode
@@ -1217,10 +1232,16 @@ async function autoRedeemNew(){
   const total=work.reduce((n,w)=>n+w.todo.length,0);
   host.innerHTML=kidWarn+'<div class="alert inf small">\u23f3 Auto-redeem '+total+' kode ke '+work.length+' karakter\u2026</div>';
   let html='<div class="lbl" style="margin:8px 0 4px">Auto-redeem kode baru</div>';
+  let limited=false;
+  outer:
   for(const w of work){
     html+=`<div class="lbl" style="margin:10px 0 4px">${esc(w.t.nick||'(tanpa nama)')} <span class="muted small">#${esc(w.t.kingdom||'?')} \u00b7 ${esc(w.t.pid)}</span></div>`;
     for(const g of w.todo){
       let r; try{ r=await ksRedeemThrottled(w.t.pid,g.code,w.t.kingdom); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+      /* Kena batas laju = kode ini BELUM ditebus. Berhenti (meneruskan cuma
+         memperpanjang hukuman) dan jangan tandai apa pun, supaya sisanya utuh
+         di antrean dan dilanjutkan saat tab dibuka lagi. */
+      if(r&&r.tooFrequent){ limited=true; break outer; }
       /* hasil hanya dicatat kalau benar-benar sampai ke server; "Kingdom kosong"
          bukan alasan menandai kode ini selesai untuk karakter tsb. */
       if(w.t.kingdom) ksMarkCode(w.t.pid,g.code,r);
@@ -1228,7 +1249,9 @@ async function autoRedeemNew(){
       host.innerHTML=kidWarn+html;
     }
   }
-  host.innerHTML=kidWarn+html+'<div class="muted small" style="margin-top:4px">Hadiah masuk mail in-game tiap karakter.</div>';
+  host.innerHTML=kidWarn+html+(limited
+    ? '<div class="alert warn small" style="margin-top:6px">Server membatasi laju redeem. Sisanya belum ditebus dan akan dilanjutkan otomatis saat tab ini dibuka lagi (~1 menit lagi).</div>'
+    : '<div class="muted small" style="margin-top:4px">Hadiah masuk mail in-game tiap karakter.</div>');
   const lv=$('#cd_live'); if(lv){ lv.innerHTML=`<div class="alert ok small">\u2705 <b class="num">${_liveCodes.length}</b> kode aktif (live).</div>`+codeTable(_liveCodes); wireCodes(lv); }
 }
 function wireCodes(host){ $$('.useco',host).forEach(b=>b.onclick=()=>{ $('#cd_code').value=b.dataset.c; window.scrollTo(0,0); $('#cd_code').focus(); }); }
