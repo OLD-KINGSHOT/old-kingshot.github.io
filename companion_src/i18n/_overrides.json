@@ -799,5 +799,14 @@
   "Memotong bahan saja (bukan Truegold). Potongan waktunya sudah ikut di Construction Speed.": "Cuts resources only (not Truegold). Its time portion is already inside Construction Speed.",
   "Rumus: Construction Speed membagi base (÷ (1 + %/100)), lalu Double Time memotong 20% (×0.8) — bukan stack flat. Double Time TIDAK termasuk dalam stat Construction Speed di Power Panel, jadi dihitung terpisah.": "Formula: Construction Speed divides the base (÷ (1 + %/100)), then Double Time cuts 20% (×0.8) — not a flat stack. Double Time is NOT part of the Power Panel Construction Speed stat, so it is applied separately.",
   "Bangunan": "Building",
-  "Bahan": "Resources"
+  "Bahan": "Resources",
+  "Artisan's Vision + Viking Vengeance Lv12-20": "Artisan's Vision + Viking Vengeance Lv12-20",
+  "Artisan's Vision masuk toko Alliance Championship; Viking Vengeance buka stage Lv12-20": "Artisan's Vision enters the Alliance Championship store; Viking Vengeance unlocks stages Lv12-20",
+  "Gen 2 Heroes masuk Hero Recruitment": "Gen 2 Heroes enter Hero Recruitment",
+  "Gen 2 Heroes mulai muncul di Hero Recruitment & Intel Missions": "Gen 2 Heroes start appearing in Hero Recruitment & Intel Missions",
+  "Truegold Lv8 + Tempered Truegold": "Truegold Lv8 + Tempered Truegold",
+  "Tempered Truegold jadi bottleneck baru di atas TG5": "Tempered Truegold becomes the new bottleneck above TG5",
+  "@title:satu sumber (kingshotguide), belum disilang-cek": "@title:single source (kingshotguide), not cross-checked",
+  "Zoe, Hilde, Marlin (±40-50). Zoe = prioritas F2P!": "Zoe, Hilde, Marlin (±40-50). Zoe = F2P priority!",
+  "King’s Castle Battle pertama": "First King’s Castle Battle"
 }
