@@ -60,6 +60,12 @@ function milestoneHari(id){
   for(var i=0;i<MILESTONES.length;i++) if(MILESTONES[i].id===id) return MILESTONES[i].d;
   return null;
 }
+/* Fitur yang sudah terbuka pada umur server `age` (hari, 1-based).
+   Fungsi murni: tanpa DOM, tanpa localStorage — bisa diuji langsung. */
+function fiturTerbuka(age){
+  var a=Number(age); if(!isFinite(a)) a=-1;
+  return MILESTONES.filter(function(m){ return m.d<=a; });
+}
 const GEN_DAY={1:0,2:50,3:113,4:197,5:281,6:365,7:449};
 const HERO_GEN={Amadeus:1,Helga:1,Jabel:1,Saul:1,Howard:1,Chenko:1,Quinn:1,Diana:1,Gordon:1,Fahd:1,Amane:1,Yeonwoo:1,Edwin:1,Seth:1,Olive:1,Zoe:2,Hilde:2,Marlin:2,Petra:3,Eric:3,Jaeger:3,Rosa:4,Alcar:4,Margot:4,'Long Fei':5,Thrud:5,Vivian:5,Sophia:6,Triton:6,Yang:6};
 /* Leader F2P per kelas, sadar-generasi — Gen 1 belum ada Zoe/Marlin/Petra.

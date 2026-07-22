@@ -112,4 +112,28 @@ t('tidak ada lagi angka 65 tertanam untuk Age of Truegold', () => {
   ok(!/\b65\s*-\s*age\b/.test(src), 'masih ada "65-age" di 01_fa4c6c09.js');
 });
 
+t('fiturTerbuka(0) hanya berisi milestone hari 0', () => {
+  const f = env.evalIn('fiturTerbuka');
+  const r = f(0);
+  eq(r.length, 1, 'jumlah salah');
+  eq(r[0].name, 'Gen 1 Heroes', 'isi salah');
+});
+
+t('fiturTerbuka(70) memuat Age of Truegold, belum memuat War Academy', () => {
+  const f = env.evalIn('fiturTerbuka');
+  const nama = f(70).map(m => m.name);
+  ok(nama.indexOf('Age of Truegold') >= 0, 'Age of Truegold harusnya sudah terbuka di h70');
+  ok(nama.indexOf('War Academy (T11 + Truegold Dust)') < 0, 'War Academy belum terbuka di h70');
+});
+
+t('fiturTerbuka(-1) kosong, bukan error', () => {
+  const f = env.evalIn('fiturTerbuka');
+  eq(f(-1).length, 0, 'umur negatif harusnya kosong');
+});
+
+t('fiturTerbuka(9999) memuat seluruh tabel', () => {
+  const f = env.evalIn('fiturTerbuka');
+  eq(f(9999).length, MS.length, 'harusnya semua baris');
+});
+
 done();
