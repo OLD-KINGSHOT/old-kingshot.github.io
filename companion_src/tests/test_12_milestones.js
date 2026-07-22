@@ -50,4 +50,44 @@ t('tiga baris hasil verifikasi sendiri tetap ada', () => {
   }
 });
 
+t('milestone pet lengkap Gen 1-7', () => {
+  for (const g of [1, 2, 3, 4, 5, 6, 7]) {
+    const row = MS.find(m => m.cat === 'Pet' && m.name === 'Gen ' + g + ' Pets');
+    ok(row, 'tidak ada milestone Gen ' + g + ' Pets');
+  }
+});
+
+t('milestone pet urut naik menurut generasi', () => {
+  const pets = MS.filter(m => m.cat === 'Pet').sort((a, b) => a.d - b.d);
+  eq(pets.map(m => m.name).join(','),
+     'Gen 1 Pets,Gen 2 Pets,Gen 3 Pets,Gen 4 Pets,Gen 5 Pets,Gen 6 Pets,Gen 7 Pets',
+     'urutan generasi pet tidak naik');
+});
+
+t('Truegold Lv8 + Tempered Truegold ada dan ditandai penting', () => {
+  const row = MS.find(m => /Tempered Truegold/.test(m.name));
+  ok(row, 'baris TG8 + Tempered Truegold tidak ada');
+  eq(row.d, 310, 'd salah');
+  eq(row.key, true, 'harusnya ditandai key');
+});
+
+t("Artisan's Vision h170 ada", () => {
+  const row = MS.find(m => /Artisan/.test(m.name));
+  ok(row, "baris Artisan's Vision tidak ada");
+  eq(row.d, 170, 'd salah');
+});
+
+t('Gen 2 Heroes masuk recruitment tercatat', () => {
+  ok(MS.some(m => /Hero Recruitment/.test(m.name) || /Hero Recruitment/.test(m.note || '')),
+     'tidak ada catatan Gen 2 Heroes masuk Hero Recruitment');
+});
+
+t('baris baru bersumber tunggal ditandai src:ksg', () => {
+  for (const n of ['Gen 3 Pets', 'Gen 4 Pets', 'Gen 5 Pets', 'Gen 6 Pets', 'Gen 7 Pets']) {
+    const row = MS.find(m => m.name === n);
+    ok(row, 'baris hilang: ' + n);
+    eq(row.src, 'ksg', 'src salah untuk ' + n);
+  }
+});
+
 done();
