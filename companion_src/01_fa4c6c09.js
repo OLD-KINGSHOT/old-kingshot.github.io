@@ -1660,7 +1660,7 @@ function initAppStars(){
 }
 function injectFavicon(){
   try{
-    var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#0d1219"/><path fill="#6b93f2" d="M3 8.6l3.6 2.8L12 4l5.4 7.4L21 8.6l-1.7 8.8H4.7L3 8.6z"/><rect x="5" y="18.2" width="14" height="1.9" rx=".4" fill="#6b93f2"/></svg>';
+    var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><defs><radialGradient id="b" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#12203a"/><stop offset=".55" stop-color="#0a1120"/><stop offset="1" stop-color="#04060b"/></radialGradient><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9c6ff"/><stop offset="1" stop-color="#5c86ee"/></linearGradient></defs><circle cx="12" cy="12" r="12" fill="url(#b)"/><circle cx="12" cy="12" r="10.7" fill="none" stroke="#6b93f2" stroke-opacity=".45" stroke-width=".7"/><g transform="translate(12 12.4) scale(.74) translate(-12 -12)"><path fill="url(#c)" d="M4.2 9.3l3.3 2.6L12 5.2l4.5 6.7 3.3-2.6-1.6 8.2H5.8L4.2 9.3z"/><rect x="5.8" y="18.6" width="12.4" height="1.7" rx=".35" fill="url(#c)"/></g></svg>';
     var l=document.querySelector('link[rel="icon"]')||document.createElement('link');
     l.rel='icon'; l.type='image/svg+xml'; l.href='data:image/svg+xml,'+encodeURIComponent(svg);
     if(!l.parentNode) document.head.appendChild(l);
