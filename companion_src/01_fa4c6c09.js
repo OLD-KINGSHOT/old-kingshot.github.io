@@ -1420,7 +1420,7 @@ function renderProfil(){
         <div class="stat acc"><div class="sl">Umur Server</div><div class="sv">${age}<span style="font-size:13px"> hari</span></div></div>
         <div class="stat"><div class="sl">Generasi Hero</div><div class="sv sm">${genForAge(age)}</div></div>
         <div class="stat"><div class="sl">Town Center</div><div class="sv">TC${tc||'?'}</div></div>
-        <div class="stat ${truegoldClass(age,tc)}"><div class="sl">Age of Truegold</div><div class="sv sm">${65-age>0?'~'+(65-age)+' hari':'tercapai'}</div></div>
+        <div class="stat ${truegoldClass(age,tc)}"><div class="sl">Age of Truegold</div><div class="sv sm">${(milestoneHari('truegold')||70)-age>0?'~'+((milestoneHari('truegold')||70)-age)+' hari':'tercapai'}</div></div>
        </div>${truegoldAlert(age,tc)}
        <h3>Milestone berikutnya</h3><div class="scrollx"><table><thead><tr><th>H</th><th>Event</th><th>Tgl</th><th>Sisa</th></tr></thead><tbody>
        ${MILESTONES.filter(m=>m.d>age).sort((a,b)=>a.d-b.d).slice(0,6).map(m=>{const {start}=profileAge();return `<tr><td class="num">~${m.d}</td><td><b>${esc(m.name)}</b><div class="muted small">${esc(m.note||'')}</div></td><td class="small">${addDaysFmt(start,m.d)}</td><td class="num">${m.d-age}h</td></tr>`;}).join('')}</tbody></table></div>`):'')
@@ -1536,9 +1536,9 @@ function syncBody(){
     <p class="muted small" style="margin-top:8px">Ambil-data saat app dibuka + tiap 5 menit · unggah otomatis setelah perubahan. Export manual tetap ada sebagai cadangan.</p>
     <div id="sy_status"></div>`;
 }
-function truegoldClass(age,tc){ const d=65-age; if(tc>=30)return 'ok'; if(d<=0)return 'crit'; if(d<15)return 'warn'; return ''; }
+function truegoldClass(age,tc){ const d=(milestoneHari('truegold')||70)-age; if(tc>=30)return 'ok'; if(d<=0)return 'crit'; if(d<15)return 'warn'; return ''; }
 function truegoldAlert(age,tc){
-  const d=65-age;
+  const d=(milestoneHari('truegold')||70)-age;
   if(tc>=30) return '<div class="alert ok small">\u2705 TC30 tercapai \u2014 siap Truegold & KvK.</div>';
   if(d<=0&&tc<30) return `<div class="alert bad small">\u26a0 Age of Truegold lewat tapi TC masih ${tc||'?'}. Kebut TC ke 30.</div>`;
   if(d>0&&tc>0){ const per=d/(30-tc); return `<div class="alert ${per<3?'bad':per<6?'warn':'ok'} small">Menuju Age of Truegold (butuh TC30) sisa <b>${d} hari</b>. Kamu TC${tc} \u2192 ~${per.toFixed(1)} hari/level. ${per<3?'Ketat! Jangan biarkan antrian kosong.':per<6?'Jaga ritme upgrade.':'On-track.'}</div>`; }

@@ -30,7 +30,7 @@ const MILESTONES=[
   {d:50, name:'Gen 2 Heroes', cat:'Hero', note:'Zoe, Hilde, Marlin (\u00b140-50). Zoe = prioritas F2P!', rng:[40,50], src:'ksg+kita'},
   {d:50, name:'King\u2019s Castle Battle pertama', cat:'PvP', note:'(\u00b148-54)', rng:[48,54], src:'ksg+kita'},
   {d:57, name:'Gen 1 Pets', cat:'Pet', note:'Gray Wolf, Lynx, Bison (\u00b155-60)', rng:[55,60], src:'ksg+kita'},
-  {d:65, name:'Age of Truegold', cat:'Truegold', note:'Truegold Lv1-3. WAJIB sudah TC30! (\u00b159-70)', key:true, src:'ksg+kita'},
+  {d:70, id:'truegold', name:'Age of Truegold', cat:'Truegold', note:'Truegold Lv1-3. WAJIB sudah TC30! (\u00b159-70)', key:true, src:'ksg'},
   {d:70, name:'KvK (Kingdom of Power)', cat:'PvP', note:'Eligibel sesudah Age of Truegold, lalu ~bulanan (\u00b170-80)', key:true, rng:[70,80], src:'ksg+kita'},
   {d:76, name:'Gen 2 Pets', cat:'Pet', note:'Cheetah, Moose (\u00b172-80)', rng:[75,80], src:'ksg+kita'},
   {d:105,name:'Gen 3 Pets', cat:'Pet', note:'Lion, Grizzly Bear', rng:[105,110], src:'ksg'},
@@ -52,6 +52,13 @@ const MILESTONES=[
 function genForAge(d){
   if(d>=449)return 'Gen 7'; if(d>=365)return 'Gen 6'; if(d>=281)return 'Gen 5'; if(d>=197)return 'Gen 4';
   if(d>=113)return 'Gen 3'; if(d>=50)return 'Gen 2'; return 'Gen 1';
+}
+/* Cari hari sebuah milestone lewat id. Dipakai supaya angka hari tidak
+   tersalin ke banyak tempat — dulu "65" tertanam di tiga tempat di 01_*.js
+   dan menyimpang dari tabel ini tanpa ada yang sadar. */
+function milestoneHari(id){
+  for(var i=0;i<MILESTONES.length;i++) if(MILESTONES[i].id===id) return MILESTONES[i].d;
+  return null;
 }
 const GEN_DAY={1:0,2:50,3:113,4:197,5:281,6:365,7:449};
 const HERO_GEN={Amadeus:1,Helga:1,Jabel:1,Saul:1,Howard:1,Chenko:1,Quinn:1,Diana:1,Gordon:1,Fahd:1,Amane:1,Yeonwoo:1,Edwin:1,Seth:1,Olive:1,Zoe:2,Hilde:2,Marlin:2,Petra:3,Eric:3,Jaeger:3,Rosa:4,Alcar:4,Margot:4,'Long Fei':5,Thrud:5,Vivian:5,Sophia:6,Triton:6,Yang:6};

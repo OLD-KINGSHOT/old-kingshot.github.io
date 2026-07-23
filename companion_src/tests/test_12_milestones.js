@@ -90,4 +90,26 @@ t('baris baru bersumber tunggal ditandai src:ksg', () => {
   }
 });
 
+t('Age of Truegold = hari 70 (kingshotguide, 2 halaman)', () => {
+  const row = MS.find(m => m.name === 'Age of Truegold');
+  ok(row, 'baris Age of Truegold hilang');
+  eq(row.d, 70, 'harusnya 70; 65 adalah titik tengah tebakan tanpa sumber');
+  eq(row.id, 'truegold', 'butuh id supaya bisa dirujuk tanpa mencocokkan nama');
+});
+
+t('milestoneHari mengembalikan hari dari tabel, bukan angka tertanam', () => {
+  const f = env.evalIn('milestoneHari');
+  eq(f('truegold'), 70, 'milestoneHari("truegold") salah');
+  eq(f('tidak-ada'), null, 'id tak dikenal harus null');
+});
+
+/* Tiga tempat di 01_*.js dulu menanam angka 65 dan menyimpang dari tabel ini
+   tanpa ada yang sadar — app sempat menampilkan dua tanggal Age of Truegold
+   yang berbeda. Test ini menjaga agar tidak kembali begitu. */
+t('tidak ada lagi angka 65 tertanam untuk Age of Truegold', () => {
+  const fs = require('fs'), path = require('path');
+  const src = fs.readFileSync(path.join(__dirname, '..', '01_fa4c6c09.js'), 'utf8');
+  ok(!/\b65\s*-\s*age\b/.test(src), 'masih ada "65-age" di 01_fa4c6c09.js');
+});
+
 done();
