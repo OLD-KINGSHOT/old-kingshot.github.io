@@ -530,10 +530,10 @@ function tcRefRows(nama,withTG){
 }
 function tcTabelHtml(baris,judul,kosongMsg){
   if(!baris.length) return `<div class="lbl" style="margin:10px 0 4px">${esc(judul)}</div><div class="muted small">${esc(kosongMsg)}</div>`;
-  const sub=baris.reduce((a,r)=>({sec:a.sec+r.secBuff,b:a.b+r.cb.b,w:a.w+r.cb.w,s:a.s+r.cb.s,i:a.i+r.cb.i,t:a.t+r.cb.t}),{sec:0,b:0,w:0,s:0,i:0,t:0});
+  const sub=baris.reduce((a,r)=>({sec:a.sec+r.secBuff,b:a.b+r.cb.b,w:a.w+r.cb.w,s:a.s+r.cb.s,i:a.i+r.cb.i,t:a.t+r.cb.t,tt:a.tt+(r.cb.tt||0)}),{sec:0,b:0,w:0,s:0,i:0,t:0,tt:0});
   return `<div class="lbl" style="margin:10px 0 4px">${esc(judul)} <span class="muted small">· ${baris.length} upgrade</span></div>`
     +'<div class="scrollx"><table class="tctab"><thead><tr><th>Bangunan</th><th>Bahan</th><th>Durasi</th></tr></thead><tbody>'
-    +baris.map(r=>`<tr><td><b>${esc(TC_NAMA_TAMPIL[r.nama]||r.nama)}</b> <span class="muted">${r.lv}</span>${r.k?' <span title="dua sumber data berbeda di baris ini" style="color:var(--warn)">⚠</span>':''}</td><td class="small">${tcCostHtml(r.cb)}</td><td class="small mono">${tcFmtDur(r.secBuff)}</td></tr>`).join('')
+    +baris.map(r=>`<tr${r.lv>30?' class="tctg"':''}><td><b>${esc(TC_NAMA_TAMPIL[r.nama]||r.nama)}</b> <span class="muted">${esc(r.label||r.lv)}</span>${r.k?' <span title="dua sumber data berbeda di baris ini" style="color:var(--warn)">⚠</span>':''}</td><td class="small">${tcCostHtml(r.cb)}</td><td class="small mono">${tcFmtDur(r.secBuff)}</td></tr>`).join('')
     +`<tr class="tcsub"><td><b>Subtotal</b></td><td class="small">${tcCostHtml(sub)}</td><td class="small mono"><b>${tcFmtDur(sub.sec)}</b></td></tr>`
     +'</tbody></table></div>';
 }
@@ -541,10 +541,21 @@ function tcCalcCard(){
   const bf=store.get('tcBuffs',{}), owned=store.get('tcOwned',{});
   const {p}=profileAge();
   const dari=Number(bf.dari||p.tc||1)||1;
-  const ke=Number(bf.ke||Math.min(30,dari+1))||Math.min(30,dari+1);
+  const ke=Number(bf.ke||Math.min(70,dari+1))||Math.min(70,dari+1);
   const opt=(sel,min,max)=>{ let o=''; for(let i=min;i<=max;i++) o+=`<option value="${i}"${i===sel?' selected':''}>${i}</option>`; return o; };
-  const rencana=(typeof tcPlan==='function')?tcPlan(dari,ke,owned):[];
-  const hasil=(typeof tcApplyBuffs==='function')?tcApplyBuffs(rencana,bf):{baris:[],total:{c:{b:0,w:0,s:0,i:0,t:0},sec:0},totalDasar:{c:{},sec:0}};
+  /* selektor jalur TC/TG: nilai = ord 1..70, teks = label (30-1..TG8) */
+  const lblOrd=(typeof labelForOrd==='function')?labelForOrd:(x=>String(x));
+  const optOrd=(sel)=>{ let o=''; for(let i=1;i<=70;i++) o+=`<option value="${i}"${i===sel?' selected':''}>${lblOrd(i)}</option>`; return o; };
+  /* Rencana jalur TG: mencapai TG mensyaratkan bangunan ≥ Lv30 (TG1 butuh
+     Embassy/Academy 30), jadi floor owned ke 30 supaya `bangun` tak menyeret
+     langkah pre-30 bangunan yang pasti sudah selesai (mencegah rencana meledak). */
+  let ownedEff=owned;
+  if(dari>=30){
+    ownedEff=Object.assign({},owned);
+    ['Embassy','Academy','Barracks','Range','Stable','CommandCenter'].forEach(n=>{ ownedEff[n]=Math.max(Number(owned[n]||0),30); });
+  }
+  const rencana=(typeof tcPlan==='function')?tcPlan(dari,ke,ownedEff):[];
+  const hasil=(typeof tcApplyBuffs==='function')?tcApplyBuffs(rencana,bf):{baris:[],total:{c:{b:0,w:0,s:0,i:0,t:0,tt:0},sec:0},totalDasar:{c:{},sec:0}};
   const barisTC=hasil.baris.filter(r=>r.jenis==='TC');
   const barisB=hasil.baris.filter(r=>r.jenis!=='TC');
   const hemat=hasil.totalDasar.sec>0?Math.round((1-hasil.total.sec/hasil.totalDasar.sec)*100):0;
@@ -553,15 +564,18 @@ function tcCalcCard(){
      ini akan membuat total terlihat lengkap padahal kurang. */
   const peringatan=(dari<12&&tanpaData.length)
     ? `<div class="alert warn small">Rentang TC di bawah 12 memakai bangunan yang biayanya belum ada di data (${tanpaData.map(n=>esc(TC_NAMA_TAMPIL[n]||n)).join(', ')}). Baris itu dilewati, jadi total di bawah <b>lebih kecil</b> dari kenyataan.</div>` : '';
+  /* Jalur Truegold jauh di depan — beri konteks umur server + asumsi bangunan. */
+  const catatanTG=(ke>30)
+    ? `<div class="alert inf small">Target di jalur Truegold (pasca-Lv30). Baru relevan jauh di depan — Age of Truegold ~hari 70, TG5 ~hari 150, TG8 ~hari 310 umur server. Prasyarat bangunan diasumsikan sudah Lv30.</div>` : '';
   return card('Rencana Upgrade TC','▲',
     `<p class="muted small">Isi TC sekarang → target, lalu level bangunan yang sudah kamu punya. Yang muncul hanya yang masih kurang.</p>
      <div class="tcwrap">
        <div class="tccol">
          <div class="calcgrid" style="margin-bottom:8px">
-           <label class="calcf"><span>TC sekarang</span><select id="tp_dari">${opt(dari,1,30)}</select></label>
-           <label class="calcf"><span>TC target</span><select id="tp_ke">${opt(ke,1,30)}</select></label>
+           <label class="calcf"><span>TC sekarang</span><select id="tp_dari">${optOrd(dari)}</select></label>
+           <label class="calcf"><span>TC target</span><select id="tp_ke">${optOrd(ke)}</select></label>
          </div>
-         ${peringatan}
+         ${peringatan}${catatanTG}
          ${tcTabelHtml(barisTC,'Town Center','Tidak ada upgrade TC di rentang ini.')}
          ${tcTabelHtml(barisB,'Bangunan prasyarat','Semua prasyarat sudah terpenuhi.')}
          <div class="tctotal">

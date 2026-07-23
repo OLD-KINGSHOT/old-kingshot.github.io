@@ -145,4 +145,58 @@ t('speed negatif/ngawur tidak membuat durasi negatif atau tak hingga', () => {
   ok(isFinite(r.total.sec) && r.total.sec > 0, 'durasi jadi ' + r.total.sec);
 });
 
+/* ---- 5. jalur Truegold (pasca-30, ord 31-70) ---- */
+
+// bangunan berjalur-TG maksimal, supaya rencana TC TG tak menyeret prasyarat bangunan
+const OWNED_TG = { Embassy: 70, CommandCenter: 70, Barracks: 70, Range: 70, Stable: 70, Academy: 30 };
+
+t('rencana TG1 (ord 30->35) = 5 langkah TC, total Truegold 660 (band = 5 langkah)', () => {
+  const plan = tcPlan(30, 35, OWNED_TG).filter(r => r.jenis === 'TC');
+  eq(plan.length, 5, 'harus 5 langkah band TG1');
+  eq(plan.map(r => r.label).join(','), '30-1,30-2,30-3,30-4,TG1', 'label langkah');
+  const tot = tcApplyBuffs(plan, {}).total.c.t;
+  eq(tot, 660, 'total Truegold band TG1 (5x132) — cocok kingshot.net');
+});
+
+t('rencana TC30->TG8 menjumlah Tempered Truegold (tt) di total', () => {
+  const plan = tcPlan(30, 70, OWNED_TG).filter(r => r.jenis === 'TC');
+  eq(plan.length, 40, '40 langkah pasca-30');
+  const r = tcApplyBuffs(plan, {});
+  ok(r.total.c.tt > 0, 'Tempered harus > 0 di rentang yang memuat TG5-1..TG8');
+  // tt hanya di ord >= 56 (TG5-1); jumlah langsung dari data harus sama
+  const TG = env.evalIn('TC_TG_LEVELS');
+  const expect = TG.reduce((a, x) => a + x.c.tt, 0);
+  eq(r.total.c.tt, expect, 'total tt harus = jumlah tt seluruh langkah TC TG');
+});
+
+t('Saul tidak memotong Tempered Truegold (seperti Truegold)', () => {
+  const plan = tcPlan(30, 70, OWNED_TG).filter(r => r.jenis === 'TC');
+  const a = tcApplyBuffs(plan, {}).total.c.tt;
+  const b = tcApplyBuffs(plan, { saulSkill: 5 }).total.c.tt;
+  eq(a, b, 'Tempered tak boleh terpotong Saul');
+});
+
+t('prasyarat bangunan TG diselesaikan (TG1-1 butuh Embassy & Stable TG1)', () => {
+  // ke=36 (TG1-1), Embassy/Stable owned di ord 34 -> hanya perlu 1 langkah (ord35=TG1) tiap-tiap
+  const plan = tcPlan(35, 36, { Embassy: 34, Stable: 34, CommandCenter: 70, Barracks: 70, Range: 70, Academy: 30 });
+  const emb = plan.find(r => r.nama === 'Embassy' && r.label === 'TG1');
+  const stb = plan.find(r => r.nama === 'Stable' && r.label === 'TG1');
+  ok(emb, 'Embassy TG1 harus diikutkan sebagai prasyarat');
+  ok(stb, 'Stable TG1 harus diikutkan sebagai prasyarat');
+  ok(plan.some(r => r.jenis === 'TC' && r.label === 'TG1-1'), 'langkah TC TG1-1 harus ada');
+});
+
+t('tcParseReqTG membaca level TG & numerik, melewati rujukan TC', () => {
+  const p = env.evalIn('tcParseReqTG');
+  eq(p('Embassy TG Lv.1 Stable TG Lv.1'), [['Embassy', 35], ['Stable', 35]]);
+  eq(p('Embassy Lv.30, Academy Lv.30'), [['Embassy', 30], ['Academy', 30]]);
+  eq(p('TC TG Lv.5'), [], 'rujukan TC dilewati (jalur utama)');
+});
+
+t('regresi: rencana pre-30 masih menyertakan prasyarat bangunan', () => {
+  const plan = tcPlan(9, 10, {});   // TC10 butuh Range 9 + Academy 1
+  ok(plan.some(r => r.nama === 'Range' && r.lv === 9), 'Range 9 harus ada');
+  ok(plan.some(r => r.jenis === 'TC' && r.lv === 10), 'TC10 harus ada');
+});
+
 done();

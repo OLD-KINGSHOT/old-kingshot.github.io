@@ -815,5 +815,6 @@
   "Bangunan ini mentok Lv30 (tidak punya jalur Truegold).": "This building caps at Lv30 (no Truegold path).",
   "Tidak ada data biaya untuk bangunan ini.": "No cost data for this building.",
   "Jalur Truegold baru relevan jauh di depan — Age of Truegold ~hari 70, TG5 ~hari 150, TG8 ~hari 310 umur server. TG = Truegold, TmpTG = Tempered Truegold.": "The Truegold path only matters far ahead — Age of Truegold ~day 70, TG5 ~day 150, TG8 ~day 310 server age. TG = Truegold, TmpTG = Tempered Truegold.",
-  "Tanpa data biaya per-langkah Truegold (kebutuhan total ada, per-level tidak ada di sumber mana pun):": "No per-step Truegold cost data (total requirement exists, per-level does not in any source):"
+  "Tanpa data biaya per-langkah Truegold (kebutuhan total ada, per-level tidak ada di sumber mana pun):": "No per-step Truegold cost data (total requirement exists, per-level does not in any source):",
+  "Target di jalur Truegold (pasca-Lv30). Baru relevan jauh di depan — Age of Truegold ~hari 70, TG5 ~hari 150, TG8 ~hari 310 umur server. Prasyarat bangunan diasumsikan sudah Lv30.": "Target is on the Truegold path (post-Lv30). Only matters far ahead — Age of Truegold ~day 70, TG5 ~day 150, TG8 ~day 310 server age. Building prerequisites assumed already Lv30."
 }

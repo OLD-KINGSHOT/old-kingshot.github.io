@@ -436,33 +436,61 @@ async function ksRedeem(fid,code,kid){
    risiko terbesar fitur ini ada di ANGKA, bukan tampilan, dan angka hanya bisa
    diuji murah kalau mesinnya tidak menyentuh browser. */
 
-/* Rencana dari TC `dari` ke TC `ke`, hanya yang BELUM dimiliki.
-   `dimiliki` = {namaBangunan: levelTertinggi}, mis. {Academy:27}. */
+/* Parse teks prasyarat jalur TG -> [[namaBangunan, ord]].
+   Contoh: "Embassy TG Lv.1 Stable TG Lv.1" -> [['Embassy',35],['Stable',35]];
+   "Embassy Lv.30, Academy Lv.30" -> [['Embassy',30],['Academy',30]].
+   Rujukan Town Center/TC dilewati: TC = jalur utama (di-handle loop, bukan bangun). */
+function tcParseReqTG(txt){
+  const NM={'town center':'TownCenter','command center':'CommandCenter','tc':'TownCenter',
+    embassy:'Embassy',academy:'Academy',barracks:'Barracks',range:'Range',stable:'Stable',
+    storehouse:'Storehouse',infirmary:'Infirmary'};
+  const re=/(Town Center|Command Center|Embassy|Academy|Barracks|Range|Stable|Storehouse|Infirmary|TC)\s+(TG\s+)?Lv\.?\s*(\d+)/gi;
+  const refs=[]; let m;
+  while((m=re.exec(txt||''))){
+    const key=NM[m[1].toLowerCase()]; if(!key||key==='TownCenter') continue;
+    refs.push([key, m[2]?30+(+m[3])*5:+m[3]]);   /* "TG Lv.N" -> ord 30+N*5; "Lv.N" -> ord N */
+  }
+  return refs;
+}
+
+/* Rencana dari TC `dari` ke TC `ke`, hanya yang BELUM dimiliki. Sumbu ordinal
+   terpadu 1..70: 1-30 = level numerik; 31-70 = jalur Truegold (30-1..TG8).
+   `dimiliki` = {namaBangunan: ordTertinggi}, mis. {Academy:27}. */
 function tcPlan(dari,ke,dimiliki){
   dimiliki=dimiliki||{}; dari=Number(dari)||0; ke=Number(ke)||0;
   if(typeof TC_LEVELS==='undefined') return [];
   const out=[], sudah=new Set(), sedang=new Set();
-  const punya=(n,lv)=>Number(dimiliki[n]||0)>=lv;
+  const punya=(n,ord)=>Number(dimiliki[n]||0)>=ord;
+  const tgB=(typeof TC_TG_BUILDINGS!=='undefined')?TC_TG_BUILDINGS:{};
+  const tgL=(typeof TC_TG_LEVELS!=='undefined')?TC_TG_LEVELS:[];
+  const lbl=(typeof labelForOrd==='function')?labelForOrd:(x=>String(x));
+  function rowB(nama,ord){
+    if(ord<=30){ const t=(typeof TC_BUILDINGS!=='undefined')?TC_BUILDINGS[nama]:null; return t?t.find(x=>x.lv===ord):null; }
+    const t=tgB[nama]; return t?t.find(x=>x.ord===ord):null;
+  }
   /* Bangunan juga mensyaratkan TC (Embassy 9 butuh TC9), jadi grafnya MEMANG
      bisa melingkar. `sedang` membuat penelusuran berhenti alih-alih kehabisan
-     stack — tanpa ini, data yang sah pun bisa menggantungkan app. */
-  function bangun(nama,lv){
-    if(lv<1||punya(nama,lv)) return;
-    const k=nama+' '+lv;
+     stack — tanpa ini, data yang sah pun bisa menggantungkan app. Bangunan naik
+     BERURUTAN (ord-1); prasyarat silang-bangunan-nya sendiri tidak ditelusuri
+     di sini (sama seperti pre-30) — resolusi silang hanya di level jalur TC. */
+  function bangun(nama,ord){
+    if(ord<1||punya(nama,ord)) return;
+    const k=nama+' '+ord;
     if(sudah.has(k)||sedang.has(k)) return;
-    const tbl=(typeof TC_BUILDINGS!=='undefined')?TC_BUILDINGS[nama]:null;
-    const row=tbl?tbl.find(x=>x.lv===lv):null;
+    const row=rowB(nama,ord);
     sedang.add(k);
-    bangun(nama,lv-1);            /* level bangunan wajib berurutan */
+    bangun(nama,ord-1);            /* level bangunan wajib berurutan (lintas 30->31 alami) */
     sedang.delete(k);
     if(!row) return;              /* tabel biayanya belum ada — lihat TC_TANPA_DATA */
-    sudah.add(k); out.push({jenis:'B',nama:nama,lv:lv,c:row.c,sec:row.sec,k:row.k||0});
+    sudah.add(k); out.push({jenis:'B',nama:nama,lv:ord,label:lbl(ord),c:row.c,sec:row.sec,k:row.k||0});
   }
-  for(let lv=dari+1;lv<=ke;lv++){
-    const row=TC_LEVELS.find(x=>x.lv===lv); if(!row) continue;
-    for(const pr of row.p) bangun(pr[0],pr[1]);   /* prasyarat DULU, baru TC-nya */
-    const k='TownCenter '+lv; if(sudah.has(k)) continue;
-    sudah.add(k); out.push({jenis:'TC',nama:'TownCenter',lv:lv,c:row.c,sec:row.sec,k:0});
+  for(let o=dari+1;o<=ke;o++){
+    let row, prereqs;
+    if(o<=30){ row=TC_LEVELS.find(x=>x.lv===o); if(!row) continue; prereqs=row.p; }
+    else { row=tgL.find(x=>x.ord===o); if(!row) continue; prereqs=tcParseReqTG(row.req); }
+    for(const pr of prereqs) bangun(pr[0],pr[1]);   /* prasyarat DULU, baru TC-nya */
+    const k='TownCenter '+o; if(sudah.has(k)) continue;
+    sudah.add(k); out.push({jenis:'TC',nama:'TownCenter',lv:o,label:lbl(o),c:row.c,sec:row.sec,k:0});
   }
   return out;
 }
@@ -483,15 +511,15 @@ function tcApplyBuffs(daftar,buff){
   const baris=(daftar||[]).map(function(r){
     let sec=r.sec/bagi;
     if(buff.doubleTime) sec*=0.8;               /* terpisah dari stat Power Panel */
-    const cb={t:(r.c&&r.c.t)||0};
+    const cb={t:(r.c&&r.c.t)||0, tt:(r.c&&r.c.tt)||0};   /* Truegold & Tempered: tak kena potongan Saul */
     for(const k of TC_RES) cb[k]=Math.round(((r.c&&r.c[k])||0)*(1-cut));
     return Object.assign({},r,{secBuff:Math.round(sec),cb:cb});
   });
-  const kosong=()=>({b:0,w:0,s:0,i:0,t:0});
+  const kosong=()=>({b:0,w:0,s:0,i:0,t:0,tt:0});
   const total={c:kosong(),sec:0}, totalDasar={c:kosong(),sec:0};
   for(const r of baris){
     total.sec+=r.secBuff; totalDasar.sec+=r.sec;
-    for(const k of TC_RES.concat('t')){
+    for(const k of TC_RES.concat(['t','tt'])){
       total.c[k]+=r.cb[k]||0; totalDasar.c[k]+=(r.c&&r.c[k])||0;
     }
   }
