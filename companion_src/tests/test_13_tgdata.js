@@ -81,4 +81,36 @@ t('celah tanpa-data-TG dicatat (Infirmary, WarAcademy)', () => {
   ok(TANPA.indexOf('WarAcademy') >= 0, 'WarAcademy tak tercatat');
 });
 
+t('labelForOrd/ordForLabel bolak-balik konsisten sepanjang 1..70', () => {
+  const labelForOrd = env.evalIn('labelForOrd');
+  const ordForLabel = env.evalIn('ordForLabel');
+  for (let o = 1; o <= 70; o++)
+    eq(ordForLabel(labelForOrd(o)), o, 'putus di ord ' + o + ' (label ' + labelForOrd(o) + ')');
+});
+
+t('labelForOrd memetakan batas jalur TG dengan benar', () => {
+  const f = env.evalIn('labelForOrd');
+  eq(f(30), '30', 'ord 30');
+  eq(f(31), '30-1', 'ord 31');
+  eq(f(34), '30-4', 'ord 34');
+  eq(f(35), 'TG1', 'ord 35 = TG1 (langkah ke-5 band 1)');
+  eq(f(36), 'TG1-1', 'ord 36');
+  eq(f(40), 'TG2', 'ord 40 = TG2');
+  eq(f(70), 'TG8', 'ord 70 = TG8');
+});
+
+t('ordForLabel menolak label tak sah', () => {
+  const f = env.evalIn('ordForLabel');
+  eq(f('TG9'), null, 'TG9 tak ada');
+  eq(f('30-5'), null, '30-5 tak ada');
+  eq(f('99'), null, 'level 99 tak ada');
+  eq(f('TG3-5'), null, 'TG3-5 tak ada');
+});
+
+t('label jalur TG di data cocok labelForOrd', () => {
+  const f = env.evalIn('labelForOrd');
+  for (const [n, rows] of Object.entries(semua))
+    for (const r of rows) eq(r.label, f(r.ord), n + ' ord ' + r.ord);
+});
+
 done();

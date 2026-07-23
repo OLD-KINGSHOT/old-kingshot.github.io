@@ -559,3 +559,26 @@ const TC_TG_BUILDINGS={
 /* Punya kebutuhan Truegold TOTAL (kingshot.net) tapi TANPA data biaya
    per-langkah pasca-30 di sumber mana pun — UI mengatakannya, tak diam. */
 const TC_TG_TANPA_DATA=['Infirmary','WarAcademy'];
+
+/* Konversi sumbu ordinal terpadu <-> label tampilan.
+   ord 1..30  = level numerik biasa -> "1".."30"
+   ord 31..70 = jalur TG (40 langkah): "30-1".."30-4","TG1","TG1-1".."TG8".
+   Baris "TGn" adalah langkah ke-5 (kelipatan 5 setelah ord 30). */
+function labelForOrd(ord){
+  ord=Number(ord);
+  if(!(ord>=1)) return String(ord);
+  if(ord<=30) return String(ord);
+  var p=ord-30;                                  // 1..40 di jalur TG
+  if(p<=4) return '30-'+p;
+  var band=Math.floor((p-1)/5), step=(p-1)%5+1;  // band 0-based, step 1..5
+  return step===5 ? 'TG'+(band+1) : 'TG'+band+'-'+step;
+}
+function ordForLabel(label){
+  label=String(label).replace(/\s+/g,'').toUpperCase();
+  var m;
+  if(/^\d+$/.test(label)){ var n=+label; return (n>=1&&n<=30)?n:null; }
+  if((m=label.match(/^30-([1-4])$/))) return 30+ +m[1];
+  if((m=label.match(/^TG([1-8])$/)))  return 30+ +m[1]*5;
+  if((m=label.match(/^TG([1-7])-([1-4])$/))) return 30+ +m[1]*5+ +m[2];
+  return null;
+}
