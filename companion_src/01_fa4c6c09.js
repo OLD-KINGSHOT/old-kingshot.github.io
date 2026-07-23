@@ -505,10 +505,28 @@ function tcFmtNum(n){ n=Math.round(n||0);
   return String(n);
 }
 function tcCostHtml(c){
-  const bag=[['b','Bread'],['w','Wood'],['s','Stone'],['i','Iron'],['t','TG']]
+  const bag=[['b','Bread','B'],['w','Wood','W'],['s','Stone','S'],['i','Iron','I'],['t','Truegold','TG'],['tt','Tempered Truegold','TmpTG']]
     .filter(x=>c[x[0]]>0)
-    .map(x=>`<span class="tcres" title="${x[1]}">${x[1].charAt(0)}&nbsp;${tcFmtNum(c[x[0]])}</span>`);
+    .map(x=>`<span class="tcres" title="${x[1]}">${x[2]}&nbsp;${tcFmtNum(c[x[0]])}</span>`);
   return bag.length?bag.join(' '):'<span class="muted">—</span>';
+}
+/* Baris referensi terpadu (pre-30 + TG) untuk satu bangunan. Fungsi murni;
+   dipakai sub-tab Tabel Biaya. `withTG` hanya berlaku bila bangunan punya jalur TG. */
+const TC_TG_CAPABLE=['TownCenter','Embassy','CommandCenter','Barracks','Range','Stable'];
+function tcRefRows(nama,withTG){
+  let rows;
+  if(nama==='TownCenter'){
+    rows=(typeof TC_LEVELS!=='undefined'?TC_LEVELS:[]).map(r=>({ord:r.lv,label:String(r.lv),
+      req:(r.p||[]).map(p=>(TC_NAMA_TAMPIL[p[0]]||p[0])+' '+p[1]).join(', '),c:r.c,sec:r.sec,k:r.k||0}));
+  } else {
+    rows=((typeof TC_BUILDINGS!=='undefined'&&TC_BUILDINGS[nama])||[]).map(r=>({ord:r.lv,label:String(r.lv),req:'',c:r.c,sec:r.sec,k:r.k||0}));
+  }
+  if(withTG&&TC_TG_CAPABLE.indexOf(nama)>=0){
+    const tg=nama==='TownCenter'?(typeof TC_TG_LEVELS!=='undefined'?TC_TG_LEVELS:[])
+      :((typeof TC_TG_BUILDINGS!=='undefined'&&TC_TG_BUILDINGS[nama])||[]);
+    rows=rows.concat(tg.map(r=>({ord:r.ord,label:r.label,req:r.req||'',c:r.c,sec:r.sec,k:0})));
+  }
+  return rows;
 }
 function tcTabelHtml(baris,judul,kosongMsg){
   if(!baris.length) return `<div class="lbl" style="margin:10px 0 4px">${esc(judul)}</div><div class="muted small">${esc(kosongMsg)}</div>`;
@@ -583,6 +601,42 @@ function wireTc(el){
     const e=$('#'+id,el); if(e) e.onchange=simpan;
   });
   $$('[data-own]',el).forEach(s=>s.onchange=simpan);
+}
+
+/* ── Sub-tab Tabel Biaya: referensi biaya penuh per bangunan (Lv1-30 + TG) ── */
+function tcTableRefCard(){
+  const buildings=['TownCenter'].concat(
+    (typeof TC_BUILDINGS!=='undefined')?Object.keys(TC_BUILDINGS):[]);
+  let sel=store.get('tcRefB','TownCenter'); if(buildings.indexOf(sel)<0) sel='TownCenter';
+  const punyaTG=TC_TG_CAPABLE.indexOf(sel)>=0;
+  const withTG=punyaTG&&store.get('tcRefTG',true)!==false;
+  const rows=tcRefRows(sel,withTG);
+  const tanpaTG=(typeof TC_TG_TANPA_DATA!=='undefined')?TC_TG_TANPA_DATA:[];
+  const opt=buildings.map(b=>`<option value="${b}"${b===sel?' selected':''}>${esc(TC_NAMA_TAMPIL[b]||b)}</option>`).join('');
+  const adaReq=rows.some(r=>r.req);
+  const tabel=rows.length
+    ? `<div class="scrollx"><table class="tctab"><thead><tr><th>Lv</th>${adaReq?'<th>Prasyarat</th>':''}<th>Bahan</th><th>Durasi</th></tr></thead><tbody>`
+      +rows.map(r=>{const tg=r.ord>30?' class="tctg"':'';return `<tr${tg}><td class="mono">${esc(r.label)}${r.k?' <span title="dua sumber data berbeda di baris ini" style="color:var(--warn)">⚠</span>':''}</td>${adaReq?`<td class="small">${esc(r.req)||'<span class="muted">—</span>'}</td>`:''}<td class="small">${tcCostHtml(r.c)}</td><td class="small mono">${tcFmtDur(r.sec)}</td></tr>`;}).join('')
+      +'</tbody></table></div>'
+    : '<div class="muted small">Tidak ada data biaya untuk bangunan ini.</div>';
+  const catatanTG=punyaTG
+    ? `<label class="calcf chk" style="margin:2px 0 8px"><input id="tr_tg" type="checkbox"${withTG?' checked':''}> Tampilkan jalur Truegold (pasca-Lv30 → TG8)</label>`
+    : `<div class="muted small" style="margin:2px 0 8px">Bangunan ini mentok Lv30 (tidak punya jalur Truegold).</div>`;
+  const catatanRelevansi=(withTG)
+    ? `<div class="alert inf small">Jalur Truegold baru relevan jauh di depan — Age of Truegold ~hari 70, TG5 ~hari 150, TG8 ~hari 310 umur server. TG = Truegold, TmpTG = Tempered Truegold.</div>` : '';
+  const catatanCelah=(tanpaTG.length&&sel==='TownCenter')
+    ? `<div class="muted small" style="margin-top:6px"><span>Tanpa data biaya per-langkah Truegold (kebutuhan total ada, per-level tidak ada di sumber mana pun):</span> ${tanpaTG.map(n=>esc(TC_NAMA_TAMPIL[n]||n)).join(', ')}</div>` : '';
+  return card('Tabel Biaya','📋',
+    `<p class="muted small">Referensi biaya & durasi upgrade tiap level. Pilih bangunan; centang Truegold untuk melihat langkah pasca-Lv30.</p>
+     <label class="calcf" style="max-width:280px"><span>Bangunan</span><select id="tr_b">${opt}</select></label>
+     ${catatanTG}
+     ${catatanRelevansi}
+     ${tabel}
+     ${catatanCelah}`,null,true);
+}
+function wireTcRef(el){
+  const b=$('#tr_b',el); if(b) b.onchange=()=>{ store.set('tcRefB',b.value); renderKalkulator(); };
+  const tg=$('#tr_tg',el); if(tg) tg.onchange=()=>{ store.set('tcRefTG',tg.checked); renderKalkulator(); };
 }
 
 function buildCalcCard(){
@@ -686,9 +740,9 @@ function renderKalkulator(){
   const el=$('[data-tab=kalkulator]'); if(!el) return;
   el.innerHTML=pageHead('Kalkulator','Alat hitung: waktu bangun & speedup, dan statistik tempur (power & rasio formasi).')
     +`<div class="seg" id="kk_sub" style="flex-wrap:wrap;margin:4px 0 10px">
-        <button data-s="tc">▲ Rencana TC</button><button data-s="build">🧮 Building</button><button data-s="stat">⚔ Statistik</button>
+        <button data-s="tc">▲ Rencana TC</button><button data-s="build">🧮 Building</button><button data-s="stat">⚔ Statistik</button><button data-s="tabel">📋 Tabel Biaya</button>
       </div><div id="kk_subc"></div>`;
-  const KK_SUBS={ tc:tcCalcCard(), build:buildCalcCard(), stat:statCalcCard() };
+  const KK_SUBS={ tc:tcCalcCard(), build:buildCalcCard(), stat:statCalcCard(), tabel:tcTableRefCard() };
   const showSub=k=>{ if(!KK_SUBS[k]) k='build'; const c=$('#kk_subc',el); if(!c) return;
     c.innerHTML=KK_SUBS[k];
     $$('#kk_sub button',el).forEach(b=>b.classList.toggle('active',b.dataset.s===k));
@@ -696,6 +750,7 @@ function renderKalkulator(){
     if(k==='tc') wireTc(el);
     if(k==='build') wireCalc(el);
     if(k==='stat') wireStat(el);
+    if(k==='tabel') wireTcRef(el);
     if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
   $$('#kk_sub button',el).forEach(b=>b.onclick=()=>showSub(b.dataset.s));
   showSub(store.get('kkSub','build'));

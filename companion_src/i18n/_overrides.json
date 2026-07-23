@@ -808,5 +808,12 @@
   "Tempered Truegold jadi bottleneck baru di atas TG5": "Tempered Truegold becomes the new bottleneck above TG5",
   "@title:satu sumber (kingshotguide), belum disilang-cek": "@title:single source (kingshotguide), not cross-checked",
   "Zoe, Hilde, Marlin (±40-50). Zoe = prioritas F2P!": "Zoe, Hilde, Marlin (±40-50). Zoe = F2P priority!",
-  "King’s Castle Battle pertama": "First King’s Castle Battle"
+  "King’s Castle Battle pertama": "First King’s Castle Battle",
+  "Tabel Biaya": "Cost Table",
+  "Referensi biaya & durasi upgrade tiap level. Pilih bangunan; centang Truegold untuk melihat langkah pasca-Lv30.": "Reference of upgrade cost & duration per level. Pick a building; tick Truegold to see the post-Lv30 steps.",
+  "Tampilkan jalur Truegold (pasca-Lv30 → TG8)": "Show Truegold path (post-Lv30 → TG8)",
+  "Bangunan ini mentok Lv30 (tidak punya jalur Truegold).": "This building caps at Lv30 (no Truegold path).",
+  "Tidak ada data biaya untuk bangunan ini.": "No cost data for this building.",
+  "Jalur Truegold baru relevan jauh di depan — Age of Truegold ~hari 70, TG5 ~hari 150, TG8 ~hari 310 umur server. TG = Truegold, TmpTG = Tempered Truegold.": "The Truegold path only matters far ahead — Age of Truegold ~day 70, TG5 ~day 150, TG8 ~day 310 server age. TG = Truegold, TmpTG = Tempered Truegold.",
+  "Tanpa data biaya per-langkah Truegold (kebutuhan total ada, per-level tidak ada di sumber mana pun):": "No per-step Truegold cost data (total requirement exists, per-level does not in any source):"
 }
