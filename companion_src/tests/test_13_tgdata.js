@@ -113,4 +113,33 @@ t('label jalur TG di data cocok labelForOrd', () => {
     for (const r of rows) eq(r.label, f(r.ord), n + ' ord ' + r.ord);
 });
 
+/* tcRefRows menyatukan pre-30 + TG untuk sub-tab Tabel Biaya (fungsi di 01_*.js). */
+t('tcRefRows TownCenter+TG = 29 (Lv2-30) + 40 TG', () => {
+  const f = env.evalIn('tcRefRows');
+  const r = f('TownCenter', true);
+  eq(r.length, 69, 'jumlah baris TownCenter');
+  eq(r[0].ord, 2, 'TC mulai Lv2');
+  eq(r[r.length - 1].label, 'TG8', 'TC berakhir TG8');
+});
+
+t('tcRefRows Embassy+TG = 30 + 40', () => {
+  const f = env.evalIn('tcRefRows');
+  eq(f('Embassy', true).length, 70, 'Embassy dgn TG');
+  eq(f('Embassy', false).length, 30, 'Embassy tanpa TG');
+});
+
+t('tcRefRows mengabaikan TG untuk bangunan tak berjalur-TG', () => {
+  const f = env.evalIn('tcRefRows');
+  eq(f('Academy', true).length, 30, 'Academy tetap 30 walau withTG');
+  eq(f('Storehouse', true).length, 30, 'Storehouse tetap 30');
+});
+
+t('baris TG di tcRefRows membawa tt dan label TG', () => {
+  const f = env.evalIn('tcRefRows');
+  const r = f('TownCenter', true);
+  const tg8 = r[r.length - 1];
+  eq(tg8.label, 'TG8', 'label TG8');
+  ok(tg8.c.tt > 0, 'TG8 punya Tempered');
+});
+
 done();
