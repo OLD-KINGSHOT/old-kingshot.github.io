@@ -28,7 +28,7 @@ const MILESTONES=[
   {d:36, name:'Fertile Land terbuka', cat:'Map', note:'(\u00b133-38)', rng:[33,38], src:'ksg+kita'},
   {d:45, name:'Alliance Resource Exchange', cat:'Alliance', note:'', src:'ksg+kita'},
   {d:50, name:'Gen 2 Heroes', cat:'Hero', note:'Zoe, Hilde, Marlin (\u00b140-50). Zoe = prioritas F2P!', rng:[40,50], src:'ksg+kita'},
-  {d:50, name:'King\u2019s Castle Battle pertama', cat:'PvP', note:'(\u00b148-54)', rng:[48,54], src:'ksg+kita'},
+  {d:54, name:'King\u2019s Castle Battle pertama', cat:'PvP', note:'Format INTERNAL (dalam kingdom) \u2014 aliansi menang menunjuk King. Biweekly (~14h, Sabtu). (\u00b150-54)', rng:[50,54], src:'ksg+kita'},
   {d:57, name:'Gen 1 Pets', cat:'Pet', note:'Gray Wolf, Lynx, Bison (\u00b155-60)', rng:[55,60], src:'ksg+kita'},
   {d:70, id:'truegold', name:'Age of Truegold', cat:'Truegold', note:'Truegold Lv1-3. WAJIB sudah TC30! (\u00b159-70)', key:true, src:'ksg'},
   {d:70, name:'KvK (Kingdom of Power)', cat:'PvP', note:'Eligibel sesudah Age of Truegold, lalu ~bulanan (\u00b170-80)', key:true, rng:[70,80], src:'ksg+kita'},

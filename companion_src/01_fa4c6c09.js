@@ -780,7 +780,10 @@ function renderKalender(){
   if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
 /* ===== Tab Castle Battle — riset + simulasi posisi ===== */
-function nextCastleDay(age){ if(age==null) return 54; if(age<54) return 54; return 54+Math.ceil((age-54+0.0001)/18)*18; }
+/* Castle Battle biweekly (Sabtu) — siklus 14 hari, BUKAN 18. Harus kelipatan 7
+   supaya tetap jatuh di hari yang sama; 18 menggeser hari tiap iterasi (salah).
+   Silang-cek kingshotmastery + kingshot.net (24 Jul 2026). */
+function nextCastleDay(age){ if(age==null) return 54; if(age<54) return 54; return 54+Math.ceil((age-54+0.0001)/14)*14; }
 /* Hero Castle Battle per generasi (sumber: kingshotwiki). Attack = pecah/serang; Garrison = tahan.
    Gen 1-2 belum punya hero meta (Petra/Eric/Jaeger dst) → pakai yang ada + saran F2P. */
 const CB_ATK={1:'Jabel (lead) · Amadeus (bila VIP) · Quinn',2:'Amadeus · Zoe · Marlin',3:'Amadeus · Petra · Marlin',4:'Amadeus · Petra · Rosa',5:'Amadeus · Petra/Thrud · Rosa',6:'Amadeus/Triton · Petra/Thrud · Yang',7:'Amadeus/Triton/Charles · Ava · Wee&Woo'};
