@@ -48,6 +48,7 @@
     /* HoG: sumber jadwal + peringatan kingdom (dinamis) — HARUS di atas aturan
        generik "hari" di bawah, yang kalau duluan akan merusak frasa penuhnya. */
     [/Kingdom (\d+) · hari (\d+)/g, 'Kingdom $1 · day $2'],
+    [/Lihat semua \((\d+)\)/g, 'Show all ($1)'],
     [/\bmulai (\d{4}-\d{2}-\d{2})/g, 'starts $1'],
     [/⚠ hari (\d+) bukan jangkar HoG kingdom ini/g, '⚠ day $1 is not this kingdom’s HoG anchor'],
     [/ — cocoknya Kingdom /g, ' — it fits Kingdom '],

@@ -446,18 +446,30 @@ async function fillSoonEvents(age){
   /* ROTASI GLOBAL (akan datang) = event rotasi feed yg BELUM jalan → tanggal GLOBAL (sama
      semua server, kingdom muda sering beda). TANPA hitung-mundur per-server yg menyesatkan;
      terkunci → cuma umur kelayakan ~H<gate>, tanpa tanggal palsu. */
-  const globRows=upcoming.filter(x=>x.source==='live').map(x=>{
+  /* Daftar rotasi global panjang (≈18 baris). Dulu dirender utuh selebar kartu →
+     satu blok 1.100px yang menelan sepertiga halaman. Sekarang: 6 baris dulu,
+     sisanya di balik "Lihat semua", dan di layar lebar dibagi 2 kolom. */
+  const GLOB_CAP=6;
+  const globArr=upcoming.filter(x=>x.source==='live').map((x,i)=>{
     let r = x.locked ? ('🔒 buka ~H'+(((x.gate&&x.gate.minDay)!=null)?x.gate.minDay:'?'))
       : ('~'+esc(dateTxt(x.startUTC))+' <span class="dim">global</span>');
-    return '<div'+clk(x.id,x.title)+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span><b class="dim tabular" style="white-space:nowrap">'+r+'</b> <span class="dim">›</span></div>';
-  }).join('');
+    return '<div'+clk(x.id,x.title)+(i>=GLOB_CAP?' data-xtra="1"':'')+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span><b class="dim tabular" style="white-space:nowrap">'+r+'</b> <span class="dim">›</span></div>';
+  });
+  const globRows=globArr.join('');
+  const globMore=globArr.length>GLOB_CAP
+    ? '<button class="btn ghost sm" id="sk_globmore" style="margin-top:8px">Lihat semua ('+globArr.length+')</button>' : '';
   h.innerHTML='<div class="card"><div class="gc-head">⏱️ Event terdekat</div>'
-    +'<div class="lbl">Sedang berjalan <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· selesai</span></div>'+runRows
-    +(psSoonRows?'<div class="lbl" style="margin-top:12px">Berikutnya <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· server-mu (umur)</span></div>'+psSoonRows:'')
+    +'<div class="lbl">Sedang berjalan <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· selesai</span></div>'
+    +'<div class="sk-evgrid">'+runRows+'</div>'
+    +(psSoonRows?'<div class="lbl" style="margin-top:12px">Berikutnya <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· server-mu (umur)</span></div>'
+        +'<div class="sk-evgrid">'+psSoonRows+'</div>':'')
     +(globRows?'<div class="lbl" style="margin-top:12px">Rotasi global <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· akan datang, cek in-game</span></div>'
-        +'<div class="muted small" style="margin-bottom:4px">Tanggal dari feed GLOBAL — SAMA utk semua server; kingdom muda sering BEDA. Acuan final: tab Events in-game.</div>'+globRows:'')
+        +'<div class="muted small" style="margin-bottom:4px">Tanggal dari feed GLOBAL — SAMA utk semua server; kingdom muda sering BEDA. Acuan final: tab Events in-game.</div>'
+        +'<div class="sk-evgrid sk-evlist" id="sk_globlist">'+globRows+'</div>'+globMore:'')
     +'<div class="muted small" style="margin-top:8px">Ketuk event untuk tips.</div>'
     +'</div>';
+  const _gm=$('#sk_globmore',h); if(_gm) _gm.onclick=()=>{ const l=$('#sk_globlist',h);
+    if(!l) return; const on=l.classList.toggle('on'); _gm.textContent=on?'Ringkas':'Lihat semua ('+globArr.length+')'; };
   $$('.sk-hograt',h).forEach(b=>b.onclick=e=>{ e.stopPropagation();
     const cur=(store.get('events',[])||[]).find(x=>x&&x.type==='hog');
     const d=prompt('HoG di game MULAI tanggal berapa? (YYYY-MM-DD)\nContoh: 2026-07-13',(cur&&cur.date)||'');
