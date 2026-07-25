@@ -277,7 +277,12 @@ function renderEvent(){
         $$('.evfind',el).forEach(c=>{ const show=!v||c.dataset.k.indexOf(v)>=0; c.style.display=show?'':'none'; if(show)n++; });
         if(cnt) cnt.textContent=n+' event'; };
       if(q){ q.oninput=doFilter; } doFilter(); }
-    if(k==='hog'){ const c=$('#hog_st',el); if(c){ const draw=i=>{ c.innerHTML=hogStageTbl(i); $$('.hibtn',el).forEach(b=>b.classList.toggle('active',+b.dataset.hi===i)); if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); }; $$('.hibtn',el).forEach(b=>b.onclick=()=>draw(+b.dataset.hi)); draw(hogCurIdx(age)); } }
+    if(k==='hog'){ const c=$('#hog_st',el); if(c){
+      /* stage yang sedang berjalan = hari ke-berapa dari iterasi ini (kalau memang jalan) */
+      const actStage=i=>{ if(age==null||i!==hogCurIdx(age)) return null;
+        const no=hogNoForDay(age), di=age-hogStartDay(no);
+        return (di>=0&&di<hogLen(no))?di:null; };
+      const draw=i=>{ c.innerHTML=hogStageTbl(i,actStage(i)); $$('.hibtn',el).forEach(b=>b.classList.toggle('active',+b.dataset.hi===i)); if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); }; $$('.hibtn',el).forEach(b=>b.onclick=()=>draw(+b.dataset.hi)); draw(hogCurIdx(age)); } }
     if(k==='adv'&&age!=null){
       const add=$('#sch_add',el); if(add) add.onclick=()=>{ const date=$('#sch_date').value; if(!date){$('#sch_date').focus();return;} const arr=store.get('events',[]); const ty=$('#sch_type').value; const i=arr.findIndex(x=>x.type===ty); if(i>=0)arr[i]={type:ty,date}; else arr.push({type:ty,date}); store.set('events',arr); renderEvent(); };
       $$('.del',el).forEach(b=>b.onclick=()=>{ const arr=store.get('events',[]); arr.splice(+b.dataset.idx,1); store.set('events',arr); renderEvent(); });
@@ -355,20 +360,27 @@ function hogStatusLine(age){
   if(!hogExists(nno)) return gen3;
   return '<div class="alert inf small">'+src+'<b>📍 Berikutnya:</b> HoG #'+nno+' · H'+nstart+' (~'+(nstart-age)+' hari)'+hi+'</div>';
 }
-function hogStageTbl(idx){
+/* Dulu SATU tabel memuat 7 stage sekaligus = 1.731px, padahal tiap hari cuma
+   satu stage yang relevan. Sekarang tiap stage jadi blok lipat; stage yang
+   sedang berjalan (dihitung dari umur kingdom) terbuka otomatis. */
+function hogStageTbl(idx,activeStage){
   var it=HOG_DETAIL.iters[idx]; if(!it) return '';
-  var rows=it.stages.map(function(st){
+  var rows=it.stages.map(function(st,si){
     var sn=st[0], tasks=st[1];
     var base=sn.replace(/^\d+\s*·\s*/,'');
     var mis=(typeof HOG_STAGE_MISSION!=='undefined'&&HOG_STAGE_MISSION[base])||'';
-    return '<tr><td colspan="2" style="padding-top:10px"><b style="color:var(--accent)">Stage '+esc(sn)+'</b></td></tr>'
+    var open=(activeStage!=null)?(si===activeStage):(si===0);
+    return '<details class="hogstage"'+(open?' open':'')+'><summary><b>Stage '+esc(sn)+'</b>'
+      +((activeStage!=null&&si===activeStage)?' <span class="pill f2p">hari ini</span>':'')+'</summary><div class="dt">'
+      +'<div class="scrollx"><table><tbody>'
       + (mis?'<tr><td colspan="2" class="muted small" style="padding-bottom:4px"><b>📋 Misi:</b> '+esc(mis)+'</td></tr>':'')
-      + tasks.map(function(t){ return '<tr><td class="small">'+esc(t[0])+'</td><td class="num">'+esc(t[1])+'</td></tr>'; }).join('');
+      + tasks.map(function(t){ return '<tr><td class="small">'+esc(t[0])+'</td><td class="num">'+esc(t[1])+'</td></tr>'; }).join('')
+      + '</tbody></table></div></div></details>';
   }).join('');
   return '<div class="kv"><span>Hero of the Season</span><b>'+esc(it.hero)+' \u00b7 '+esc(it.rank)+'</b></div>'
     + '<div class="kv"><span>Durasi</span><b>'+it.stages.length+' hari ('+it.stages.length+' stage)</b></div>'
     + '<div class="kv"><span>Mulai \u00b7 Generasi</span><b>'+esc(it.day)+' \u00b7 '+esc(it.gen)+'</b></div>'
-    + '<div class="scrollx"><table><thead><tr><th>Task</th><th>Poin</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    + '<div style="margin-top:8px">'+rows+'</div>'
     + '<div class="alert inf small" style="margin-top:6px">'+esc(it.note)+'</div>';
 }
 function hogHTML(age){
@@ -380,7 +392,8 @@ function hogHTML(age){
   var scale='<details><summary>\u2694\ufe0f Latih Troop \u2014 poin per unit per level</summary><div class="dt"><div class="scrollx"><table><thead><tr><th>Level</th><th>Poin/unit</th></tr></thead><tbody>'+H.troop.map(function(r){return '<tr><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td></tr>';}).join('')+'</tbody></table></div><div class="muted small" style="margin-top:4px">Tier tertinggi jauh lebih berpoin \u2014 jangan spam tier rendah.</div></div></details>'
     + '<details><summary>\ud83d\udee1\ufe0f Governor Gear \u2014 poin per Level Up</summary><div class="dt"><div class="scrollx"><table><thead><tr><th>Rarity</th><th>Level-up score</th></tr></thead><tbody>'+H.govgear.map(function(r){return '<tr><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td></tr>';}).join('')+'</tbody></table></div><div class="muted small" style="margin-top:4px">+500 poin tiap naik max score (di luar tabel).</div></div></details>'
     + '<details><summary>\ud83d\udca0 Governor Charm \u2014 poin per Level Up (HoG #4/#5)</summary><div class="dt"><div class="scrollx"><table><thead><tr><th>Level</th><th>Level-up score</th></tr></thead><tbody>'+H.charm.map(function(r){return '<tr><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td></tr>';}).join('')+'</tbody></table></div><div class="muted small" style="margin-top:4px">+1.000 poin tiap naik max score. Level awal (L4=8.750) lompat besar.</div></div></details>';
-  var tips=H.tips.map(function(t,i){ return '<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">'+pad(i+1)+'</span> &nbsp;'+esc(t)+'</div></div>'; }).join('');
+  /* daftar tips = teks pendek; di layar lebar dua kolom (lihat .colw) */
+  var tips='<div class="colw">'+H.tips.map(function(t,i){ return '<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">'+pad(i+1)+'</span> &nbsp;'+esc(t)+'</div></div>'; }).join('')+'</div>';
   return card('Hall of Governors','\ud83c\udfdb',hogStatusLine(age)+'<p class="small" style="margin-top:6px">'+esc(H.intro)+'</p><div class="alert warn small" style="margin-top:6px">\u26a0\ufe0f Yang BERUBAH tiap iterasi = Hero of the Season, ambang leaderboard, durasi, & susunan stage. Poin per task SAMA. Tab Events di game = acuan final.</div><div class="lbl" style="margin:10px 0 4px">Ringkasan 4 iterasi</div>'+summary)
     + card('Tabel Skor per Stage (seperti game)','\u25a6','<p class="muted small">Pilih iterasi \u2014 satu tabel berisi urutan Stage \u2192 Task \u2192 Poin, persis alur di game.</p><div class="seg" style="margin-bottom:8px">'+sel+'</div><div id="hog_st"></div>')
     + card('Skala Poin Detail','\u25a4',scale)
@@ -948,7 +961,8 @@ function renderCastle(){
        <li>${L?'Clear your <b>hospital & infirmary</b> before battle (capacity for the wounded).':'Kosongkan <b>hospital & infirmary</b> sebelum battle (kapasitas untuk luka).'}</li>
        <li>${L?'Win → the alliance appoints the <b>King</b> = kingdom buff + rewards for all. Even a loss gives <b>Charm materials</b> — always join.':'Menang → aliansi tunjuk <b>King</b> = buff kingdom + reward semua anggota. Kalah pun dapat <b>Charm material</b> — tetap ikut.'}</li>
      </ul>`);
-  el.innerHTML=pageHead('Castle Battle',L?"King's Castle — capture & hold. Position simulator, scoring, F2P tactics (community research).":"King's Castle — rebut & tahan. Simulasi posisi, skor, taktik F2P (riset komunitas).")+cdCard+mapCard+winCard+heroCard+posCard+tacCard;
+  el.innerHTML=pageHead('Castle Battle',L?"King's Castle — capture & hold. Position simulator, scoring, F2P tactics (community research).":"King's Castle — rebut & tahan. Simulasi posisi, skor, taktik F2P (riset komunitas).")+'<div class="wide">'+cdCard+mapCard+'</div>'+winCard+heroCard+posCard+tacCard;
+  el.classList.add('cardcols');   /* kartu teks jadi 2 kolom di layar lebar; peta tetap penuh */
   wireCastle(el);
 }
 /* ===== Tab Dukung — Saran/Request + Donasi ===== */
@@ -1044,7 +1058,10 @@ function renderBangun(){
        <div class="scrollx"><table><thead><tr><th>Decree</th><th>Efek</th><th>Catatan</th></tr></thead><tbody>${DECREES.map(([n,e,c])=>`<tr><td><b>${esc(n)}</b></td><td class="small">${esc(e)}</td><td class="small muted">${esc(c)}</td></tr>`).join('')}</tbody></table></div>
        <div class="alert ok small">⏱️ Double Time: aktifkan SEBELUM mulai upgrade (window 5 mnt). Dihitung dari base time DULU, baru buff lain (VIP/research/Chief Minister) menumpuk — bukan stack flat. Stack dgn pet Gray Wolf + Chief Minister. Lewat TC25: tunggu cooldown daripada mulai tanpa Double Time.</div>`)
     +card('Prasyarat Town Center','○',
-      `<div class="scrollx"><table><thead><tr><th>Target</th><th>Butuh</th></tr></thead><tbody>${TC_PREREQ.map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join('')}</tbody></table></div><p class="muted small">Angka bisa beda tipis per versi — cek layar upgrade di game.</p>`);
+      /* 30 baris referensi = 1.218px; dilipat karena dibaca sesekali, bukan tiap hari */
+      `<details><summary>Tabel prasyarat TC (${TC_PREREQ.length} baris)</summary><div class="dt">
+       <div class="scrollx"><table><thead><tr><th>Target</th><th>Butuh</th></tr></thead><tbody>${TC_PREREQ.map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join('')}</tbody></table></div>
+       <p class="muted small">Angka bisa beda tipis per versi — cek layar upgrade di game.</p></div></details>`);
   const cRiset=card('Urutan Research (Academy)','▤',RESEARCH_ORDER.map(([t,d])=>`<div class="check note"><div><div class="t">${esc(t)}</div><div class="d">${esc(d)}</div></div></div>`).join(''))
     +card('VIP — Target F2P','◉',
       `<div class="scrollx"><table><thead><tr><th>VIP</th><th>Manfaat</th><th>Catatan</th></tr></thead><tbody>${VIP_LEVELS.map(([v,b,n])=>`<tr><td><b>${esc(v)}</b></td><td class="small">${esc(b)}</td><td class="small muted">${esc(n)}</td></tr>`).join('')}</tbody></table></div><div class="muted small">XP gratis ~200-500/hari. Ambang VIP9 beda antar sumber.</div>`);
@@ -1090,6 +1107,7 @@ function renderBangun(){
       </div><div id="bg_subc"></div>`;
   const BG_SUBS={ urut:cUrut, riset:cRiset, troop:cTroop, gear:cGub, track:buildTrackerCard() };
   const wireUp=()=>{ const list=$('#up_list',el); if(!list) return;
+    list.className='colw';   /* daftar centang pendek → 2 kolom di layar lebar */
     BUILD_ORDER.forEach((b,idx)=>{ const id='bo'+idx,isDone=!!done[id];
       const div=document.createElement('label'); div.className='check'+(isDone?' done':'');
       div.innerHTML=`<input type="checkbox" ${isDone?'checked':''}><div><div class="t" style="${b.warn?'color:var(--loss)':''}">${esc(b.t)}</div><div class="d">${esc(b.d)}</div></div>`;
@@ -1501,6 +1519,9 @@ async function redeemAllUI(){
 /* ============ PROFIL (login / settings) ============ */
 function renderProfil(){
   const el=$('[data-tab=profil]');
+  /* 9 kartu pengaturan bertumpuk satu kolom = 3.409px. Semuanya form/teks pendek
+     (tanpa tabel lebar), jadi aman jadi 2 kolom di layar lebar. */
+  el.classList.add('cardcols');
   const p=store.get('profile',{kingdom:'',pid:'',start:'',tc:''});
   const {age,tc}=profileAge();
   const _profs=store.get('profiles',[]); const _ap=_ksActivePid();

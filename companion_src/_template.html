@@ -571,7 +571,7 @@ a{color:var(--cyan);text-decoration:none}
 #langtoggle::before{content:"🌐";font-size:12px;opacity:.75}
 .iconbtn:hover{border-color:var(--accent);color:var(--accent)}
 
-.content{padding:30px 28px;max-width:1140px;margin:0 auto;width:100%}
+.content{padding:30px 28px;max-width:1240px;margin:0 auto;width:100%}
 .tab{display:none}
 .tab.active{display:block;animation:fade .28s var(--ease) both}
 @keyframes fade{from{transform:translateY(7px)}to{transform:none}}
@@ -1086,7 +1086,7 @@ html{scrollbar-width:thin;scrollbar-color:var(--bg-4) transparent}
 .sk .gc-note{font-size:11.5px;color:var(--sk-ink-faint);line-height:1.5}
 .sk .gc-note b{color:var(--sk-ink-soft);font-weight:600}
 
-.sk .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:14px}
+.sk .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:14px}
 .sk .ev{padding:16px;display:flex;flex-direction:column;gap:11px}
 .sk .ev .top{display:flex;align-items:center;gap:11px}
 .sk .ev .ico{width:36px;height:36px;border-radius:10px;background:var(--sk-surface-2);display:grid;place-items:center;font-size:18px}
@@ -1131,10 +1131,10 @@ html{scrollbar-width:thin;scrollbar-color:var(--bg-4) transparent}
 .sk .act .d{font-size:12px;color:var(--sk-ink-faint);margin-top:1px}
 .sk .act .tag{margin-left:auto;font-size:11px;font-weight:600;color:var(--sk-gold);background:var(--sk-surface-2);padding:3px 9px;border-radius:7px}
 .sk .more{text-align:center;padding:13px;font-size:13px;font-weight:600;color:var(--sk-accent);cursor:pointer;border-top:1px solid var(--sk-line)}
-.sk .ring-wrap{padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;height:100%}
-.sk .ring{width:120px;height:120px;position:relative;display:grid;place-items:center}
+.sk .ring-wrap{padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;height:100%}
+.sk .ring{width:88px;height:88px;position:relative;display:grid;place-items:center}
 .sk .ring svg{transform:rotate(-90deg)}
-.sk .ring .val{position:absolute;font-family:var(--sk-mono);font-weight:700;font-size:27px;color:var(--sk-ink)}
+.sk .ring .val{position:absolute;font-family:var(--sk-mono);font-weight:700;font-size:21px;color:var(--sk-ink)}
 .sk .ring .val small{display:block;font-family:var(--sk-sans);font-size:11px;color:var(--sk-ink-faint);letter-spacing:.05em;text-transform:uppercase;font-weight:600;margin-top:3px}
 .sk .ring-wrap .cap{font-size:12.5px;color:var(--sk-ink-soft);max-width:190px;line-height:1.5}
 
@@ -1282,7 +1282,7 @@ window.__splashT0=Date.now();setTimeout(function(){var s=document.getElementById
 .topnav .navbtn:hover{background:var(--bg-3);color:var(--fg)}
 .topnav .navbtn.active{background:var(--accent);color:#0b1220;font-weight:700;box-shadow:0 3px 12px rgba(107,147,242,.30)}
 .main{margin-left:0}
-.content{max-width:1160px;margin:0 auto;padding:30px 28px;width:100%}
+.content{max-width:1240px;margin:0 auto;padding:30px 28px;width:100%}
 /* mobile: hide the desktop top-nav row, keep status row; bottom nav (.mobnav) takes over */
 @media(max-width:860px){
   .topnav{display:none}
@@ -1364,6 +1364,18 @@ window.__splashT0=Date.now();setTimeout(function(){var s=document.getElementById
    sepertiga tab Sekarang. Baris ini pendek ("nama … tanggal"), jadi di layar
    lebar dua kolom terbaca sama enaknya dengan setengah tinggi. */
 .sk-evlist:not(.on) [data-xtra]{display:none}
+/* daftar teks pendek (tips/checklist) → 2 kolom di layar lebar, 1 kolom di HP */
+@media(min-width:1000px){ .colw{column-count:2;column-gap:20px} .colw > *{break-inside:avoid} }
+/* tumpukan kartu mandiri (mis. tab Profil) → 2 kolom di layar lebar */
+@media(min-width:1000px){
+  .cardcols{column-count:2;column-gap:20px}
+  .cardcols > .card{break-inside:avoid;margin-bottom:18px}
+  .cardcols > .pagehead, .cardcols > .wide{column-span:all}
+  .cardcols > .wide{margin-bottom:18px}
+}
+/* stage HoG yang dilipat: ringkas, tanpa kotak tebal */
+details.hogstage{margin:4px 0}
+details.hogstage > summary{padding:8px 10px}
 @media(min-width:900px){
   .sk-evgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:22px}
   .sk-evgrid > *{min-width:0}
