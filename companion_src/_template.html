@@ -488,7 +488,12 @@
   --accent:#6b93f2; --accent-dim:#5580e6; --cyan:#3fb6c0; --pink:#e8618f;
   --profit:#37b877; --warn:#e0a13e; --loss:#f0654a;
   --font-ui:"Inter","Helvetica Neue",-apple-system,system-ui,sans-serif;
-  --font-mono:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  /* REDESIGN "Studio": font mono dulu dipakai di 55 tempat — termasuk nav, label,
+     judul tabel, tombol — sehingga app terbaca seperti terminal, bukan produk.
+     Sekarang --font-mono = sans (semua teks antarmuka ikut berubah sekaligus),
+     dan angka/jam/kode dipindahkan ke --font-num yang tetap monospace. */
+  --font-mono:"Inter","Helvetica Neue",-apple-system,system-ui,sans-serif;
+  --font-num:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace;
   --shadow-card:0 2px 6px rgba(0,0,0,.18),0 16px 38px rgba(0,0,0,.34);
   --glow:0 0 20px rgba(107,147,242,.16);
   --offset:5px 5px 0 rgba(107,147,242,.10);
@@ -1404,13 +1409,65 @@ details.hogstage > summary{padding:8px 10px}
   .navsheet-g .navbtn{flex-direction:column;gap:5px;min-height:66px;padding:10px 4px;margin:0;
     width:100%;background:var(--bg-3);border-radius:10px;text-align:center;align-items:center}
   .navsheet-g .navbtn .gi{font-size:19px;width:auto}
-  .navsheet-g .navbtn .nl{font-size:10.5px;text-transform:none;letter-spacing:.02em}
+  .navsheet-g .navbtn .nl{font-size:11px;text-transform:none;letter-spacing:.02em}
   /* sub-tab: SATU baris yang digeser. Sebelumnya membungkus jadi 4 baris chip
      (10 sub-tab Event) sehingga separuh layar habis sebelum isinya mulai. */
   .seg{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none}
   .seg::-webkit-scrollbar{display:none}
   .seg button{scroll-snap-align:center}
 }
+
+/* ════════════════════════════════════════════════════════════════
+   REDESIGN "STUDIO" (2026-07-26) — lapisan terakhir, menimpa yang di atas.
+   Arah: gelap tenang, huruf lapang, satu aksen, angka tetap monospace.
+   Ditulis sebagai lapisan penimpa (bukan mengedit 800 baris di atas) supaya
+   perubahannya bisa dibaca & dibalik dalam satu blok.
+   ════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#0f141c; --bg-2:#131a24; --bg-3:#161e29; --bg-4:#1b2331; --bg-term:#0b0f15;
+  --bd:#202834; --bd-strong:#2b3545; --bd-soft:#1a2230;
+  --fg:#e8ecf3; --fg-mute:#aab3c2; --fg-dim:#8c96a8; --fg-faint:#737d8e;
+  --accent:#6b93f2; --accent-soft:#8fb0ff; --gold:#c8a24a;
+  --rad:14px; --rad-s:10px;
+  --shadow-card:0 1px 2px rgba(0,0,0,.20),0 10px 28px rgba(0,0,0,.24);
+  --shadow-soft:0 2px 8px rgba(0,0,0,.28);
+}
+/* angka, jam, kode → tetap monospace + rata lebar digit */
+.num,.mono,.tabular,.clk,.kv b,.stat .sv,.nowhud .bigday,.nowhud .bigclock,
+.calcell .dn,.cbmap .cn,.cbmap .tn,.sk .count .n,.sk .pf-clock .clk,
+.sk .pf-clock .reset b,.sk .gc-row code,.sk .ev .when,.sk .timeset .cd,
+input,select,textarea{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+/* .sk memakai tumpukan font sendiri (system-ui) → bentuk huruf beda antar tab */
+:root{ --sk-sans:var(--font-ui); --sk-mono:var(--font-num); }
+
+/* ── skala tipe ── */
+body{font-size:14px;line-height:1.6;letter-spacing:0}
+.pagehead h1{font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.25}
+.pagehead p{font-size:14px;line-height:1.6;color:var(--fg-mute);max-width:68ch}
+.card-h h2{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+.card-b,.alert,.muted,.check .d,table,.lrow{font-size:14px;line-height:1.6}
+.small{font-size:13px}
+.lbl{font-size:11.5px;font-weight:600;letter-spacing:.07em;color:var(--fg-dim)}
+th{font-size:11.5px;font-weight:600;letter-spacing:.06em;color:var(--fg-dim)}
+td{padding:11px 10px}
+.card-h .meta,.clkmeta,.muted.small{font-size:12.5px;color:var(--fg-dim)}
+
+/* ── komponen ── */
+.card{background:var(--bg-2);border:1px solid var(--bd);border-radius:var(--rad);box-shadow:none}
+.card-h{padding:13px 16px;border-bottom:1px solid var(--bd)}
+.card-b{padding:16px}
+.alert{border-radius:var(--rad-s);padding:12px 14px}
+.check{padding:10px 12px;border-radius:var(--rad-s)}
+.pill,.tag{border-radius:999px;font-size:11.5px;font-weight:600;letter-spacing:0;padding:4px 10px}
+.stat{background:var(--bg-3);border:1px solid var(--bd);border-radius:12px;padding:12px 16px}
+.stat .sv{font-size:25px;font-weight:600;line-height:1.15}
+.stat .sl{font-size:10.5px;font-weight:600;letter-spacing:.07em;color:var(--fg-dim)}
+.btn{border-radius:var(--rad-s);font-size:13.5px;font-weight:600;letter-spacing:0;text-transform:none}
+.seg button{font-size:13.5px;font-weight:500;letter-spacing:0;text-transform:none;border-radius:999px;padding:8px 14px}
+.navbtn{font-size:13.5px;font-weight:500;letter-spacing:0}
+.navbtn.active{font-weight:600}
+summary{font-size:14px;font-weight:600}
+.kv{padding:9px 0;border-bottom:1px solid var(--bd-soft)}
 </style>
 
 
