@@ -354,7 +354,9 @@ function hogStatusLine(age){
   if(age<6) return '<div class="alert inf small">'+src+'<b>📍 Berikutnya:</b> HoG #1 · H6 (~'+(6-age)+' hari)</div>';
   var no=hogNoForDay(age); var di=age-hogStartDay(no); var len=hogLen(no);
   var it=HOG_DETAIL.iters[hogCurIdx(age)]; var hi=it?(' · '+esc(it.hero)+' · '+esc(it.rank)):'';
-  var gen3='<div class="alert warn small"><b>📍</b> HoG kemungkinan sudah selesai (cuma Gen 1-2) — fokus KvK / Strongest Governor.</div>';
+  /* server tua (HoG sudah tamat) juga harus menyebut kingdom & umur — tanpa itu
+     pengguna multi-server tak tahu ini menjawab server yang mana. */
+  var gen3='<div class="alert warn small">'+src+'<b>📍</b> HoG kemungkinan sudah selesai (cuma Gen 1-2) — fokus KvK / Strongest Governor.</div>';
   if(di<len) return hogExists(no)?'<div class="alert ok small">'+src+'<b>📍 Sekarang:</b> HoG #'+no+' · hari '+(di+1)+'/'+len+hi+'</div>':gen3;
   var nno=no+1, nstart=hogStartDay(nno);
   if(!hogExists(nno)) return gen3;

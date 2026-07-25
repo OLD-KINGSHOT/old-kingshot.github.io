@@ -333,6 +333,14 @@ async function fetchKingdomDate(kid){
   window._kdateEst=false;
   if(KINGDOM_DATES[String(kid)]) return KINGDOM_DATES[String(kid)];
   const cached=store.get('kdates',{}); if(cached[String(kid)]) return cached[String(kid)];
+  /* Tabel tertanam (2.341 kingdom) — instan & OFFLINE. Jalur jaringan di bawah cuma
+     untuk kingdom yang lebih baru daripada snapshot. Tanpa ini, pengguna di server
+     lain bergantung pada proxy publik (worker app sendiri sudah 404) yang lambat
+     dan sering diblokir CORS, lalu jatuh ke interpolasi ±2-3 hari. */
+  if(typeof kingdomOpenSeed==='function'){
+    const seeded=kingdomOpenSeed(kid);
+    if(seeded){ KINGDOM_DATES[String(kid)]=seeded; return seeded; }
+  }
   const target='https://kingshot.net/api/kingdom-tracker?kingdomId='+kid;
   /* jalur 1 = server sendiri (KS_PROXIES[0]); proxy publik hanya cadangan */
   for(const px of KS_PROXIES){
