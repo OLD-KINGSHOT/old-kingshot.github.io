@@ -884,7 +884,9 @@ function predictedEvents(start,age){
 function hogAdvOccurrence(start, pfStart){
   if(!pfStart||typeof HOG_DETAIL==='undefined'||!HOG_DETAIL.iters) return null;
   var sd=daysBetween(new Date(pfStart+'T00:00:00Z'),start)+1;
-  var no=hogNoForDay(sd);
+  /* tanggal D1 → jangkar TERDEKAT (bukan pembulatan ke bawah): tanggal yang meleset
+     sehari dulu mengambil data iterasi sebelumnya (hero/ambang/durasi salah). */
+  var no=(typeof hogNoForStart==='function')?hogNoForStart(sd):hogNoForDay(sd);
   var it=HOG_DETAIL.iters[hogIdxForNo(no)]; if(!it) return null;
   var days=it.stages.map(function(st){ return st[0]; });
   var spend=it.stages.map(function(st){ var t=st[1]||[]; return t.slice(0,2).map(function(x){ return x[0]+' ('+x[1]+')'; }).join(' + ')||'item sesuai tema'; });
@@ -927,7 +929,41 @@ function evAdvisory(ev){
     if(tpl.battleWIB&&di===effLen-1) lines.push('\u2694 Battle '+tpl.battleWIB+(ev.time?' \u00b7 jam event '+ev.time+' WIB':''));
     else if(ev.time) lines.push('\u23f0 Jam event: '+ev.time+' WIB');
   } else { status='Selesai'; cls='inf'; lines.push('Event sudah lewat.'); }
+  /* Umur tiap kingdom beda → tanggal HoG dari kingdom lain TIDAK sah di sini.
+     Dulu ditelan diam-diam (dan dipetakan ke iterasi yang salah); sekarang
+     ditandai, sekalian ditunjukkan kingdom mana yang tanggalnya benar-benar pas. */
+  if(ev.type==='hog'&&_pf.start&&typeof hogAnchorFit==='function'){
+    const _sd=daysBetween(new Date(_pf.start+'T00:00:00Z'),start)+1;
+    const _fit=hogAnchorFit(_sd);
+    if(!_fit.fits){
+      const _alt=(typeof kingdomsForHogDate==='function')
+        ? kingdomsForHogDate(ev.date).filter(h=>String(h.kid)!==String(_pf.kingdom||'')) : [];
+      lines.unshift('⚠ Tanggal ini TIDAK COCOK dengan umur kingdom profil ini: jatuh di hari '+_sd
+        +', sedangkan jangkar HoG terdekat hari '+(_sd-_fit.off)+' (#'+_fit.no+') — meleset '+Math.abs(_fit.off)+' hari.'
+        +(_alt.length?' Tanggal ini justru PAS untuk Kingdom '+_alt.map(h=>h.kid+' (HoG #'+h.no+')').join(', ')+' — salah profil?'
+                     :' Cek lagi hari pertama HoG di tab Events game.'));
+    }
+  }
   return {type:ev.type,name:tpl.name,status,cls,lines,start,tpl,di,len:effLen};
+}
+/* Tipe event yang entri manual-nya masih RELEVAN (sedang jalan / belum mulai).
+   Entri yang sudah selesai TIDAK boleh lagi menahan ramalan — dulu renderEvent
+   memakai semua entri, jadi sekali sebuah HoG dicatat, HoG berikutnya tak pernah
+   diramalkan lagi (kartunya hilang total). activeAdvisories sudah benar; ini
+   menyamakan tab Event dengannya. */
+function openUserTypes(evs){
+  const s=new Set();
+  (evs||[]).forEach(e=>{ if(!e||!e.type) return; const a=evAdvisory(e); if(!a) return;
+    const len=a.len||(a.tpl&&a.tpl.len)||1; if(a.di<len) s.add(e.type); });
+  return s;
+}
+/* Label asal tanggal. HoG deterministik (jangkar terverifikasi + siklus 14 hari)
+   → dihitung, bukan ditebak. KvK cuma gerbang eligibility. Sisanya estimasi. */
+function predSourceLabel(e){
+  if(!e) return '';
+  if(e.type==='hog') return 'dihitung dari umur kingdom';
+  if(e.elig) return 'estimasi · eligibility, belum tentu terjadi';
+  return 'estimasi · akurasi '+(e.conf||'?');
 }
 function activeAdvisories(start,age){
   const sched=store.get('events',[]).map(evAdvisory).filter(a=>a&&!a.notEligible&&a.di>=0&&a.di<(a.len||a.tpl.len));

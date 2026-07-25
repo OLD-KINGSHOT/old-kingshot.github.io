@@ -830,5 +830,6 @@
   "= perkiraan kasar (fix setelah kejadian pertama).": "= rough estimate (locks in after the first occurrence).",
   "KvK hari 70 = eligibility TERBUKA (paling cepat), bukan jadwal pasti": "KvK day 70 = eligibility OPENS (earliest possible), not a fixed schedule",
   "— tanpa lawan matchmaking bulan itu batal (Matchmaking Bye). Advisory \"Hari Ini\" tetap jalan otomatis — kalau tanggal asli di game beda, tekan \"ralat\" di bawah.": "— with no matchmaking opponent it is skipped that month (Matchmaking Bye). The \"Today\" advisory still runs automatically — if the real in-game date differs, hit \"fix\" below.",
-  "Tidak ada event aktif/akan datang ≤7 hari.": "No active/upcoming events within 7 days."
+  "Tidak ada event aktif/akan datang ≤7 hari.": "No active/upcoming events within 7 days.",
+  "dihitung dari umur kingdom": "computed from kingdom age"
 }

@@ -170,7 +170,8 @@ function renderEvent(){
   let schedHTML;
   if(age==null){ schedHTML='<div class="alert inf small">Hubungkan Player ID di tab Profil untuk advisory event otomatis.</div>'; }
   else{
-    const user=store.get('events',[]); const userTypes=new Set(user.map(e=>e.type));
+    /* entri manual yang SUDAH SELESAI tidak lagi menahan ramalan (lihat openUserTypes) */
+    const user=store.get('events',[]); const userTypes=openUserTypes(user);
     const auto=[];
     if(age<=7 && !userTypes.has('burst')) auto.push({type:'burst',date:addDaysISO(start,1),pred:true});
     predictedEvents(start,age).forEach(pp=>{ if(!userTypes.has(pp.type)) auto.push({type:pp.type,date:pp.date,pred:true,conf:pp.conf,elig:pp.elig}); });
@@ -180,14 +181,29 @@ function renderEvent(){
     schedHTML=`<div class="alert inf small"><b>Tanggal di bawah = ESTIMASI otomatis</b> dari umur server (belum kamu konfirmasi). <b>Akurasi tinggi</b> = pola pasti (HoG tiap 14 hari). <b>Akurasi sedang</b> = perkiraan kasar (fix setelah kejadian pertama). <b>KvK hari 70 = eligibility TERBUKA (paling cepat), bukan jadwal pasti</b> — tanpa lawan matchmaking bulan itu batal (Matchmaking Bye). Advisory "Hari Ini" tetap jalan otomatis — kalau tanggal asli di game beda, tekan "ralat" di bawah.</div>`
       +(shown.length? shown.map(e=>{ const a=e._a; const pc=a.cls==='ok'?'f2p':a.cls==='bad'?'crit':a.cls==='warn'?'warn':'info';
         return `<div class="lcard" style="margin:10px 0">
-          <div class="lh"><span class="nm" style="font-size:13px">${EV_EMOJI[e.type]||'\u25c6'} ${esc(a.name)}</span>${e.pred?(e.elig?'<span class="tag">estimasi \u00b7 eligibility, belum tentu terjadi</span>':'<span class="tag">estimasi \u00b7 akurasi '+(e.conf||'?')+'</span>'):''}<span class="pill ${pc}" style="margin-left:auto">${esc(a.status)}</span></div>
+          <div class="lh"><span class="nm" style="font-size:13px">${EV_EMOJI[e.type]||'\u25c6'} ${esc(a.name)}</span>${e.pred?'<span class="tag">'+predSourceLabel(e)+'</span>':''}<span class="pill ${pc}" style="margin-left:auto">${esc(a.status)}</span></div>
           <div class="dim small mono" style="margin-bottom:4px">mulai ${esc(e.date)}</div>
           ${a.lines.map(l=>`<div class="alert ${a.cls} small">${l}</div>`).join('')}
           ${e.pred?'':`<button class="btn ghost sm del" data-idx="${e.idx}">Hapus</button>`}</div>`;
       }).join('') : '<div class="muted small">Tidak ada event aktif/akan datang \u22647 hari.</div>')
       +`<details style="margin-top:12px"><summary>Tambah / ralat tanggal manual</summary><div class="dt">
           <div class="grid2"><div><label class="fl">Jenis</label><select id="sch_type">${Object.entries(EVENT_TEMPLATES).map(([k,v])=>`<option value="${k}">${esc(v.name)}</option>`).join('')}</select></div><div><label class="fl">Tanggal D1</label><input id="sch_date" type="date"></div></div>
-          <div class="row" style="margin-top:10px"><button class="btn sm" id="sch_add">Simpan</button></div></div></details>`;
+          <div class="row" style="margin-top:10px"><button class="btn sm" id="sch_add">Simpan</button></div>
+          ${user.length?`<div class="lbl" style="margin:12px 0 4px">Tanggal manual tersimpan</div>`+user.map((e,idx)=>{
+            const nm=(EVENT_TEMPLATES[e.type]&&EVENT_TEMPLATES[e.type].name)||e.type;
+            /* HoG deterministik per kingdom → tanggal yang tak duduk di jangkar itu salah kingdom/salah catat.
+               Tanpa baris ini entri "Selesai" tak pernah muncul lagi = tak bisa dihapus & diam-diam salah. */
+            let warn='';
+            if(e.type==='hog'&&start){
+              const sd=daysBetween(start,new Date(e.date+'T00:00:00Z'))+1, fit=hogAnchorFit(sd);
+              if(!fit.fits){ const alt=kingdomsForHogDate(e.date).filter(h=>String(h.kid)!==String((p&&p.kingdom)||''));
+                warn=`<div class="alert bad small" style="margin-top:2px">⚠ hari ${sd} bukan jangkar HoG kingdom ini`
+                  +(alt.length?` — cocoknya Kingdom ${esc(alt.map(h=>h.kid+' (HoG #'+h.no+')').join(', '))}`:``)+`</div>`; }
+            }
+            return `<div class="obs small" style="margin-top:4px"><b>${esc(nm)}</b> <span class="dim">${esc(e.date)}</span> `
+              +`<button class="btn sec sm del" data-idx="${idx}">↩</button>${warn}</div>`;
+          }).join(''):''}
+          </div></details>`;
   }
   /* ROI points */
   const roi=`<div class="scrollx"><table><thead><tr><th>Item</th><th>Poin KvK</th><th>Catatan</th></tr></thead><tbody>
@@ -286,6 +302,31 @@ function hogLen(no){ return no<=1?5 : no===2?6 : 7; }
    dari umur server) → judul "#2" tapi hero/durasi milik #1 saat #1 masih jalan. */
 function hogNoForDay(day){ return day<6?1:Math.floor((day-6)/14)+1; }
 function hogStartDay(no){ return 6+(no-1)*14; }
+/* Menafsirkan sebuah tanggal D1 (dicatat/diralat pengguna) → iterasi mana.
+   BEDA dari hogNoForDay: yang itu menjawab "iterasi apa yang sedang/terakhir jalan
+   pada umur X" (pembulatan KE BAWAH). Kalau dipakai untuk tanggal D1 yang meleset
+   1 hari, hasilnya iterasi SEBELUMNYA — hero/ambang/durasinya ikut salah. Di sini
+   dipakai jangkar TERDEKAT, plus laporan apakah tanggalnya benar-benar cocok. */
+function hogAnchorFit(day){
+  var best=null;
+  for(var no=1;no<=HOG_LAST_NO;no++){ var off=day-hogStartDay(no);
+    if(!best||Math.abs(off)<Math.abs(best.off)) best={no:no,off:off}; }
+  return {no:best.no,off:best.off,fits:best.off===0};
+}
+function hogNoForStart(day){ return hogAnchorFit(day).no; }
+/* Umur tiap kingdom beda → tanggal HoG yang sama tidak berlaku lintas kingdom.
+   Dipakai untuk mendeteksi "tanggal ini sebenarnya milik kingdom mana". */
+function kingdomsForHogDate(dateISO){
+  if(typeof KINGDOM_DATES==='undefined'||!dateISO) return [];
+  var d=new Date(dateISO+'T00:00:00Z'), out=[];
+  Object.keys(KINGDOM_DATES).forEach(function(kid){
+    var s=KINGDOM_DATES[kid]; if(!s) return;
+    var day=daysBetween(new Date(s+'T00:00:00Z'),d)+1;
+    var fit=hogAnchorFit(day);
+    if(fit.fits&&hogExists(fit.no)) out.push({kid:String(kid),no:fit.no,day:day});
+  });
+  return out;
+}
 function hogIdxForNo(no){ return no<=1?0 : no===2?1 : no===3?2 : 3; }
 /* HoG cuma ada di Gen 1-2: #5 (H62) yang terakhir. Setelahnya jangan diramalkan lagi. */
 const HOG_LAST_NO=5;
@@ -300,14 +341,19 @@ function hogCurIdx(age){
 /* Status: HoG apa yang AKTIF sekarang / BERIKUTNYA + hari ke-berapa dari durasinya */
 function hogStatusLine(age){
   if(age==null) return '';
-  if(age<6) return '<div class="alert inf small"><b>📍 Berikutnya:</b> HoG #1 · H6 (~'+(6-age)+' hari)</div>';
+  /* Jadwal HoG DIHITUNG dari umur kingdom (jangkar H6 + 14 hari, terverifikasi
+     in-game di 2114). Kingdom & umur yang dipakai ditulis eksplisit supaya salah
+     profil langsung kelihatan — umur tiap kingdom beda, jadwalnya ikut beda. */
+  var _kid=(store.get('profile',{})||{}).kingdom;
+  var src='<span class="dim">'+(_kid?'Kingdom '+esc(_kid)+' · ':'')+'hari '+age+'</span> ';
+  if(age<6) return '<div class="alert inf small">'+src+'<b>📍 Berikutnya:</b> HoG #1 · H6 (~'+(6-age)+' hari)</div>';
   var no=hogNoForDay(age); var di=age-hogStartDay(no); var len=hogLen(no);
   var it=HOG_DETAIL.iters[hogCurIdx(age)]; var hi=it?(' · '+esc(it.hero)+' · '+esc(it.rank)):'';
   var gen3='<div class="alert warn small"><b>📍</b> HoG kemungkinan sudah selesai (cuma Gen 1-2) — fokus KvK / Strongest Governor.</div>';
-  if(di<len) return hogExists(no)?'<div class="alert ok small"><b>📍 Sekarang:</b> HoG #'+no+' · hari '+(di+1)+'/'+len+hi+'</div>':gen3;
+  if(di<len) return hogExists(no)?'<div class="alert ok small">'+src+'<b>📍 Sekarang:</b> HoG #'+no+' · hari '+(di+1)+'/'+len+hi+'</div>':gen3;
   var nno=no+1, nstart=hogStartDay(nno);
   if(!hogExists(nno)) return gen3;
-  return '<div class="alert inf small"><b>📍 Berikutnya:</b> HoG #'+nno+' · H'+nstart+' (~'+(nstart-age)+' hari)'+hi+'</div>';
+  return '<div class="alert inf small">'+src+'<b>📍 Berikutnya:</b> HoG #'+nno+' · H'+nstart+' (~'+(nstart-age)+' hari)'+hi+'</div>';
 }
 function hogStageTbl(idx){
   var it=HOG_DETAIL.iters[idx]; if(!it) return '';

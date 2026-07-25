@@ -45,6 +45,19 @@
     [/(\d+) hari\b/g, '$1 days'],
     [/\bTC masih (\d+)/g, 'TC still $1'],
     [/Kebut TC ke (\d+)/g, 'Rush TC to $1'],
+    /* HoG: sumber jadwal + peringatan kingdom (dinamis) — HARUS di atas aturan
+       generik "hari" di bawah, yang kalau duluan akan merusak frasa penuhnya. */
+    [/Kingdom (\d+) · hari (\d+)/g, 'Kingdom $1 · day $2'],
+    [/\bmulai (\d{4}-\d{2}-\d{2})/g, 'starts $1'],
+    [/⚠ hari (\d+) bukan jangkar HoG kingdom ini/g, '⚠ day $1 is not this kingdom’s HoG anchor'],
+    [/ — cocoknya Kingdom /g, ' — it fits Kingdom '],
+    [/Tanggal manual tersimpan/g, 'Saved manual dates'],
+    [/⚠ Tanggal ini TIDAK COCOK dengan umur kingdom profil ini: jatuh di hari (\d+), sedangkan jangkar HoG terdekat hari (\d+) \(#(\d+)\) — meleset 1 hari\./g,
+      '⚠ This date does NOT match this profile’s kingdom age: it lands on day $1, while the nearest HoG anchor is day $2 (#$3) — off by 1 day.'],
+    [/⚠ Tanggal ini TIDAK COCOK dengan umur kingdom profil ini: jatuh di hari (\d+), sedangkan jangkar HoG terdekat hari (\d+) \(#(\d+)\) — meleset (\d+) hari\./g,
+      '⚠ This date does NOT match this profile’s kingdom age: it lands on day $1, while the nearest HoG anchor is day $2 (#$3) — off by $4 days.'],
+    [/ Tanggal ini justru PAS untuk Kingdom (.+?) — salah profil\?/g, ' It DOES fit Kingdom $1 — wrong profile?'],
+    [/ Cek lagi hari pertama HoG di tab Events game\./g, ' Double-check HoG day 1 in the in-game Events tab.'],
     /* event advisory (dynamic, number-interpolated) */
     [/Server masih baru \(hari/g, 'Server is still new (day'],
     [/baru aktif/g, 'becomes active'],
