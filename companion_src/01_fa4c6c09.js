@@ -174,7 +174,7 @@ function renderEvent(){
     const user=store.get('events',[]); const userTypes=openUserTypes(user);
     const auto=[];
     if(age<=7 && !userTypes.has('burst')) auto.push({type:'burst',date:addDaysISO(start,1),pred:true});
-    predictedEvents(start,age).forEach(pp=>{ if(!userTypes.has(pp.type)) auto.push({type:pp.type,date:pp.date,pred:true,conf:pp.conf,elig:pp.elig}); });
+    predictedEvents(start,age).forEach(pp=>{ if(!userTypes.has(pp.type)) auto.push({type:pp.type,date:pp.date,pred:true,conf:pp.conf,elig:pp.elig,src:pp.src}); });
     const merged=[...user.map((e,idx)=>({...e,pred:false,idx})),...auto];
     merged.forEach(e=>e._a=evAdvisory(e));
     const shown=merged.filter(e=>e._a&&e._a.di>=-7&&e._a.di<(e._a.len||e._a.tpl.len)).sort((a,b)=>new Date(a.date)-new Date(b.date));

@@ -854,6 +854,32 @@ async function ksLiveCodes(){
   return out;
 }
 
+/* ── Jadwal KvK: GLOBAL, bukan per-kingdom ──
+   Semua kingdom bertanding di jendela yang sama (siklus 28 hari); umur kingdom
+   cuma GERBANG (H70). Model lama (+28 dihitung dari H70 kingdom sendiri) memberi
+   tanggal yang salah — utk 2114 ia bilang H70 = 4 Agu padahal KvK #17 global
+   mulai 10 Agu. Tanggal sebenarnya sudah ada di feed kingshot.net yang app ini
+   pakai untuk kartu "Jadwal Live"; di sini dipakai juga untuk advisory. */
+function kvkGlobalStartISO(ld){
+  const k=ld&&ld.kvk; if(!k||!ld.timestamp) return null;
+  const ts=Date.parse(ld.timestamp); if(!ts) return null;
+  const tot=k.timeLeft&&k.timeLeft.total;
+  /* cuma fase 'countdown' yang menunjuk MULAI-nya; fase berjalan menunjuk akhir fase */
+  if(k.phase!=='countdown'||!(tot>0)) return null;
+  return new Date(ts+tot).toISOString().slice(0,10);
+}
+/* Gelombang global pertama yang saat itu kingdom sudah cukup umur. */
+function kvkNextForKingdom(globalISO,kingdomStartISO,minDay){
+  if(!globalISO||!kingdomStartISO) return null;
+  const gate=minDay||70, ks=new Date(kingdomStartISO+'T00:00:00Z');
+  let d=new Date(globalISO+'T00:00:00Z');
+  for(let i=0;i<24;i++){
+    const day=daysBetween(ks,d)+1;
+    if(day>=gate) return {date:d.toISOString().slice(0,10),day:day};
+    d=new Date(d.getTime()+28*86400000);
+  }
+  return null;
+}
 /* ── Event prediction & advisory ── */
 function predictedEvents(start,age){
   const out=[];
@@ -864,13 +890,27 @@ function predictedEvents(start,age){
   if(age>=hogStartDay(hno)+hogLen(hno)) hno++;
   for(let k=0;k<3;k++){ const no=hno+k; if(!hogExists(no)) break;   /* HoG berhenti setelah #5 (Gen 3) */
     const d=hogStartDay(no); out.push({type:'hog',day:d,date:addDaysISO(start,d),conf:'tinggi'}); }
-  let kvk=age<70?70:70+Math.floor((age-70)/28)*28;
+  /* Tanggal KvK: feed global dulu (akurat), model umur cuma cadangan. */
   const klen=(EVENT_TEMPLATES.kvk&&EVENT_TEMPLATES.kvk.len)||5;
-  if(age>=kvk+klen) kvk+=28; /* current cycle already over → predict the next one */
-  /* `elig` = hari ini cuma GERBANG eligibility, bukan jadwal match. KvK perlu lawan
-     matchmaking; tanpa lawan sepadan bulan itu batal (Matchmaking Bye Rewards). HoG/SG
-     polanya pasti begitu gerbangnya lewat, jadi TIDAK ditandai. */
-  out.push({type:'kvk',day:kvk,date:addDaysISO(start,kvk),conf:'sedang',elig:true});
+  const _gate=(EVENT_TEMPLATES.kvk&&EVENT_TEMPLATES.kvk.minDay)||70;
+  let kvkRow=null;
+  try{
+    const _lc=store.get('liveEvents',null);
+    const _g=kvkGlobalStartISO(_lc&&_lc.d);
+    if(_g){ const n=kvkNextForKingdom(_g,start.toISOString().slice(0,10),_gate);
+      /* gelombang yang SEDANG berjalan sudah lewat → pakai berikutnya */
+      if(n){ let nn=n; if(age>=nn.day+klen) nn=kvkNextForKingdom(addDaysISO(new Date(nn.date+'T00:00:00Z'),29),start.toISOString().slice(0,10),_gate)||nn;
+        kvkRow={type:'kvk',day:nn.day,date:nn.date,conf:'live',elig:true,src:'feed'}; } }
+  }catch(e){}
+  if(!kvkRow){
+    let kvk=age<_gate?_gate:_gate+Math.floor((age-_gate)/28)*28;
+    if(age>=kvk+klen) kvk+=28; /* current cycle already over → predict the next one */
+    /* `elig` = hari ini cuma GERBANG eligibility, bukan jadwal match. KvK perlu lawan
+       matchmaking; tanpa lawan sepadan bulan itu batal (Matchmaking Bye Rewards). HoG/SG
+       polanya pasti begitu gerbangnya lewat, jadi TIDAK ditandai. */
+    kvkRow={type:'kvk',day:kvk,date:addDaysISO(start,kvk),conf:'sedang',elig:true};
+  }
+  out.push(kvkRow);
   /* Strongest Governor = kompetitif berbasis UMUR (gate H75, siklus 28 hari) — sama
      modelnya dgn KvK/HoG & dgn kalender. Tanpa ini SG jatuh ke feed rotasi GLOBAL →
      tanggal sama utk semua server (salah lintas-kingdom). */
@@ -917,7 +957,9 @@ function evAdvisory(ev){
   if(di<0){ const h=-di; status='H-'+h+' (prep)'; cls=h<=1?'bad':h<=3?'warn':'inf';
     /* Tanggal KvK = ramalan dari gerbang eligibility, bukan jadwal yang diumumkan.
        Tanpa catatan ini "H-5 KvK" terbaca sebagai kepastian. */
-    if(ev.type==='kvk') lines.push('\u2139 Hari 70 = ELIGIBILITY terbuka (paling cepat), bukan tanggal pasti. KvK butuh lawan matchmaking \u2014 tanpa lawan sepadan, bulan ini batal \u2192 "Matchmaking Bye Rewards". Acuan final = tab Events in-game.');
+    if(ev.type==='kvk') lines.push(ev.src==='feed'
+      ? '\ud83d\udce1 Tanggal dari jadwal GLOBAL KvK (semua kingdom serentak, siklus 28 hari) \u2014 umur kingdom-mu sudah lewat gerbang H70. Tetap tidak dijamin: tanpa lawan sepadan \u2192 "Matchmaking Bye Rewards".'
+      : '\u2139 Hari 70 = ELIGIBILITY terbuka (paling cepat), bukan tanggal pasti. KvK butuh lawan matchmaking \u2014 tanpa lawan sepadan, bulan ini batal \u2192 "Matchmaking Bye Rewards". Acuan final = tab Events in-game.');
     lines.push('\ud83d\udd12 TAHAN & siapkan: '+tpl.hold+'.');
     lines.push('\ud83d\udeab Jangan selesaikan upgrade besar \u2014 tahan untuk diselesaikan saat event.');
     if(h<=1) lines.push('\u26a0 MULAI BESOK! Pastikan upgrade hampir selesai & buff siap.');
@@ -962,6 +1004,7 @@ function openUserTypes(evs){
 function predSourceLabel(e){
   if(!e) return '';
   if(e.type==='hog') return 'dihitung dari umur kingdom';
+  if(e.src==='feed') return 'jadwal global KvK · dari feed';
   if(e.elig) return 'estimasi · eligibility, belum tentu terjadi';
   return 'estimasi · akurasi '+(e.conf||'?');
 }
