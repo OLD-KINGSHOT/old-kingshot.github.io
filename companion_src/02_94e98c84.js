@@ -16,6 +16,25 @@ const NAV=[
 ];
 
 function navBtnHTML(n,cls){ return `<button class="navbtn" data-go="${n.id}"><span class="gi">${n.gi}</span><span class="nl">${esc(n.label)}</span></button>`; }
+/* Nav bawah HP: 4 tujuan tersering + tombol "Lainnya". Dulu 12 item diperas ke
+   lebar 390px (label 8,5px, harus digeser) — tak terbaca & tak profesional.
+   Sisanya pindah ke sheet. Desktop tetap memakai NAV utuh. */
+const MOBNAV_PRIMARY=['sekarang','event','kode','kalkulator'];
+const NAV_PROFIL={id:'profil',gi:'👤',label:'Profil'};
+function mobileNavSplit(){
+  const all=[NAV_PROFIL].concat(NAV);
+  const primary=MOBNAV_PRIMARY.map(id=>all.find(n=>n.id===id)).filter(Boolean);
+  const inPrimary=new Set(primary.map(n=>n.id));
+  return {primary:primary, sheet:all.filter(n=>!inPrimary.has(n.id))};
+}
+/* Sub-tab kini satu baris yang digulir di HP → chip aktif digeser ke tengah,
+   supaya sub-tab yang sedang dibuka tak "hilang" di luar layar. */
+function centerActiveChips(root){
+  $$('.seg button.active',root||document).forEach(b=>{
+    try{ b.scrollIntoView({inline:'center',block:'nearest'}); }catch(e){} });
+}
+function closeNavSheet(){ const s=$('#navsheet'); if(s) s.classList.remove('on'); }
+function toggleNavSheet(){ const s=$('#navsheet'); if(s) s.classList.toggle('on'); }
 function updateBrandCredit(){
   /* Auto-update kredit brand dari profil aktif — ganti nama in-game = brand ikut berubah.
      Fallback ke kredit statis pembuat kalau profil kosong. */
@@ -59,10 +78,22 @@ function makeDragScroll(nav){
 }
 function buildNav(){
   $('#navlist').innerHTML=NAV.map(n=>navBtnHTML(n)).join('');
-  /* mobile bottom-nav: Profil FIRST (bottom-LEFT — the single login/settings access on phones) */
-  $('#mobnav').innerHTML=[{id:'profil',gi:'👤',label:'Profil'}].concat(NAV).map(n=>navBtnHTML(n)).join('');
+  const split=mobileNavSplit();
+  $('#mobnav').innerHTML=split.primary.map(n=>navBtnHTML(n)).join('')
+    +'<button class="navbtn" id="navmore"><span class="gi">☰</span><span class="nl">Lainnya</span></button>';
+  const sheet=$('#navsheet');
+  if(sheet) sheet.innerHTML='<div class="navsheet-bd"></div><div class="navsheet-p">'
+    +'<div class="navsheet-h">Lainnya</div><div class="navsheet-g">'
+    +split.sheet.map(n=>navBtnHTML(n)).join('')+'</div></div>';
   $$('[data-go]').forEach(b=>b.onclick=()=>activate(b.dataset.go));
-  makeDragScroll($('#mobnav')); makeDragScroll($('#navlist'));
+  const more=$('#navmore'); if(more) more.onclick=toggleNavSheet;
+  /* chip sub-tab yang diklik ikut digeser ke tengah (delegasi: chip dibuat ulang tiap render) */
+  document.addEventListener('click',e=>{ const t=e.target;
+    const b=t&&t.closest&&t.closest('.seg button');
+    if(b) setTimeout(()=>{ try{ b.scrollIntoView({inline:'center',block:'nearest'}); }catch(_){} },0); },true);
+  const bd=sheet&&sheet.querySelector('.navsheet-bd'); if(bd) bd.onclick=closeNavSheet;
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeNavSheet(); });
+  makeDragScroll($('#navlist'));
   const sp=$('#sideprof'); if(sp) sp.onclick=()=>activate('profil');
   updateSideProf();
 }
@@ -75,9 +106,11 @@ function activate(id){
   const fn=window['render'+id.charAt(0).toUpperCase()+id.slice(1)];
   if(typeof fn==='function') fn();
   window.scrollTo(0,0);
-  /* mobile bottom-nav: geser tombol aktif ke tengah biar tak "hilang" saat banyak tab */
-  const ab=document.querySelector('#mobnav [data-go="'+id+'"]');
-  if(ab&&ab.scrollIntoView){ try{ ab.scrollIntoView({inline:'center',block:'nearest'}); }catch(e){} }
+  centerActiveChips($('[data-tab="'+id+'"]'));
+  /* nav bawah: tutup sheet, dan tandai "Lainnya" kalau tab aktif ada di dalamnya */
+  closeNavSheet();
+  const more=$('#navmore');
+  if(more) more.classList.toggle('active',!document.querySelector('#mobnav [data-go="'+id+'"]'));
 }
 
 /* ============ LIVE CLOCK (topbar) ============ */

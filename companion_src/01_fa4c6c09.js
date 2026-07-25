@@ -226,7 +226,7 @@ function renderEvent(){
   }).join('')).join('');
 
   el.innerHTML=pageHead('Event','Advisory otomatis: kapan TAHAN item, kapan PAKAI, dan jam berapa \u2014 digerakkan umur server. (Kalender kini tab tersendiri.)')
-    +`<div class="seg" id="ev_sub" style="flex-wrap:wrap;margin:4px 0 10px">
+    +`<div class="seg" id="ev_sub" style="margin:4px 0 10px">
         <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="hog">\ud83c\udfdb HoG</button><button data-s="mystic">\ud83d\udd2e Mystic Trial</button><button data-s="find">\ud83d\udd0e Cari Event</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
       </div><div id="ev_subc"></div>`;
 
@@ -382,7 +382,7 @@ function hogHTML(age){
     + '<details><summary>\ud83d\udca0 Governor Charm \u2014 poin per Level Up (HoG #4/#5)</summary><div class="dt"><div class="scrollx"><table><thead><tr><th>Level</th><th>Level-up score</th></tr></thead><tbody>'+H.charm.map(function(r){return '<tr><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td></tr>';}).join('')+'</tbody></table></div><div class="muted small" style="margin-top:4px">+1.000 poin tiap naik max score. Level awal (L4=8.750) lompat besar.</div></div></details>';
   var tips=H.tips.map(function(t,i){ return '<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">'+pad(i+1)+'</span> &nbsp;'+esc(t)+'</div></div>'; }).join('');
   return card('Hall of Governors','\ud83c\udfdb',hogStatusLine(age)+'<p class="small" style="margin-top:6px">'+esc(H.intro)+'</p><div class="alert warn small" style="margin-top:6px">\u26a0\ufe0f Yang BERUBAH tiap iterasi = Hero of the Season, ambang leaderboard, durasi, & susunan stage. Poin per task SAMA. Tab Events di game = acuan final.</div><div class="lbl" style="margin:10px 0 4px">Ringkasan 4 iterasi</div>'+summary)
-    + card('Tabel Skor per Stage (seperti game)','\u25a6','<p class="muted small">Pilih iterasi \u2014 satu tabel berisi urutan Stage \u2192 Task \u2192 Poin, persis alur di game.</p><div class="seg" style="flex-wrap:wrap;margin-bottom:8px">'+sel+'</div><div id="hog_st"></div>')
+    + card('Tabel Skor per Stage (seperti game)','\u25a6','<p class="muted small">Pilih iterasi \u2014 satu tabel berisi urutan Stage \u2192 Task \u2192 Poin, persis alur di game.</p><div class="seg" style="margin-bottom:8px">'+sel+'</div><div id="hog_st"></div>')
     + card('Skala Poin Detail','\u25a4',scale)
     + card('Tips F2P','\ud83d\udca1',tips);
 }
@@ -431,7 +431,7 @@ function mysticHTML(){
        <div class="lbl" style="margin:10px 0 2px">Jadwal mingguan</div>${week}
        <div class="lbl" style="margin:12px 0 2px">Aturan semua zona</div>${rules}`,null,true)
     +card('Detail per Zona','▦',
-      `<div class="seg" style="flex-wrap:wrap;margin-bottom:8px">${zoneBtns}</div><div id="mt_detail"></div>`)
+      `<div class="seg" style="margin-bottom:8px">${zoneBtns}</div><div id="mt_detail"></div>`)
     +card('Kalkulator Formasi','◆',
       `<div class="row"><div style="flex:1"><label class="fl">Kapasitas march</label><input id="mt_cap" type="number" value="100000" min="0" step="1000"></div>
        <div style="flex:1"><label class="fl">Zona / preset</label><select id="mt_zone">${calcOpts}</select></div></div>
@@ -799,7 +799,7 @@ function wireStat(root){
 function renderKalkulator(){
   const el=$('[data-tab=kalkulator]'); if(!el) return;
   el.innerHTML=pageHead('Kalkulator','Alat hitung: waktu bangun & speedup, dan statistik tempur (power & rasio formasi).')
-    +`<div class="seg" id="kk_sub" style="flex-wrap:wrap;margin:4px 0 10px">
+    +`<div class="seg" id="kk_sub" style="margin:4px 0 10px">
         <button data-s="tc">▲ Rencana TC</button><button data-s="build">🧮 Building</button><button data-s="stat">⚔ Statistik</button><button data-s="tabel">📋 Tabel Biaya</button>
       </div><div id="kk_subc"></div>`;
   const KK_SUBS={ tc:tcCalcCard(), build:buildCalcCard(), stat:statCalcCard(), tabel:tcTableRefCard() };
@@ -1085,7 +1085,7 @@ function renderBangun(){
        <details><summary>Governor Charms</summary><div class="dt"><div class="small muted">${CHARM_INFO.map(c=>'• '+esc(c)).join('<br>')}</div></div></details>
        <div class="alert warn small">Governor Gear TIDAK pakai Forgehammer/Mithril (itu Hero Gear). Jangan gear hero joiner.</div>`);
   el.innerHTML=pageHead('Bangun & Progres','Urutan upgrade F2P (rush TC30), research, VIP, troop, gear & prioritas gubernur.')
-    +`<div class="seg" id="bg_sub" style="flex-wrap:wrap;margin:4px 0 10px">
+    +`<div class="seg" id="bg_sub" style="margin:4px 0 10px">
         <button data-s="urut">▣ Urutan</button><button data-s="riset">▤ Riset/VIP</button><button data-s="troop">⚔ Troop</button><button data-s="gear">◈ Gear & Gubernur</button><button data-s="track">✓ Tracker</button>
       </div><div id="bg_subc"></div>`;
   const BG_SUBS={ urut:cUrut, riset:cRiset, troop:cTroop, gear:cGub, track:buildTrackerCard() };
