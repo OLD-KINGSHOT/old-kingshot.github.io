@@ -76,8 +76,36 @@ function makeDragScroll(nav){
   nav.addEventListener('click',function(e){ if(dragged){ e.preventDefault(); e.stopPropagation(); } dragged=false; },true);
   nav.addEventListener('wheel',function(e){ if(nav.scrollWidth>nav.clientWidth+2 && Math.abs(e.deltaY)>=Math.abs(e.deltaX)){ nav.scrollLeft+=e.deltaY; e.preventDefault(); } },{passive:false});
 }
+/* Nav desktop dikelompokkan (pola yang dipakai situs pendamping game yang matang,
+   mis. Kingshot Optimizer & Maxroll): 12 tujuan dalam satu deret datar sulit
+   dipindai; dikelompokkan menurut kapan dipakai. Di layar sempit kelompoknya
+   luruh jadi satu baris seperti sebelumnya (label kelompok disembunyikan CSS). */
+const NAV_GROUPS=[
+  {t:'Harian',        ids:['sekarang','kode','kalender']},
+  {t:'Perang & Event',ids:['event','castle']},
+  {t:'Kemajuan',      ids:['bangun','hero','pets','island','kalkulator']},
+  {t:'Lainnya',       ids:['profil','dukung']},
+];
+function navGroupedHTML(){
+  const all=[NAV_PROFIL].concat(NAV);
+  const dipakai=new Set();
+  let h=NAV_GROUPS.map(g=>{
+    const btn=g.ids.map(id=>{ const n=all.find(x=>x.id===id); if(!n) return ''; dipakai.add(id); return navBtnHTML(n); }).join('');
+    return btn?'<div class="navgrp"><div class="navgrp-t">'+esc(g.t)+'</div>'+btn+'</div>':'';
+  }).join('');
+  /* jaring pengaman: tujuan yang belum masuk kelompok tetap tampil */
+  const sisa=all.filter(n=>!dipakai.has(n.id));
+  if(sisa.length) h+='<div class="navgrp">'+sisa.map(navBtnHTML).join('')+'</div>';
+  return h;
+}
+/* tinggi header dipakai CSS untuk menempatkan sidebar tepat di bawahnya */
+function syncHeaderH(){
+  const hd=document.querySelector('.apphead .topbar');
+  if(hd) document.documentElement.style.setProperty('--hdr-h',Math.round(hd.getBoundingClientRect().height)+'px');
+}
 function buildNav(){
-  $('#navlist').innerHTML=NAV.map(n=>navBtnHTML(n)).join('');
+  $('#navlist').innerHTML=navGroupedHTML();
+  syncHeaderH(); window.addEventListener('resize',syncHeaderH);
   const split=mobileNavSplit();
   $('#mobnav').innerHTML=split.primary.map(n=>navBtnHTML(n)).join('')
     +'<button class="navbtn" id="navmore"><span class="gi">☰</span><span class="nl">Lainnya</span></button>';
