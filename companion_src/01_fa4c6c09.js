@@ -227,7 +227,7 @@ function renderEvent(){
 
   el.innerHTML=pageHead('Event','Advisory otomatis: kapan TAHAN item, kapan PAKAI, dan jam berapa \u2014 digerakkan umur server. (Kalender kini tab tersendiri.)')
     +`<div class="seg" id="ev_sub" style="margin:4px 0 10px">
-        <button data-s="adv">\u25c9 Hari Ini</button><button data-s="live">\ud83d\udce1 Jadwal Live</button><button data-s="hog">\ud83c\udfdb HoG</button><button data-s="mystic">\ud83d\udd2e Mystic Trial</button><button data-s="find">\ud83d\udd0e Cari Event</button><button data-s="ency">\u25a4 Ensiklopedia</button><button data-s="kvk">\u2620 KvK Prep</button><button data-s="roi">\u25c6 Item & ROI</button><button data-s="anti">\u26a0 Anti-P2W</button><button data-s="ally">\ud83e\udd1d Aliansi & King</button>
+        <button data-s="adv">Hari Ini</button><button data-s="live">Jadwal Live</button><button data-s="hog">HoG</button><button data-s="mystic">Mystic Trial</button><button data-s="find">Cari Event</button><button data-s="ency">Ensiklopedia</button><button data-s="kvk">KvK Prep</button><button data-s="roi">Item & ROI</button><button data-s="anti">Anti-P2W</button><button data-s="ally">Aliansi & King</button>
       </div><div id="ev_subc"></div>`;
 
   /* SEMUA bagian jadi sub-tab \u2014 satu bagian tampil pada satu waktu, tanpa scroll panjang */
@@ -235,7 +235,7 @@ function renderEvent(){
     adv: card('Advisory Otomatis','\u25c9',schedHTML,'live',true),
     live: card('Jadwal Kingdom (live)','\ud83d\udce1','<div id="evlive"></div>'),
     cal: card('Kalender Server','\u2691',
-      `<p class="muted small">Event PERTUMBUHAN berbasis umur server (HoG \u00b7 KvK \u00b7 SG \u00b7 Burst \u00b7 Milestone). Event mingguan aliansi ada di sub-tab "\ud83d\udce1 Jadwal Live".</p><div id="evcal"></div>`),
+      `<p class="muted small">Event PERTUMBUHAN berbasis umur server (HoG \u00b7 KvK \u00b7 SG \u00b7 Burst \u00b7 Milestone). Event mingguan aliansi ada di sub-tab "Jadwal Live".</p><div id="evcal"></div>`),
     mystic: mysticHTML(),
     find: eventFinderHTML(),
     hog: hogHTML(age),
@@ -413,7 +413,7 @@ function eventFinderHTML(){
       +(e.what?'<div class="small">'+esc(e.what)+'</div>':'')
       +'</div>';
   }).join('');
-  return card('Cari Event','🔎',
+  return card('Cari Event','◎',
     '<p class="muted small">Ketik nama event untuk cari cepat — apa yang dilakukan, poin, & tips. Semua event ada di sini (tak ada yang terkubur).</p>'
     +'<input id="evfind_q" placeholder="mis. fishing, buccaneer, armament, viking…" autocomplete="off" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.04);color:var(--fg);margin-bottom:6px;font-size:13px">'
     +'<div class="dim small" id="evfind_count" style="margin-bottom:8px"></div>'
@@ -441,7 +441,7 @@ function mysticHTML(){
   const calcOpts=M.zones.map(z=>`<option value="${z.ratio.join(',')}"${z.key==='molten'?' selected':''}>${esc(z.name)} — ${z.ratio.join('/')}</option>`).join('');
   const tableRows=M.zones.map(z=>`<tr><td><b>${esc(z.name)}</b></td><td class="small">${esc(z.days)}</td><td class="small">${esc(z.stat)}</td><td class="mono">${z.ratio.join('/')}</td><td class="small">${esc(z.unlock)}</td></tr>`).join('');
   const tactics=M.tactics.map(t=>`<div class="check note"><div class="d" style="color:var(--fg)"><b>${esc(t[0])}</b><div class="muted small">${esc(t[1])}</div></div></div>`).join('');
-  return card('Mystic Trial — 6 Zona','🔮',
+  return card('Mystic Trial — 6 Zona','◈',
       `<p class="muted small">PvE permanen, unlock TC ${M.unlockTC}. Total power TIDAK berlaku — tiap zona hanya menghitung SATU sumber stat. Troop disediakan game (T10) kecuali Radiant Spire (troop sendiri).</p>
        <div class="lbl" style="margin:10px 0 2px">Jadwal mingguan</div>${week}
        <div class="lbl" style="margin:12px 0 2px">Aturan semua zona</div>${rules}`,null,true)
@@ -458,7 +458,7 @@ function mysticHTML(){
     +card('Ringkasan 6 Zona','▤',
       `<div class="scrollx"><table><thead><tr><th>Zona</th><th>Hari</th><th>Stat</th><th>I/C/A</th><th>Unlock</th></tr></thead><tbody>${tableRows}</tbody></table></div>`)
     +card('Taktik Lanjutan','♟',tactics)
-    +card('Shop & Catatan','🎁',
+    +card('Shop & Catatan','◆',
       `<div class="alert inf small">${esc(M.shop)}</div><p class="muted small">${esc(M.note)}</p>`);
 }
 /* Metode TERVERIFIKASI: % musuh TIDAK tampil sebelum fight — baca dari Battle Report
@@ -701,7 +701,7 @@ function tcTableRefCard(){
     ? `<div class="alert inf small">Jalur Truegold baru relevan jauh di depan — Age of Truegold ~hari 70, TG5 ~hari 150, TG8 ~hari 310 umur server. TG = Truegold, TmpTG = Tempered Truegold.</div>` : '';
   const catatanCelah=(tanpaTG.length&&sel==='TownCenter')
     ? `<div class="muted small" style="margin-top:6px"><span>Tanpa data biaya per-langkah Truegold (kebutuhan total ada, per-level tidak ada di sumber mana pun):</span> ${tanpaTG.map(n=>esc(TC_NAMA_TAMPIL[n]||n)).join(', ')}</div>` : '';
-  return card('Tabel Biaya','📋',
+  return card('Tabel Biaya','▤',
     `<p class="muted small">Referensi biaya & durasi upgrade tiap level. Pilih bangunan; centang Truegold untuk melihat langkah pasca-Lv30.</p>
      <label class="calcf" style="max-width:280px"><span>Bangunan</span><select id="tr_b">${opt}</select></label>
      ${catatanTG}
@@ -715,7 +715,7 @@ function wireTcRef(el){
 }
 
 function buildCalcCard(){
-  return card('Kalkulator Waktu Bangun & Speedup','🧮',
+  return card('Kalkulator Waktu Bangun & Speedup','▦',
     `<p class="muted small">Hitung waktu upgrade sebenarnya setelah bonus <b>Construction Speed</b>, dan berapa speedup yang dibutuhkan. Baca <b>base time</b> di layar upgrade dan total <b>Construction Speed %</b> di profil buff-mu (VIP + Research + Chief Minister + pet Gray Wolf + decree).</p>
      <div class="calcgrid">
        <label class="calcf"><span>Base — Hari</span><input id="cd_d" type="number" min="0" value="0" inputmode="numeric"></label>
@@ -815,7 +815,7 @@ function renderKalkulator(){
   const el=$('[data-tab=kalkulator]'); if(!el) return;
   el.innerHTML=pageHead('Kalkulator','Alat hitung: waktu bangun & speedup, dan statistik tempur (power & rasio formasi).')
     +`<div class="seg" id="kk_sub" style="margin:4px 0 10px">
-        <button data-s="tc">▲ Rencana TC</button><button data-s="build">🧮 Building</button><button data-s="stat">⚔ Statistik</button><button data-s="tabel">📋 Tabel Biaya</button>
+        <button data-s="tc">Rencana TC</button><button data-s="build">Building</button><button data-s="stat">Statistik</button><button data-s="tabel">Tabel Biaya</button>
       </div><div id="kk_subc"></div>`;
   const KK_SUBS={ tc:tcCalcCard(), build:buildCalcCard(), stat:statCalcCard(), tabel:tcTableRefCard() };
   const showSub=k=>{ if(!KK_SUBS[k]) k='build'; const c=$('#kk_subc',el); if(!c) return;
@@ -971,7 +971,7 @@ function renderCastle(){
 function renderDukung(){
   const el=$('[data-tab=dukung]'); if(!el) return;
   el.innerHTML=pageHead('Saran & Donasi','Punya ide atau permintaan fitur? Kirim di sini — semoga membantu.')
-    +card('Pembuat','👑',
+    +card('Pembuat','★',
       `<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
          <div class="crest" style="width:46px;height:46px;flex:0 0 auto;font-size:22px">👑</div>
          <div><div style="font-weight:800;font-size:16px">INDONenen13</div><div class="muted small">2 server</div></div>
@@ -987,7 +987,7 @@ function renderDukung(){
          <button class="btn sec sm" data-cid="343522603">📋 Salin</button>
        </div>
        <div class="dim small" style="margin-top:8px">Semoga membantu perjalanan F2P-mu. 🙏</div>`)
-    +card('Saran / Request Fitur','💬',
+    +card('Saran / Request Fitur','✦',
       `<p class="muted small">Tulis ide, bug, atau fitur yang kamu mau. Terkirim langsung dari sini.</p>
        <textarea id="fb_text" rows="5" placeholder="Contoh: tambah kalkulator gear, atau event X belum ada…"></textarea>
        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
@@ -1105,7 +1105,7 @@ function renderBangun(){
        <div class="alert warn small">Governor Gear TIDAK pakai Forgehammer/Mithril (itu Hero Gear). Jangan gear hero joiner.</div>`);
   el.innerHTML=pageHead('Bangun & Progres','Urutan upgrade F2P (rush TC30), research, VIP, troop, gear & prioritas gubernur.')
     +`<div class="seg" id="bg_sub" style="margin:4px 0 10px">
-        <button data-s="urut">▣ Urutan</button><button data-s="riset">▤ Riset/VIP</button><button data-s="troop">⚔ Troop</button><button data-s="gear">◈ Gear & Gubernur</button><button data-s="track">✓ Tracker</button>
+        <button data-s="urut">Urutan</button><button data-s="riset">Riset/VIP</button><button data-s="troop">Troop</button><button data-s="gear">Gear & Gubernur</button><button data-s="track">Tracker</button>
       </div><div id="bg_subc"></div>`;
   const BG_SUBS={ urut:cUrut, riset:cRiset, troop:cTroop, gear:cGub, track:buildTrackerCard() };
   const wireUp=()=>{ const list=$('#up_list',el); if(!list) return;
@@ -1144,7 +1144,7 @@ function renderPets(){
 function renderIsland(){
   const el=$('[data-tab=island]');
   el.innerHTML=pageHead('My Island (Oasis)','Panen peti & Essence — peta referensi + 5 aturan yang berlaku untuk layout apa pun.')
-    +card('🗺️ Peta referensi komunitas (grid 60×60)','🏝',
+    +card('🗺️ Peta referensi komunitas (grid 60×60)','◇',
       `<div class="small muted" style="margin-bottom:8px">🟥 merah = peti · ⬜ putih = jalur ter-clear · angka = koordinat. Cocokkan 2-3 titik merah dekat tepi dengan pulaumu — kalau meleset, abaikan koordinat dan pakai 5 aturan saja.</div>
        <div class="scrollx" style="border-radius:8px;max-height:70vh;overflow:auto"><img id="isl_ref" src="${(document.getElementById('islandmap')||{}).src||''}" alt="island map" style="width:100%;border-radius:8px;border:1px solid var(--bd-strong);cursor:zoom-in"></div>
        <div class="small muted" style="margin-top:4px">🔍 Ketuk gambar untuk zoom (100% → 180% → 260%), geser untuk melihat detail.</div>
@@ -1172,7 +1172,7 @@ function renderIsland(){
          <button class="btn ghost sm" id="isl_clear" style="margin-left:auto;color:var(--loss);border-color:rgba(255,70,85,.4)">reset peta</button>
        </div>
        <div class="scrollx" style="max-height:62vh;overflow:auto;border:1px solid var(--bd);border-radius:8px;background:#06080C"><canvas id="isl_cv"></canvas></div>`,null,true)
-    +card('My Island (Oasis) — panen peti','🏝️',
+    +card('My Island (Oasis) — panen peti','◇',
       `<p class="muted small">Mode terpisah, unlock TC19 (ikon Island di peta). Clear cacti → muncul peti + Essence (buff growth & combat). Semua cacti habis → dapat Purifier. Clearing = progress permanen.</p>
        <div class="lbl" style="margin:10px 0 4px">5 aturan (tak perlu hafal peta)</div>
        ${['Kiri dulu — sisi kiri pulau = peti terpadat.','Taruh Reservoir nempel cluster peti, bukan di tengah kosong.','Cluster beres → pindahkan Reservoir ke cluster peti berikutnya.','Buka layar Oasis saat clearing — worker lebih cepat online daripada offline.','Kerjakan per kuadran; pakai dekorasi untuk blokir & arahkan worker ke peti.'].map((t,i)=>`<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">${i+1}</span> &nbsp;${esc(t)}</div></div>`).join('')}
@@ -1569,8 +1569,8 @@ function renderProfil(){
       `<p class="muted small">App ikut waktu server (UTC) \u2014 reset 07:00 WIB. Sinkron otomatis saat online. Kalau meleset, geser manual (menit):</p>
        <div class="row"><input id="pf_nudge" type="number" step="1" value="${esc(ksClock.nudge)}" style="width:100px"><button class="btn sec sm" id="pf_nudgeset">Terapkan</button><span id="pf_synstat" class="muted small">${ksClock.synced?'\u2713 tersinkron server':'pakai jam perangkat'}</span></div>`)
     +card('Notifikasi otomatis','◉',notifBody())
-    +card('Sinkron Otomatis Antar Perangkat','🔁',syncBody())
-    +card('Backup & Pindah Perangkat','💾',
+    +card('Sinkron Otomatis Antar Perangkat','◉',syncBody())
+    +card('Backup & Pindah Perangkat','▣',
       `<p class="muted small">Semua data (profil, checklist, jam alliance, progres) tersimpan di browser INI saja. Ganti HP/browser = data hilang. Export dulu, lalu Import di perangkat baru.</p>
        <div class="row"><button class="btn sec sm" id="bk_export">⬇ Export data</button><button class="btn sec sm" id="bk_import">⬆ Import data</button><input type="file" id="bk_file" accept=".json" style="display:none"></div>
        <div id="bk_status"></div>`);

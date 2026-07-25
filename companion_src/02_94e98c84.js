@@ -5,13 +5,13 @@ const NAV=[
   {id:'sekarang',gi:'\u25d0',label:'Sekarang'},
   {id:'hero',gi:'\u25ce',label:'Hero'},
   {id:'event',gi:'\u2694',label:'Event'},
-  {id:'castle',gi:'\ud83c\udff0',label:'Castle'},
+  {id:'castle',gi:'\u25b2',label:'Castle'},
   {id:'bangun',gi:'\u25a3',label:'Bangun'},
   {id:'pets',gi:'\u2b22',label:'Pets'},
-  {id:'island',gi:'\ud83c\udfdd',label:'Island'},
+  {id:'island',gi:'\u25c7',label:'Island'},
   {id:'kode',gi:'\u2726',label:'Kode'},
   {id:'kalender',gi:'\u2691',label:'Kalender'},
-  {id:'kalkulator',gi:'\ud83e\uddee',label:'Kalkulator'},
+  {id:'kalkulator',gi:'\u25a6',label:'Kalkulator'},
   {id:'dukung',gi:'\u2764',label:'Dukung'},
 ];
 
@@ -20,7 +20,7 @@ function navBtnHTML(n,cls){ return `<button class="navbtn" data-go="${n.id}"><sp
    lebar 390px (label 8,5px, harus digeser) — tak terbaca & tak profesional.
    Sisanya pindah ke sheet. Desktop tetap memakai NAV utuh. */
 const MOBNAV_PRIMARY=['sekarang','event','kode','kalkulator'];
-const NAV_PROFIL={id:'profil',gi:'👤',label:'Profil'};
+const NAV_PROFIL={id:'profil',gi:'\u25c9',label:'Profil'};
 function mobileNavSplit(){
   const all=[NAV_PROFIL].concat(NAV);
   const primary=MOBNAV_PRIMARY.map(id=>all.find(n=>n.id===id)).filter(Boolean);
@@ -254,7 +254,7 @@ function renderSekarang(){
       +'<div class="u"><div class="n sk-cd" data-t="'+target+'" data-u="m">--</div><div class="l">menit</div></div></div>'
       +'<div class="prep-list">'+steps.map((s,i)=>'<div class="p"><i>'+(i+1)+'</i><div>'+s+'</div></div>').join('')+'</div></div></div>';
   }
-  const giftHTML='<div class="card giftcard"><div class="gc-head">🎟️ Gift Code'
+  const giftHTML='<div class="card giftcard"><div class="gc-head">◆ Gift Code'
     +'<span class="gc-id">ID <b>'+pid+'</b><button class="cpy" data-c="'+pid+'">salin</button></span></div>'
     +'<div class="gc-list" id="sk_codes"><div class="gc-note">⏳ Memuat kode aktif…</div></div>'
     +'<div class="gc-note">Otomatis dari kingshot.net · <b>Redeem</b> menukar kode ke Player ID kamu (hadiah masuk mail in-game).</div></div>';
@@ -376,7 +376,7 @@ function renderSekarang(){
    — kalau tidak, cache dingin bikin kartu kosong. Event aktif diringkas satu baris. */
 async function fillSoonEvents(age){
   const host=$('#sk_soon'); if(!host) return;
-  host.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div><div class="gc-note">⏳ Memuat jadwal…</div></div>';
+  host.innerHTML='<div class="card"><div class="gc-head">◷ Sebulan ke depan</div><div class="gc-note">⏳ Memuat jadwal…</div></div>';
   try{ if(typeof ksLiveEvents==='function') await ksLiveEvents(); }catch(e){}
   const h=$('#sk_soon'); if(!h) return;                 /* tab bisa berganti saat fetch */
   const now=ksClock.now().getTime();
@@ -384,7 +384,7 @@ async function fillSoonEvents(age){
   const active=list.filter(x=>x.active);
   const upcoming=list.filter(x=>!x.active&&x.startUTC!=null).sort((a,b)=>a.startUTC-b.startUTC);
   if(!active.length&&!upcoming.length){
-    h.innerHTML='<div class="card"><div class="gc-head">⏱️ Sebulan ke depan</div>'
+    h.innerHTML='<div class="card"><div class="gc-head">◷ Sebulan ke depan</div>'
       +'<div class="gc-note">Jadwal live belum termuat. Buka tab Event → 📡 Jadwal Live, atau cek koneksi.</div></div>';
     return;
   }
@@ -458,7 +458,7 @@ async function fillSoonEvents(age){
   const globRows=globArr.join('');
   const globMore=globArr.length>GLOB_CAP
     ? '<button class="btn ghost sm" id="sk_globmore" style="margin-top:8px">Lihat semua ('+globArr.length+')</button>' : '';
-  h.innerHTML='<div class="card"><div class="gc-head">⏱️ Event terdekat</div>'
+  h.innerHTML='<div class="card"><div class="gc-head">◷ Event terdekat</div>'
     +'<div class="lbl">Sedang berjalan <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· selesai</span></div>'
     +'<div class="sk-evgrid">'+runRows+'</div>'
     +(psSoonRows?'<div class="lbl" style="margin-top:12px">Berikutnya <span class="dim" style="font-weight:400;text-transform:none;letter-spacing:0">· server-mu (umur)</span></div>'

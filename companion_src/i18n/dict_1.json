@@ -115,7 +115,6 @@
  "~tiap 14 hari (mulai ~hari 6)": "~every 14 days (starts ~day 6)",
  "~tiap 40-60 hari": "~every 40-60 days",
  "−20% waktu konstruksi (bertahan s/d build selesai)": "−20% construction time (lasts until build done)",
- "⏱️ Double Time: aktifkan SEBELUM mulai upgrade (window 5 mnt). Dihitung dari base time DULU, baru buff lain (VIP/research/Chief Minister) menumpuk — bukan stack flat. Stack dgn pet Gray Wolf + Chief Minister. Lewat TC25: tunggu cooldown daripada mulai tanpa Double Time.": "⏱️ Double Time: activate BEFORE starting upgrade (5 min window). Computed from base time FIRST, then other buffs (VIP/research/Chief Minister) stack on top — not flat stack. Stacks with Gray Wolf pet + Chief Minister. Past TC25: wait for cooldown rather than start without Double Time.",
  "⏳ Belum aktif — mulai ~hari 70 (server hari 69). Simpan persiapan.": "⏳ Not active yet — starts ~day 70 (server day 69). Save your prep.",
  "⏳ Reset harian 07:00": "⏳ Daily reset 07:00",
  "⏳ Reset harian 07:00 WIB dalam": "⏳ Daily reset 07:00 WIB in",
@@ -135,5 +134,6 @@
  "★ Zoe (Inf) INTI": "★ Zoe (Inf) CORE",
  "⚔️ Speedup Training": "⚔️ Training Speedup",
  "⚙ Aturan rotasi (F2P) — BACA DULU": "⚙ Rotation rules (F2P) — READ FIRST",
- "⚠ Age of Truegold lewat tapi TC masih 15. Kebut TC ke 30.": "⚠ Age of Truegold passed but TC still 15. Rush TC to 30."
+ "⚠ Age of Truegold lewat tapi TC masih 15. Kebut TC ke 30.": "⚠ Age of Truegold passed but TC still 15. Rush TC to 30.",
+ "◷ Double Time: aktifkan SEBELUM mulai upgrade (window 5 mnt). Dihitung dari base time DULU, baru buff lain (VIP/research/Chief Minister) menumpuk — bukan stack flat. Stack dgn pet Gray Wolf + Chief Minister. Lewat TC25: tunggu cooldown daripada mulai tanpa Double Time.": "◷ Double Time: activate BEFORE starting upgrade (5 min window). Computed from base time FIRST, then other buffs (VIP/research/Chief Minister) stack on top — not flat stack. Stacks with Gray Wolf pet + Chief Minister. Past TC25: wait for cooldown rather than start without Double Time."
 }
