@@ -510,7 +510,7 @@ async function fillSoonEvents(age){
   if(EN&&window.__translate) window.__translate();
 }
 
-/* "Lakukan SEKARANG" ikut menampilkan event mingguan kingdom yang berjalan HARI INI
+/* "Lakukan sekarang" ikut menampilkan event mingguan kingdom yang berjalan HARI INI
    (rotasi global kingshot.net, di-gate umur server) — bukan cuma event skor. */
 async function fillNowLive(age){
   const host=$('#now_live'); if(!host) return;
@@ -543,7 +543,7 @@ function renderHero(){
     const seen=new Set(); activeAdvisories(start,age).forEach(a=>{ if(a.type==='kvk'&&!seen.has('kvk')){ seen.add('kvk'); nowHTML+='<div class="lbl" style="margin:10px 0 4px">Event combat aktif</div>'+lineupCard(by('kvk-rally'),age); } });
   }
 
-  const ruleBox=`<div class="alert ok small"><b>Cara baca skill hero</b> — tiap hero punya 2 set skill terpisah (manual beda, bisa di-maks dua-duanya):<br>• <b>EXPEDITION</b> = dipakai di rally, garrison, Bear Hunt, KvK, semua tempur lapangan. <b>Ini yang utama untuk F2P.</b><br>• <b>CONQUEST</b> = HANYA Arena & Campaign. Skill pertamanya = "Ultimate" (otomatis). Tak main Arena → tabung manualnya.</div>
+  const ruleBox=`<div class="alert ok small"><b>Cara baca skill hero</b> — tiap hero punya 2 set skill terpisah (manual beda, bisa di-maks dua-duanya):<br>• <b>EXPEDITION</b> = dipakai di rally, garrison, Bear Hunt, KvK, semua tempur lapangan. <b>Ini yang utama untuk F2P.</b><br>• <b>CONQUEST</b> = Hanya Arena & Campaign. Skill pertamanya = "Ultimate" (otomatis). Tak main Arena → tabung manualnya.</div>
   <div class="alert inf small"><b>JOINER</b> (kamu ikut rally orang lain): cuma <b>skill Expedition PERTAMA</b> (bendera hijau) yang dihitung → maks itu ke Lv5 (butuh 4★). Skill ke-2/3, gear, & widget joiner <b>SIA-SIA</b> — jangan buang resource ke situ. <b>LEADER / GARRISON</b> (hero kamu deploy penuh): naikkan <b>semua 3 skill Expedition</b>.</div>`;
 
   el.innerHTML=pageHead('Hero & Lineup','Satu sumber data \u2014 jawab "event ini pakai hero apa", siapa diprioritaskan, dan skill mana dinaikkan / ditahan.')
@@ -563,7 +563,7 @@ function renderHero(){
            <div class="seg" id="sitpick"></div><div id="sitcard"></div>`);
     } else if(which==='prioritas'){
       html=card('Skill di-MAX per hero','\u25c6',
-          `<div class="alert ok small"><b>EXPEDITION</b> = semua mode lapangan (rally, garrison, Bear Hunt, PvP, gather). <b>CONQUEST</b> = Arena/Campaign saja.<br><b>Join rally \u2192 cuma skill #1.</b> Leader/garrison \u2192 max SEMUA skill Expedition. Arena \u2192 Ultimate (Conquest #1) Lv5\u21928\u219210.</div>
+          `<div class="alert ok small"><b>EXPEDITION</b> = semua mode lapangan (rally, garrison, Bear Hunt, PvP, gather). <b>CONQUEST</b> = Arena/Campaign saja.<br><b>Join rally \u2192 cuma skill #1.</b> Leader/garrison \u2192 max semua skill Expedition. Arena \u2192 Ultimate (Conquest #1) Lv5\u21928\u219210.</div>
            <div class="scrollx"><table><thead><tr><th>Hero</th><th>Skill di-MAX (nama in-game)</th><th>Peran</th></tr></thead><tbody>
            ${SKILL_MAX.map(([h,c,s,r])=>`<tr><td><b>${esc(h)}</b></td><td class="small">${s}</td><td class="small muted">${esc(r)}</td></tr>`).join('')}
            </tbody></table></div>

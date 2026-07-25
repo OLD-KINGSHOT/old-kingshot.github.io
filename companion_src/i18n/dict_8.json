@@ -8,7 +8,6 @@
  "Sumber Widget & skin terbaik F2P. ATURAN: Corsair Keys PERSIST antar event, Pearls TIDAK → tabung key, habiskan pearl sebelum tutup. Pakai 3 free refresh/hari. Hindari pack \"Harbor Tome\" 499 coin.": "Best F2P Widget & skin source. RULE: Corsair Keys PERSIST across events, Pearls DON'T → save up keys, spend pearls before it closes. Use 3 free refreshes/day. Avoid the \"Harbor Tome\" pack at 499 coin.",
  "Support / ekonomi": "Support / economy",
  "Swordland Showdown (2 minggu, Minggu)": "Swordland Showdown (2 weeks, Sunday)",
- "TAHAN": "HOLD",
  "Tambah / ralat tanggal manual": "Add / fix date manually",
  "Tambah antrian march": "Add march queue",
  "Tambang tile cari Ultimate Treasure; tiap lantai ke-5 = reward DOBEL. F2P: daily gratis ~26 pickaxe/hari, CARRY-OVER antar event → tabung. Tip: tile ke-14 di lantai biasa dijamin Ultimate Treasure (≤14 pickaxe/lantai). Trap: kalau <14 pickaxe, jangan buka — simpan untuk event berikutnya.": "Mine tiles for the Ultimate Treasure; every 5th floor = DOUBLE reward. F2P: free daily ~26 pickaxes/day, CARRY-OVER across events → save up. Tip: the 14th tile on a normal floor guarantees Ultimate Treasure (≤14 pickaxes/floor). Trap: if <14 pickaxes, don't open — save for the next event.",
@@ -40,7 +39,6 @@
  "Tidak ada event skor aktif. Fokus rutin & bangun pondasi.": "No active scoring event. Focus on routine & building your foundation.",
  "Tidak ada event terjadwal — fokus rutin & pondasi.": "No scheduled events — focus on routine & foundation.",
  "Tipe": "Type",
- "Town Center (TC) — SELALU prioritas #1": "Town Center (TC) — ALWAYS priority #1",
  "Trading/gathering -> resource. Jalankan gather & tukar.": "Trading/gathering -> resource. Run gathers & exchange.",
  "Trap gem #1.": "Gem trap #1.",
  "Tri-Alliance Clash (Sabtu ~60mnt)": "Tri-Alliance Clash (Saturday ~60min)",
@@ -64,7 +62,6 @@
  "Urutan upgrade F2P (rush TC30), research, VIP, troop, gear & tracker progres pribadi.": "F2P upgrade order (rush TC30), research, VIP, troop, gear & personal progress tracker.",
  "Utility (gather/stamina)": "Utility (gather/stamina)",
  "VIP — Target F2P": "VIP — F2P Target",
- "WAJIB Lv15 → gate menangkap Lion": "MUST be Lv15 → gates capturing Lion",
  "Wall = level TC": "Wall = TC level",
  "Wall = level TC (selalu)": "Wall = TC level (always)",
  "Wall 25 + Academy 24 (buka Charms / Master Academy)": "Wall 25 + Academy 24 (unlocks Charms / Master Academy)",
@@ -81,5 +78,8 @@
  "yang dihitung. Lineup max 1 hero/tipe (tak bisa 2 archer).": "that counts. Lineup max 1 hero/type (can't run 2 archers).",
  "Yeonwoo (Arc)": "Yeonwoo (Arc)",
  "Yeonwoo → 4★": "Yeonwoo → 4★",
- "Zoe → 4★": "Zoe → 4★"
+ "Zoe → 4★": "Zoe → 4★",
+ "Tahan": "Hold",
+ "Town Center (TC) — Selalu prioritas #1": "Town Center (TC) — Always priority #1",
+ "Wajib Lv15 → gate menangkap Lion": "Must be Lv15 → gates capturing Lion"
 }

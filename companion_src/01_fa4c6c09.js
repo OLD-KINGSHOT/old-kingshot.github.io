@@ -217,15 +217,15 @@ function renderEvent(){
     if(e.what) parts.push(`<div class="small" style="margin-top:4px">${esc(e.what)}</div>`);
     if(e.tpl && EVENT_TEMPLATES[e.tpl] && (EVENT_TEMPLATES[e.tpl].days||[]).length){
       const t=EVENT_TEMPLATES[e.tpl];
-      parts.push(`<h3 style="margin:10px 0 4px">Jadwal per hari</h3><div class="scrollx"><table><thead><tr><th>Hari</th><th>Tema skor</th><th>Pakai SEKARANG</th></tr></thead><tbody>${t.days.map((d,i)=>`<tr><td><b>${esc(d.split(' ')[0])}</b></td><td class="small">${esc(d.replace(/^D\d+\s*/,''))}</td><td class="small muted">${esc(t.spend[i]||'item sesuai tema')}</td></tr>`).join('')}</tbody></table></div>`);
+      parts.push(`<h3 style="margin:10px 0 4px">Jadwal per hari</h3><div class="scrollx"><table><thead><tr><th>Hari</th><th>Tema skor</th><th>Pakai sekarang</th></tr></thead><tbody>${t.days.map((d,i)=>`<tr><td><b>${esc(d.split(' ')[0])}</b></td><td class="small">${esc(d.replace(/^D\d+\s*/,''))}</td><td class="small muted">${esc(t.spend[i]||'item sesuai tema')}</td></tr>`).join('')}</tbody></table></div>`);
       if(SPEED_NOTE[e.tpl]) parts.push(`<div class="alert warn small" style="margin-top:6px">${SPEED_NOTE[e.tpl]}.</div>`);
-      if(t.hold) parts.push(`<div class="alert inf small">🔒 TAHAN: ${esc(t.hold)}</div>`);
+      if(t.hold) parts.push(`<div class="alert inf small">🔒 Tahan: ${esc(t.hold)}</div>`);
     }
     if(e.sit){ const s=SITUATIONS.find(x=>x.key===e.sit); if(s) parts.push(lineupCard(s,age)); }
     return `<details><summary>${esc(e.n)} <span class="tag" style="margin-left:auto">${esc(e.cat)}</span></summary><div class="dt">${parts.join('')}</div></details>`;
   }).join('')).join('');
 
-  el.innerHTML=pageHead('Event','Advisory otomatis: kapan TAHAN item, kapan PAKAI, dan jam berapa \u2014 digerakkan umur server. (Kalender kini tab tersendiri.)')
+  el.innerHTML=pageHead('Event','Advisory otomatis: kapan tahan item, kapan pakai, dan jam berapa \u2014 digerakkan umur server. (Kalender kini tab tersendiri.)')
     +`<div class="seg" id="ev_sub" style="margin:4px 0 10px">
         <button data-s="adv">Hari Ini</button><button data-s="live">Jadwal Live</button><button data-s="hog">HoG</button><button data-s="mystic">Mystic Trial</button><button data-s="find">Cari Event</button><button data-s="ency">Ensiklopedia</button><button data-s="kvk">KvK Prep</button><button data-s="roi">Item & ROI</button><button data-s="anti">Anti-P2W</button><button data-s="ally">Aliansi & King</button>
       </div><div id="ev_subc"></div>`;
@@ -256,8 +256,8 @@ function renderEvent(){
        <div class="lbl" style="margin:12px 0 4px">Urutan donasi Alliance Tech</div>
        <div class="small muted">1. <b>Growth dulu</b> (konstruksi/riset/gather semua) \u2192 buka Plains Enrichment. 2. Seimbangkan <b>Battle</b> (rally governor cap). 3. <b>Territory</b> secukupnya (banner + Storehouse). Donasi ke tech ber-flag "preferred" R4 (+20% reward). Tech kunci: <b>Cooperative Protocols</b> (help 30\u2192150 dtk), <b>Rally Expansion</b> (slot 1\u21924).</div>
        <div class="alert ok small">Peran F2P: <b>JOIN rally, jangan lead</b> (rally cap = CC leader; leader butuh Widget mahal). Spam Help All tiap hari = income token + rank gratis.</div>`)
-      +card('King\'s Castle & Title \u2014 buff GRATIS','\ud83d\udc51',
-      `<div class="small muted">Castle Battle pertama (~<b>hari 54</b>, timeline kingshot.net) \u2192 alliance pemenang menunjuk <b>King</b>. King beri <b>title/minister</b> (Marshal=Attack, Field Commander=Lethality) = buff stat GRATIS & sementara ke governor mana pun.</div>
+      +card('King\'s Castle & Title \u2014 buff Gratis','\ud83d\udc51',
+      `<div class="small muted">Castle Battle pertama (~<b>hari 54</b>, timeline kingshot.net) \u2192 alliance pemenang menunjuk <b>King</b>. King beri <b>title/minister</b> (Marshal=Attack, Field Commander=Lethality) = buff stat gratis & sementara ke governor mana pun.</div>
        <div class="alert ok small">\ud83d\udca1 Minta title buff (konstruksi/riset) <b>sebelum</b> upgrade besar / riset panjang / snapshot registrasi Championship.</div>
        <div class="lbl" style="margin:12px 0 4px">Castle Battle \u2014 taktik F2P</div>
        <div class="small muted">\u2022 <b>Serang TURRET, bukan castle</b> \u2014 tiap turret musuh = 2% korban/siklus ke pasukan castle (4 turret = 8%).<br>\u2022 <b>Forbidden Zone</b>: TP masuk hanya &lt;1 jam sebelum mulai (lebih awal = kota dipindah, shield hilang).<br>\u2022 Batch-heal slider ~30 mnt + minta help; jangan buang healing speedup kecuali hospital overflow (overflow = 30% mati permanen).</div>`)
@@ -890,7 +890,7 @@ function wireCastle(root){
     var gd=$('#cb_guide',el); if(!gd) return;
     gd.innerHTML = L
       ? '<b>Base in the '+nm+'</b> → stage outside the ring on the '+nm+' side.<br>• <b>🔴 Attack rally</b> (strongest players) → King\'s Castle (center).<br>• <b>🟢 Turret rally</b> → Turret '+U(dir)+' (nearest = capture & HOLD, easy to defend) + Turret '+D.adj.map(U).join('/')+' (secondary).<br>• <b>🚩 Joiners</b> → gather behind the rally leader, tap JOIN (only a joiner\'s 1st Expedition skill counts).<br>• Turret '+U(D.far)+' (opposite) → leave to the alliance on that side.'
-      : '<b>Base di '+nm+'</b> → staging di luar ring sisi '+nm+'.<br>• <b>🔴 Rally SERANG</b> (pemain terkuat) → King\'s Castle (tengah).<br>• <b>🟢 Rally TURRET</b> → Turret '+U(dir)+' (terdekat = rebut & TAHAN, mudah dibela) + Turret '+D.adj.map(U).join('/')+' (sekunder).<br>• <b>🚩 Joiner</b> → kumpul di belakang rally leader, tekan JOIN (cuma skill Expedition #1 joiner yang dihitung).<br>• Turret '+U(D.far)+' (seberang) → serahkan ke aliansi sisi itu.';
+      : '<b>Base di '+nm+'</b> → staging di luar ring sisi '+nm+'.<br>• <b>🔴 Rally SERANG</b> (pemain terkuat) → King\'s Castle (tengah).<br>• <b>🟢 Rally TURRET</b> → Turret '+U(dir)+' (terdekat = rebut & Tahan, mudah dibela) + Turret '+D.adj.map(U).join('/')+' (sekunder).<br>• <b>🚩 Joiner</b> → kumpul di belakang rally leader, tekan JOIN (cuma skill Expedition #1 joiner yang dihitung).<br>• Turret '+U(D.far)+' (seberang) → serahkan ke aliansi sisi itu.';
   }
   $$('#cb_dir button',el).forEach(function(b){ b.onclick=function(){ dir=b.dataset.dir; paintBase(); }; });
   ['n','e','s','w'].forEach(function(k){ var g=$('#tur-'+k,el); if(g){ g.onclick=function(){ st[k]=st[k]==='enemy'?'us':(st[k]==='us'?'contested':'enemy'); paintTur(); }; g.onkeydown=function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); g.onclick(); } }; } });
@@ -927,7 +927,7 @@ function renderCastle(){
      <div class="alert warn small">${L?'Idle holding WITHOUT fighting = low score. Points come from <b>active combat</b>.':'Diam menahan struktur TANPA bertempur = skor kecil. Poin datang dari <b>pertempuran aktif</b>.'}</div>
      <div class="alert inf small">${L?'🩹 Troops are NOT permanently killed unless the <b>hospital is full</b> (then 30% lost, 70% recovered via the Enlistment Office/Loyalty). Watch hospital capacity.':'🩹 Pasukan TIDAK mati permanen kecuali <b>hospital penuh</b> (lalu 30% hilang, 70% balik via Enlistment Office/Loyalty). Pantau kapasitas hospital.'}</div>`);
   const heroCard=card(L?'Heroes & Ratios — Attack vs Hold':'Hero & Rasio — Serang vs Tahan','⚔',
-    `<p class="muted small">${age!=null?(L?'Your generation: <b>Gen '+_cbGen(age)+'</b>. ':'Generasimu: <b>Gen '+_cbGen(age)+'</b>. '):''}${L?'<b>ATTACK</b> rally = break/capture · <b>HOLD</b> (garrison) rally = keep the castle. Source: kingshotwiki.':'Rally <b>SERANG</b> = pecah/rebut · Rally <b>TAHAN</b> (garrison) = hold castle. Sumber: kingshotwiki.'}</p>
+    `<p class="muted small">${age!=null?(L?'Your generation: <b>Gen '+_cbGen(age)+'</b>. ':'Generasimu: <b>Gen '+_cbGen(age)+'</b>. '):''}${L?'<b>ATTACK</b> rally = break/capture · <b>HOLD</b> (garrison) rally = keep the castle. Source: kingshotwiki.':'Rally <b>SERANG</b> = pecah/rebut · Rally <b>Tahan</b> (garrison) = hold castle. Sumber: kingshotwiki.'}</p>
      <div class="grid2">
        <div>
          <div class="lbl" style="color:#c8737a">${L?'⚔ Attack (rally)':'⚔ Serang (Attack Rally)'}</div>
@@ -1056,7 +1056,7 @@ function renderBangun(){
   const cUrut=card('Urutan Upgrade F2P','▣',
       `<div class="alert warn small">Sebelum upgrade: aktifkan Double Time Decree + skill pet Gray Wolf, dan tahan upgrade besar untuk hari City Construction (KvK D1/D5, SG D1).</div><div id="up_list"></div>`,null,true)
     +card('City Decrees (Court of Justice — TC6)','⚖',
-      `<p class="muted small">Decree dibeli pakai poin Contentment (dari Resident bekerja). Double Time WAJIB tiap upgrade besar.</p>
+      `<p class="muted small">Decree dibeli pakai poin Contentment (dari Resident bekerja). Double Time wajib tiap upgrade besar.</p>
        <div class="scrollx"><table><thead><tr><th>Decree</th><th>Efek</th><th>Catatan</th></tr></thead><tbody>${DECREES.map(([n,e,c])=>`<tr><td><b>${esc(n)}</b></td><td class="small">${esc(e)}</td><td class="small muted">${esc(c)}</td></tr>`).join('')}</tbody></table></div>
        <div class="alert ok small">⏱️ Double Time: aktifkan SEBELUM mulai upgrade (window 5 mnt). Dihitung dari base time DULU, baru buff lain (VIP/research/Chief Minister) menumpuk — bukan stack flat. Stack dgn pet Gray Wolf + Chief Minister. Lewat TC25: tunggu cooldown daripada mulai tanpa Double Time.</div>`)
     +card('Prasyarat Town Center','○',
@@ -1097,7 +1097,7 @@ function renderBangun(){
        <div class="scrollx"><table><thead><tr><th>#</th><th>Hero</th><th>2 Piece</th><th>Target</th></tr></thead><tbody>
        ${HERO_GEAR.map((g,i)=>`<tr><td><b>${i+1}</b></td><td><b>${esc(g[0])}</b><div class="dim small">${esc(g[1])}</div></td><td class="small">${esc(g[2])}</td><td class="small"><b>${esc(g[3])}</b></td></tr>`).join('')}
        </tbody></table></div>
-       <div class="small muted" style="margin-top:6px">• <b>2-piece:</b> pasang HANYA 2 piece sesuai fokus hero. DPS/leader → Helmet+Boots (Lethality). Tank/garrison → Gloves+Chest (Health). <i>(Slot gear hero cuma 4: Helmet/Chest/Gloves/Boots — tak ada "Belt".)</i><br>• <b>Transfer per TIPE:</b> gear bisa dipindah antar-hero, tapi dalam tipe yang sama. 1 set Infantry → hero infantry terbaikmu (Howard→Zoe); 1 set Cavalry → Jabel→Petra; 1 set Archer → Marlin. Gear Cavalry TIDAK nyambung ke hero Infantry.<br>• <b>Target Lv20</b> = breakpoint <b>Mastery Forging</b> (pakai Forgehammer).<br>• Exclusive Gear/Widget = Mythic saja — prioritas paling AKHIR (mahal).</div>
+       <div class="small muted" style="margin-top:6px">• <b>2-piece:</b> pasang hanya 2 piece sesuai fokus hero. DPS/leader → Helmet+Boots (Lethality). Tank/garrison → Gloves+Chest (Health). <i>(Slot gear hero cuma 4: Helmet/Chest/Gloves/Boots — tak ada "Belt".)</i><br>• <b>Transfer per TIPE:</b> gear bisa dipindah antar-hero, tapi dalam tipe yang sama. 1 set Infantry → hero infantry terbaikmu (Howard→Zoe); 1 set Cavalry → Jabel→Petra; 1 set Archer → Marlin. Gear Cavalry TIDAK nyambung ke hero Infantry.<br>• <b>Target Lv20</b> = breakpoint <b>Mastery Forging</b> (pakai Forgehammer).<br>• Exclusive Gear/Widget = Mythic saja — prioritas paling AKHIR (mahal).</div>
        <div class="alert bad small">⛔ JANGAN gear hero JOINER (Chenko/Amane/Yeonwoo/Gordon/Howard/Quinn) — tak terhitung saat join. Jangan gear hero Gen 1 yang bakal diganti.</div>`)
     +card('Gear & Charm Governor (TC25+)','◈',
       `${GEAR_INFO.map(([t,d])=>`<details><summary>${esc(t)}</summary><div class="dt"><div class="small muted">${esc(d)}</div></div></details>`).join('')}

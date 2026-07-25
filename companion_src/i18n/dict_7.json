@@ -11,9 +11,7 @@
  "Progres Pribadi": "Personal Progress",
  "Punya self-heal seperti Zoe versi bayar": "Has self-heal like a paid version of Zoe",
  "putuskan": "disconnect",
- "PvE · harian · PENTING": "PvE · daily · IMPORTANT",
  "PvE · mingguan": "PvE · weekly",
- "PvP · server · PENTING": "PvP · server · IMPORTANT",
  "PvP 2-Legion lintas-server. Pasukan cuma LUKA → auto-heal penuh setelah keluar, jadi main agresif. Fase: Voting 2h → Registrasi 2h → Matchmaking 2h → Battle 1 jam (eligible top-20 aliansi). F2P (support/joiner): farm Undercellar & Baggage Train (sering diabaikan = poin aman), reinforce, join rally. Rank PRIBADI bayar lebih besar dari menang aliansi → fokus Relic Point-mu. ⚠ WAJIB kosongkan infirmary sebelum battle (pasukan luka = tak bisa masuk).": "Cross-server 2-Legion PvP. Troops only get INJURED → full auto-heal after exit, so play aggressive. Phases: Voting 2h → Registration 2h → Matchmaking 2h → Battle 1 hour (top-20 alliances eligible). F2P (support/joiner): farm Undercellar & Baggage Train (often ignored = safe points), reinforce, join rally. PERSONAL rank pays more than alliance win → focus your Relic Points. ⚠ MUST empty infirmary before battle (injured troops = can't deploy).",
  "PvP lawan Archer-heavy": "PvP vs Archer-heavy",
  "PvP lawan Cavalry-heavy": "PvP vs Cavalry-heavy",
@@ -75,7 +73,6 @@
  "Sel & Kam (~40mnt) · defense/reinforce": "Tue & Thu (~40 min) · defense/reinforce",
  "selama event (3 hari) — tabung, tak kedaluwarsa.": "during the event (3 days) — save up, doesn't expire.",
  "Selesaikan 5 tier Daily Mission": "Complete 5 tiers of Daily Mission",
- "SELESAIKAN upgrade/riset/troop SEKARANG (kebalikan \"tahan\") → kejar 4M power. Reward: City Skin + gem.": "FINISH upgrades/research/troops NOW (opposite of \"hold\") → chase 4M power. Reward: City Skin + gems.",
  "Seluruh server saling serang. F2P: SHIELD + farm gatherer + incar troop tier tinggi.": "Whole server attacks each other. F2P: SHIELD + farm gatherers + target high-tier troops.",
  "Sembuhkan semua Resident sakit": "Heal all sick Residents",
  "Semua": "All",
@@ -105,7 +102,6 @@
  "skill maks Lv2": "skill max Lv2",
  "Skip (joiner)": "Skip (joiner)",
  "Skip riset OUTPUT bangunan": "Skip building OUTPUT research",
- "SKIP! Gathering di map 10-100× lebih untung. Naikkan HANYA jika jadi prasyarat TC.": "SKIP! Gathering on the map is 10-100× more profitable. Level up ONLY if it's a TC prerequisite.",
  "solo": "solo",
  "Solo · poin": "Solo · points",
  "Spam \"Help All\" alliance": "Spam alliance \"Help All\"",
@@ -114,5 +110,9 @@
  "Spend per hari": "Spend per day",
  "Spin shard hero pakai GEM/KUNCI. F2P: simpan gem -> spin di HoG D2 (+90.000 poin/spin) untuk Zoe/Petra.": "Spin hero shards with GEMS/KEYS. F2P: save gems -> spin on HoG D2 (+90,000 points/spin) for Zoe/Petra.",
  "Spin Zoe di Hero Roulette saat hari skor (HoG D2-D3) → poin + bintang sekaligus.": "Spin Zoe in Hero Roulette on scoring days (HoG D2-D3) → points + stars at once.",
- "Stack dgn Chenko (effect_op beda = dikali = damage lebih besar)": "Stack with Chenko (different effect_op = multiplied = bigger damage)"
+ "Stack dgn Chenko (effect_op beda = dikali = damage lebih besar)": "Stack with Chenko (different effect_op = multiplied = bigger damage)",
+ "PvE · harian · penting": "PvE · daily · important",
+ "PvP · server · penting": "PvP · server · important",
+ "SELESAIKAN upgrade/riset/troop sekarang (kebalikan \"tahan\") → kejar 4M power. Reward: City Skin + gem.": "FINISH upgrades/research/troops now (opposite of \"hold\") → chase 4M power. Reward: City Skin + gems.",
+ "SKIP! Gathering di map 10-100× lebih untung. Naikkan hanya jika jadi prasyarat TC.": "SKIP! Gathering on the map is 10-100× more profitable. Level up only if it's a TC prerequisite."
 }

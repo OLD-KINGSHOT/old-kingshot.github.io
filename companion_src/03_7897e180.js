@@ -968,12 +968,12 @@ function evAdvisory(ev){
     if(ev.type==='kvk') lines.push(ev.src==='feed'
       ? '\ud83d\udce1 Tanggal dari jadwal GLOBAL KvK (semua kingdom serentak, siklus 28 hari) \u2014 umur kingdom-mu sudah lewat gerbang H70. Tetap tidak dijamin: tanpa lawan sepadan \u2192 "Matchmaking Bye Rewards".'
       : '\u2139 Hari 70 = ELIGIBILITY terbuka (paling cepat), bukan tanggal pasti. KvK butuh lawan matchmaking \u2014 tanpa lawan sepadan, bulan ini batal \u2192 "Matchmaking Bye Rewards". Acuan final = tab Events in-game.');
-    lines.push('\ud83d\udd12 TAHAN & siapkan: '+tpl.hold+'.');
+    lines.push('\ud83d\udd12 Tahan & siapkan: '+tpl.hold+'.');
     lines.push('\ud83d\udeab Jangan selesaikan upgrade besar \u2014 tahan untuk diselesaikan saat event.');
     if(h<=1) lines.push('\u26a0 MULAI BESOK! Pastikan upgrade hampir selesai & buff siap.');
   } else if(di<effLen){ status='D'+(di+1)+'/'+effLen+' AKTIF'; cls='ok';
     lines.push('\ud83c\udfaf '+effDays[di]+hogInfo);
-    lines.push('\u2705 Pakai SEKARANG: '+(effSpend[di]||'item sesuai tema')+'.');
+    lines.push('\u2705 Pakai sekarang: '+(effSpend[di]||'item sesuai tema')+'.');
     if(SPEED_NOTE[ev.type]) lines.push(SPEED_NOTE[ev.type]+'.');
     lines.push('\ud83d\udd50 Batas hari ini: spend/selesaikan SEBELUM reset 07:00 WIB.');
     if(tpl.battleWIB&&di===effLen-1) lines.push('\u2694 Battle '+tpl.battleWIB+(ev.time?' \u00b7 jam event '+ev.time+' WIB':''));

@@ -4,17 +4,17 @@
 
 /* ── Bangun / Upgrade ── */
 const BUILD_ORDER=[
-  {t:'Town Center (TC) \u2014 SELALU prioritas #1',d:'Begitu satu selesai, langsung mulai berikutnya. Rush ke TC30 (buka T10 + Truegold). Jangan biarkan antrian kosong.'},
+  {t:'Town Center (TC) \u2014 selalu prioritas #1',d:'Begitu satu selesai, langsung mulai berikutnya. Rush ke TC30 (buka T10 + Truegold). Jangan biarkan antrian kosong.'},
   {t:'Embassy = level TC − 1',d:'Prasyarat SETIAP upgrade TC dari 9 ke atas, tanpa kecuali. Ini yang paling sering menyendat progres. Naikkan duluan, jangan tunggu terhalang.'},
   {t:'Academy (riset)',d:'Prasyarat TC di Lv10/16/20/24/28 + pengali pertumbuhan. Fokus Growth (kecepatan konstruksi/riset) > Economy.'},
   {t:'Bangunan militer (Barracks/Range/Stable)',d:'Berputar jadi prasyarat TC: Barracks → Range → Stable → Academy, satu tiap level. Cek prasyarat TC berikutnya sebelum menaikkan.'},
   {t:'Infirmary',d:'Murah & penting \u2014 kapasitas wounded. Prasyarat TC hanya sekali (Infirmary 1 untuk TC9); selebihnya murni buat menampung korban. Jangan cap Lv10.'},
   {t:'Kitchen & Houses',d:'Murah, kasih Gold gratis untuk riset & populasi. Worth dinaikkan.'},
-  {t:'\u26d4 Produksi (Mill/Sawmill/Quarry/Iron Mine)',d:'SKIP! Gathering di map 10-100\u00d7 lebih untung. Naikkan HANYA jika jadi prasyarat TC.',warn:true},
+  {t:'\u26d4 Produksi (Mill/Sawmill/Quarry/Iron Mine)',d:'SKIP! Gathering di map 10-100\u00d7 lebih untung. Naikkan hanya jika jadi prasyarat TC.',warn:true},
   {t:'\u26d4 Command Center',d:'Prioritas rendah untuk solo \u2014 hanya jika kamu MEMIMPIN rally. Catatan: Command Center 1 tetap prasyarat TC12, jadi naikkan sekali lalu tinggalkan.',warn:true},
 ];
 const DECREES=[
-  ['Double Time','\u221220% waktu konstruksi (bertahan s/d build selesai)','\u2605 WAJIB tiap upgrade besar. ~800k Contentment, cd ~23 jam. Aktifkan SEBELUM mulai.'],
+  ['Double Time','\u221220% waktu konstruksi (bertahan s/d build selesai)','\u2605 Wajib tiap upgrade besar. ~800k Contentment, cd ~23 jam. Aktifkan SEBELUM mulai.'],
   ['Rush Job','Beri instan ~5 hari resource worksite','Cd ~1 hari'],
   ['Urgent Mobilization','Resident bekerja 48 jam, \u221210 mood','Cd ~8 jam'],
   ['Comprehensive Care','Sembuhkan semua Resident sakit','Cd ~4 jam'],
@@ -67,7 +67,7 @@ const TC_PREREQ=[
   ['TC30','Embassy 29 + Range 29'],
 ];
 const RESEARCH_ORDER=[
-  ['1. Tool Enhancement (Research Speed)','Compound ke SEMUA riset berikutnya \u2014 rush pertama'],
+  ['1. Tool Enhancement (Research Speed)','Compound ke semua riset berikutnya \u2014 rush pertama'],
   ['2. Tooling Up (Construction Speed)','Compound ke semua bangunan'],
   ['3. Command Tactics (March Queue)','Tambah antrian march'],
   ['4. Regimental Expansion','Ukuran march & rally'],
@@ -118,7 +118,7 @@ const PETS=[
   {n:'Lynx',w:1,day:'~55',role:'Utility',skill:'Comforting Embrace: pulihkan stamina (~40 di Lv20 cap, 60 di skill maks)',f2p:'CAP Lv20 (pas 4 Pet Adventure/hari). Lebih = boros',pri:'B'},
   {n:'Bison',w:1,day:'~55',role:'Utility',skill:'Grip of the Titan: 1 gather tile selesai instan',f2p:'Lv15-20 (ROI primer Gen2 terbaik)',pri:'A'},
   {n:'Cheetah',w:2,day:'~72-80',role:'Ekonomi',skill:'Scent Mastery: cari 500 Pet Food',f2p:'Lv25-30 (mendanai pet food sendiri)',pri:'A'},
-  {n:'Moose',w:2,day:'~72-80',role:'Combat',skill:'Horror Stare: \u22125% enemy squad HP',f2p:'WAJIB Lv15 \u2192 gate menangkap Lion',pri:'C'},
+  {n:'Moose',w:2,day:'~72-80',role:'Combat',skill:'Horror Stare: \u22125% enemy squad HP',f2p:'Wajib Lv15 \u2192 gate menangkap Lion',pri:'C'},
   {n:'Lion',w:3,day:'~113',role:'Ekonomi \u2605',skill:'Gift of the King: hasilkan item (Truegold/Forgehammer/gear mats) tiap ~1-2 hari',f2p:'#1 PRIORITAS F2P \u2014 ROI jangka panjang terbaik',pri:'S'},
   {n:'Grizzly Bear',w:3,day:'~113',role:'Combat',skill:'The Howler: +30% march speed, \u22125% enemy lethality',f2p:'Opsional',pri:'B'},
   {n:'Giant Rhino',w:4,day:'~190',role:'Combat',skill:'Wild Charge: +10% Attack semua squad',f2p:'\u2192Lv30 gate Mighty Bison',pri:'B'},
@@ -178,7 +178,7 @@ const POINTS=[
   {item:'Advanced Taming Mark',kvk:'15.000',note:'\u2713 Skor hari Pet (D3/D5)'},
   {item:'Hero Roulette (1 spin)',kvk:'8.000',note:'\u2713 Skor hari Skill (D2)'},
   {item:'Mythic Widget',kvk:'8.000',note:'\u2713 Skor hari Gear. Jangan beli mahal'},
-  {item:'Intel Mission',kvk:'6.000',note:'\u2713 GRATIS \u2014 simpan utk hari skor (D1/D3)'},
+  {item:'Intel Mission',kvk:'6.000',note:'\u2713 Gratis \u2014 simpan utk hari skor (D1/D3)'},
   {item:'Master Emblem',kvk:'6.000',note:'(?) belum terverifikasi'},
   {item:'Forgehammer',kvk:'4.000',note:'\u2713 Skor hari Gear (D4/D5)'},
   {item:'Mythic Shard',kvk:'3.040',note:'\u2713 Skor hari Skill (D2)'},
@@ -190,16 +190,16 @@ const POINTS=[
   {item:'Speedup (/menit)',kvk:'30',note:'\u2713 vs Armament cuma 1/menit'},
 ];
 const ITEM_GUIDE=[
-  ['\ud83c\udfd7\ufe0f Speedup Construction','TAHAN','Pakai di hari City Construction (KvK D1/D5, SG D1, HoG D1) untuk SELESAIKAN bangunan.'],
-  ['\ud83d\udd2c Speedup Research','TAHAN','Pakai di hari Research/Skill (KvK D2, SG D3/D5).'],
-  ['\u2694\ufe0f Speedup Training','TAHAN','Pakai di hari Combat/Troop (KvK D4, SG D4/D6, HoG D3). Stage T9 dulu, promote di window.'],
-  ['🪖 Training Capacity Boost','TAHAN','Aktifkan SEBELUM antri latih di hari Train Troops (HoG D3, SG D4/D6, KvK D4) → batch lebih besar = lebih banyak troop & poin. Barengkan Speedup Training biar batch SELESAI di dalam window (tepat waktu). ⛔ Jangan aktifkan di hari biasa — durasi terbuang. [verifikasi in-game]'],
+  ['\ud83c\udfd7\ufe0f Speedup Construction','Tahan','Pakai di hari City Construction (KvK D1/D5, SG D1, HoG D1) untuk SELESAIKAN bangunan.'],
+  ['\ud83d\udd2c Speedup Research','Tahan','Pakai di hari Research/Skill (KvK D2, SG D3/D5).'],
+  ['\u2694\ufe0f Speedup Training','Tahan','Pakai di hari Combat/Troop (KvK D4, SG D4/D6, HoG D3). Stage T9 dulu, promote di window.'],
+  ['🪖 Training Capacity Boost','Tahan','Aktifkan SEBELUM antri latih di hari Train Troops (HoG D3, SG D4/D6, KvK D4) → batch lebih besar = lebih banyak troop & poin. Barengkan Speedup Training biar batch SELESAI di dalam window (tepat waktu). ⛔ Jangan aktifkan di hari biasa — durasi terbuang. [verifikasi in-game]'],
   ['\u2764\ufe0f Speedup Healing','BEBAS','BUKAN item skor. Pakai saat perang/KvK. Jangan ditahan.'],
-  ['\ud83d\udc8e Gem','TAHAN','Untuk Hero Roulette \u2014 terutama HoG D2 (+90.000/spin!).'],
-  ['\ud83d\udd11 Kunci (Gold/Epic Keys)','TAHAN','Recruit/roulette di hari Hero Dev (HoG D2).'],
-  ['\ud83e\uddb8 Hero Shard','TAHAN','Hari Hero Dev (KvK D2, SG D2/D7, HoG D2/D7).'],
-  ['\ud83d\udc3e Advanced Taming Mark','TAHAN','Hari Pet/Skill (KvK D3, SG D3) = 15.000 poin/buah.'],
-  ['\ud83d\udd28 Forgehammer / Mithril','TAHAN','Hari Gear (KvK D4, Armament Type2, Officer). \u26d4 jangan Armament Type1.'],
+  ['\ud83d\udc8e Gem','Tahan','Untuk Hero Roulette \u2014 terutama HoG D2 (+90.000/spin!).'],
+  ['\ud83d\udd11 Kunci (Gold/Epic Keys)','Tahan','Recruit/roulette di hari Hero Dev (HoG D2).'],
+  ['\ud83e\uddb8 Hero Shard','Tahan','Hari Hero Dev (KvK D2, SG D2/D7, HoG D2/D7).'],
+  ['\ud83d\udc3e Advanced Taming Mark','Tahan','Hari Pet/Skill (KvK D3, SG D3) = 15.000 poin/buah.'],
+  ['\ud83d\udd28 Forgehammer / Mithril','Tahan','Hari Gear (KvK D4, Armament Type2, Officer). \u26d4 jangan Armament Type1.'],
 ];
 
 /* ── KvK Prep ── */
@@ -226,36 +226,36 @@ const KVK_PREP={
 /* ── Ensiklopedia event (condensed, refer ke SITUATIONS) ── */
 const EVENTS_INFO=[
  {g:'Rutin (harian / mingguan)', items:[
-   {n:'Bear Hunt (Bear Trap)',cat:'PvE \u00b7 harian \u00b7 PENTING',freq:'Per siklus (aliansi pasang 2 trap, jam beda)',what:'Rally beruang bareng aliansi (TANPA stamina \u2014 rally Bear Trap tidak makan stamina, bisa join sebanyak mungkin). Beruang = INFANTRY \u2192 ARCHER +10%. Sumber utama Forgehammer. \u26a0 Hanya bisa serang SATU KALI per siklus \u2014 pilih Trap 1 ATAU Trap 2 sesuai jam onlinemu; sudah ikut satu, BT berikutnya muncul siklus depan.',sit:'bear-trap'},
+   {n:'Bear Hunt (Bear Trap)',cat:'PvE \u00b7 harian \u00b7 penting',freq:'Per siklus (aliansi pasang 2 trap, jam beda)',what:'Rally beruang bareng aliansi (TANPA stamina \u2014 rally Bear Trap tidak makan stamina, bisa join sebanyak mungkin). Beruang = INFANTRY \u2192 ARCHER +10%. Sumber utama Forgehammer. \u26a0 Hanya bisa serang SATU KALI per siklus \u2014 pilih Trap 1 ATAU Trap 2 sesuai jam onlinemu; sudah ikut satu, BT berikutnya muncul siklus depan.',sit:'bear-trap'},
    {n:'Mystic Trial',cat:'PvE \u00b7 mingguan',freq:'Rotasi harian: Sen-Sel Coliseum \u00b7 Rab-Kam Forest+Crystal \u00b7 Jum-Sab Nexus+Molten \u00b7 Min Radiant Spire',what:'\u2192 Detail 6 zona + kalkulator formasi: tab Event \u2192 sub-tab \ud83d\udd2e Mystic Trial. Dungeon solo. Sumber Misty Crystal \u2192 Mithril (bottleneck crafting gear). Kerjakan tiap buka. \u2694 COLISEUM (Sen-Sel) = "gear-only": Pet/Charm/Governor Gear/Academy DIABAIKAN \u2014 cuma Hero Gear (per-hero) + troop + skill yang dihitung. Formasi 50/10/40; rotasi 1 set Hero Gear terbaik antar tim (gear-swap) > sebar gear lemah. F2P: tembus Stage 10. Reward Crystal + Hero Gear material. CATATAN: Coliseum = satu-satunya tempat Hero Gear-mu kepakai PENUH (di rally kamu joiner \u2192 Hero Gear sia-sia), jadi 1 set Hero Gear rapi terbayar di sini.',sit:'coliseum'},
    {n:'Hall of Heroes',cat:'PvE \u00b7 hero',freq:'~3 hari',what:'Pertarungan hero bertahap. Sumber shard Marlin (F2P) + mat progres hero.'},
  ]},
  {g:'Aliansi & PvP besar', items:[
-   {n:'Viking Vengeance',cat:'Aliansi · defense · PENTING',freq:'Tiap 2 minggu (~30mnt; jam diatur aliansi)',what:'20 stage Viking AI menyerang semua anggota aliansi. Skor = Viking yang dibunuh troop-MU di rumah anggota lain + Viking yang dibunuh di rumah-MU oleh anggota. Cara F2P: KOSONGKAN rumahmu (3 hero terkuat di Guard Station, keluarkan/tukar sisa troop) biar supporter dapat skor penuh, lalu SUPPORT anggota lain. Stage 7/14/17 = cuma anggota ONLINE diserang (skor besar); stage 10/20 = serang HQ (shield infantry + cavalry tier tinggi, diatur R4/R5). Gagal bertahan 2x → Viking berhenti serang rumah itu. ⛔ Jangan heal troop saat event. Reward: Alliance Coin + material Governor Gear.',sit:'viking'},
+   {n:'Viking Vengeance',cat:'Aliansi · defense · penting',freq:'Tiap 2 minggu (~30mnt; jam diatur aliansi)',what:'20 stage Viking AI menyerang semua anggota aliansi. Skor = Viking yang dibunuh troop-MU di rumah anggota lain + Viking yang dibunuh di rumah-MU oleh anggota. Cara F2P: KOSONGKAN rumahmu (3 hero terkuat di Guard Station, keluarkan/tukar sisa troop) biar supporter dapat skor penuh, lalu SUPPORT anggota lain. Stage 7/14/17 = cuma anggota ONLINE diserang (skor besar); stage 10/20 = serang HQ (shield infantry + cavalry tier tinggi, diatur R4/R5). Gagal bertahan 2x → Viking berhenti serang rumah itu. ⛔ Jangan heal troop saat event. Reward: Alliance Coin + material Governor Gear.',sit:'viking'},
    {n:'Sanctuary Battle',cat:'Aliansi \u00b7 season',freq:'Per season (8 fase)',what:'Rebut & tahan Sanctuary. F2P = JOINER rally. RPS combat.',sit:'sanctuary'},
    {n:'Fortress Battle',cat:'Aliansi \u00b7 season',freq:'Per season',what:'Rebut Fortress \u2014 bernilai 2 season point. Koordinasi aliansi penuh.',sit:'fortress'},
-   {n:'Kingdom of Power (KvK)',cat:'Aliansi \u00b7 antar-kingdom \u00b7 PENTING',freq:'Eligible ~hari 70 (umur kingdom), lalu siklus ~4 minggu (matchmaking Sabtu)',what:'Perang ANTAR-kingdom (bukan internal). 4 fase: Matchmaking (2h) \u2192 Preparation (5h, adu poin) \u2192 Battle (serang King\u2019s Castle kingdom LAWAN, 19:00 WIB) \u2192 Field Triage. \u26a0 TIDAK dijamin: kalau matchmaking tak dapat lawan sepadan, KvK batal bulan itu \u2192 dapat "Matchmaking Bye Rewards" (100 Kingdom Coin dll). Menang Preparation = castle-mu aman & kamu yang menyerang. Combat = RPS (counter unit); jatuhkan rally lawan cepat. \u26a1 BEDA dari King\u2019s Castle Battle INTERNAL (~hari 54, biweekly) yang menunjuk King kingdom-mu SENDIRI \u2014 lihat tab Castle.',sit:'kvk-rally'},
-   {n:'All Out (Kill Event)',cat:'PvP \u00b7 server \u00b7 PENTING',freq:'~2 hari',what:'Seluruh server saling serang. F2P: SHIELD + farm gatherer + incar troop tier tinggi.',sit:'all-out'},
-   {n:'Strongest Governor',cat:'Solo \u00b7 poin',freq:'7 hari',what:'Kompetisi poin harian per tema. TAHAN speedup \u2192 ledakkan di hari temanya.',tpl:'sg'},
+   {n:'Kingdom of Power (KvK)',cat:'Aliansi \u00b7 antar-kingdom \u00b7 penting',freq:'Eligible ~hari 70 (umur kingdom), lalu siklus ~4 minggu (matchmaking Sabtu)',what:'Perang ANTAR-kingdom (bukan internal). 4 fase: Matchmaking (2h) \u2192 Preparation (5h, adu poin) \u2192 Battle (serang King\u2019s Castle kingdom LAWAN, 19:00 WIB) \u2192 Field Triage. \u26a0 TIDAK dijamin: kalau matchmaking tak dapat lawan sepadan, KvK batal bulan itu \u2192 dapat "Matchmaking Bye Rewards" (100 Kingdom Coin dll). Menang Preparation = castle-mu aman & kamu yang menyerang. Combat = RPS (counter unit); jatuhkan rally lawan cepat. \u26a1 BEDA dari King\u2019s Castle Battle INTERNAL (~hari 54, biweekly) yang menunjuk King kingdom-mu SENDIRI \u2014 lihat tab Castle.',sit:'kvk-rally'},
+   {n:'All Out (Kill Event)',cat:'PvP \u00b7 server \u00b7 penting',freq:'~2 hari',what:'Seluruh server saling serang. F2P: SHIELD + farm gatherer + incar troop tier tinggi.',sit:'all-out'},
+   {n:'Strongest Governor',cat:'Solo \u00b7 poin',freq:'7 hari',what:'Kompetisi poin harian per tema. Tahan speedup \u2192 ledakkan di hari temanya.',tpl:'sg'},
    {n:'Hall of Governors (HoG)',cat:'Solo \u00b7 poin',freq:'~tiap 14 hari (mulai ~hari 6)',what:'Poin dari spending per tema. Tahan item \u2192 selesai di hari tema.',tpl:'hog'},
  ]},
  {g:'Server-age (sekali, ikut umur)', items:[
-   {n:'Burst of Life',cat:'Server baru \u00b7 milestone',freq:'Hari 0-6 (sekali)',what:'SELESAIKAN upgrade/riset/troop SEKARANG (kebalikan "tahan") \u2192 kejar 4M power. Reward: City Skin + gem.'},
+   {n:'Burst of Life',cat:'Server baru \u00b7 milestone',freq:'Hari 0-6 (sekali)',what:'SELESAIKAN upgrade/riset/troop sekarang (kebalikan "tahan") \u2192 kejar 4M power. Reward: City Skin + gem.'},
    {n:'Milestone umur server',cat:'Pembukaan fitur',freq:'Hari tertentu',what:'Pembukaan Sanctuary, Plains, Fortress, Truegold dll \u2014 lihat Kalender Server.'},
-   {n:'Dawn Expedition',cat:'Server baru \u00b7 battle-pass',freq:'7 hari (early kingdom)',what:'Misi harian \u2192 Dawn Point \u2192 reward track. F2P: kerjakan misi GRATIS tiap hari (boost early-game terkuat, tanpa spend). Trap: jangan beli pass level pakai gem \u2014 track gratis sudah kasih reward utama.'},
-   {n:'Oasis & Beyond',cat:'login · beginner',freq:'30 hari (sekali, mulai dari buat akun)',what:'Event login harian 30 hari untuk pemain baru — tiap login buka reward (shard hero, gem, dll). F2P: LOGIN tiap hari & klaim track GRATIS; jangan beli track Epic berbayar. Beda dari Path of Growth (task 7 hari) & Dawn Expedition.'},
+   {n:'Dawn Expedition',cat:'Server baru \u00b7 battle-pass',freq:'7 hari (early kingdom)',what:'Misi harian \u2192 Dawn Point \u2192 reward track. F2P: kerjakan misi Gratis tiap hari (boost early-game terkuat, tanpa spend). Trap: jangan beli pass level pakai gem \u2014 track gratis sudah kasih reward utama.'},
+   {n:'Oasis & Beyond',cat:'login · beginner',freq:'30 hari (sekali, mulai dari buat akun)',what:'Event login harian 30 hari untuk pemain baru — tiap login buka reward (shard hero, gem, dll). F2P: LOGIN tiap hari & klaim track Gratis; jangan beli track Epic berbayar. Beda dari Path of Growth (task 7 hari) & Dawn Expedition.'},
    {n:'War Preparation',cat:'build \u00b7 Gen 1',freq:'2 hari (early kingdom)',what:'Event Gen 1 SAJA, 2 task \u2014 kenalkan Forgehammer (800 poin=1 hammer) + speedup training (1 poin/mnt). F2P: selesaikan 2 task utk hammer gratis. Trap: naikkan TC ke 20 SEBELUM event (TC20 = syarat pakai Forgehammer).'},
  ]},
  {g:'Aliansi mingguan & PvP rutin', items:[
    {n:'Alliance Brawl',cat:'Aliansi \u00b7 PvP',freq:'~6,5 hari',what:'Rally aliansi terkoordinasi. Ikut rally yang dipanggil; sumbang poin & speedup di dalam window.'},
    {n:'Tri-Alliance Clash',cat:'Aliansi \u00b7 PvP',freq:'Sabtu (~60 mnt)',what:'3 aliansi bentrok rebut titik. Hadir tepat waktu, ikut rally/garrison; reward PvP aliansi.'},
    {n:'Swordland Showdown',cat:'Lintas-server \u00b7 PvP',freq:'2-mingguan \u00b7 battle Minggu (1 jam)',what:'PvP 2-Legion lintas-server. Pasukan cuma LUKA \u2192 auto-heal penuh setelah keluar, jadi main agresif. Fase: Voting 2 hari \u2192 Registrasi 2 hari \u2192 Matchmaking 2 hari \u2192 Battle 1 jam (eligible top-20 aliansi). F2P (support/joiner): farm Undercellar & Baggage Train (sering diabaikan = poin aman), reinforce, join rally. Rank PRIBADI bayar lebih besar dari menang aliansi \u2192 fokus Relic Point-mu. \u26a0 WAJIB kosongkan infirmary sebelum battle (pasukan luka = tak bisa masuk).'},
-   {n:'Alliance Championship / Mobilization',cat:'Aliansi \u00b7 misi',freq:'Berkala',what:'Kumpul poin aliansi dari misi (gather/help/train/spend). Mobilization: ambil refresh GRATIS tiap hari, beli attempt 50 & 200 gem (sering net-profit ~100 gem balik/200 poin), HINDARI attempt 1.000 gem. Championship: snapshot stat LOCK saat registrasi \u2192 nyalakan SEMUA buff sebelum confirm (butuh TC10). Struktur: 6 aliansi/bracket, 5 ronde, 3 LANE; hanya TOP 20 (by power) yang dihitung; menang 2 dari 3 lane = menang ronde; maks 2 kill/member/ronde. Reset Senin (UTC): registrasi 2h + matchmaking 1h + tanding ~3h (11 jam atur lane antar ronde; Ronde 1 buta, lawan terlihat R2+). STRATEGI 2-1: tumpuk pemain terkuat di 2 lane, korbankan 1 (margin kalah tak penting \u2014 yang penting menang 2 lane). Deploy troop SEBELUM tanding (troop yang lagi march/heal/reinforce tak ikut). Tier: Stone\u2192Iron\u2192Bronze\u2192Silver\u2192Gold\u2192Diamond (reward Charm Stone/Forgehammer/Gem/Hero Shard); Championship Badge \u2192 Championship shop. PILIH 1 LANE (1 player = 1 lane): kuat (top-20 power) \u2192 masuk lane yang ditumpuk aliansi; lemah \u2192 bebas/lane korban, tetap hadir utk reward. Ikut arahan R4/R5.',sit:'ac-lane'},
+   {n:'Alliance Championship / Mobilization',cat:'Aliansi \u00b7 misi',freq:'Berkala',what:'Kumpul poin aliansi dari misi (gather/help/train/spend). Mobilization: ambil refresh Gratis tiap hari, beli attempt 50 & 200 gem (sering net-profit ~100 gem balik/200 poin), HINDARI attempt 1.000 gem. Championship: snapshot stat LOCK saat registrasi \u2192 nyalakan SEMUA buff sebelum confirm (butuh TC10). Struktur: 6 aliansi/bracket, 5 ronde, 3 LANE; hanya TOP 20 (by power) yang dihitung; menang 2 dari 3 lane = menang ronde; maks 2 kill/member/ronde. Reset Senin (UTC): registrasi 2h + matchmaking 1h + tanding ~3h (11 jam atur lane antar ronde; Ronde 1 buta, lawan terlihat R2+). STRATEGI 2-1: tumpuk pemain terkuat di 2 lane, korbankan 1 (margin kalah tak penting \u2014 yang penting menang 2 lane). Deploy troop SEBELUM tanding (troop yang lagi march/heal/reinforce tak ikut). Tier: Stone\u2192Iron\u2192Bronze\u2192Silver\u2192Gold\u2192Diamond (reward Charm Stone/Forgehammer/Gem/Hero Shard); Championship Badge \u2192 Championship shop. PILIH 1 LANE (1 player = 1 lane): kuat (top-20 power) \u2192 masuk lane yang ditumpuk aliansi; lemah \u2192 bebas/lane korban, tetap hadir utk reward. Ikut arahan R4/R5.',sit:'ac-lane'},
    {n:'Hero Rally',cat:'Aliansi \u00b7 PvE',freq:'Berkala',what:'Rally bareng kalahkan bos hero. Joiner bawa hero ber-Lethality, kirim troop terkuat.'},
    {n:'Flamedragon Tyrant',cat:'Aliansi \u00b7 zona besar',freq:'~10+ hari (5 fase)',what:'Perang multi-aliansi rebut Palace + 4 Aerie; pemenang jadi "Tyrant" 30 hari (bisa beri title buff). F2P: jadi anggota dispatch biasa \u2014 farm Pyrocrystal/escort + milestone poin pribadi. Trap: cuma waktu okupasi RALLY CAPTAIN yang dihitung menang \u2192 F2P fokus milestone pribadi, bukan title.'},
  ]},
  {g:'Event rotasi "spend -> hadiah" (kebanyakan 2 hari)', items:[
-   {n:'\u2699 Aturan rotasi (F2P) \u2014 BACA DULU',cat:'panduan',freq:'-',what:'Event-event ini = "lakukan X dapat poin/hadiah". JANGAN boros tiap hari. TAHAN speedup/resource/shard, lalu SELESAIKAN pas event-nya AKTIF -> dobel untung (hadiah event + ranking Strongest Governor/HoG). Cek tab Events dalam game untuk yang sedang aktif.'},
+   {n:'\u2699 Aturan rotasi (F2P) \u2014 BACA DULU',cat:'panduan',freq:'-',what:'Event-event ini = "lakukan X dapat poin/hadiah". JANGAN boros tiap hari. Tahan speedup/resource/shard, lalu SELESAIKAN pas event-nya AKTIF -> dobel untung (hadiah event + ranking Strongest Governor/HoG). Cek tab Events dalam game untuk yang sedang aktif.'},
    {n:'Armament Competition',cat:'gear',freq:'2 hari',what:'Poin dari forge/upgrade gear. Type 1: shard/Truegold/Governor Gear. Type 2: Forgehammer/Mithril. JANGAN buang speedup (1 poin/mnt).'},
    {n:'Steel Edge',cat:'poin luas',freq:'2 hari',what:'Event poin LUAS (beda dari Armament yg khusus gear/Truegold) — skor dari bangun/riset/training/gear/beast sekaligus, & buka lebih awal. F2P: tahan speedup + 1 upgrade hampir selesai, lalu selesaikan di window 2 hari → kejar milestone 4 (Gem + Mythic Skill Book). Speedup ~1 poin/menit. Trap: jangan habiskan speedup/material sehari SEBELUM mulai.'},
    {n:'Officer Project',cat:'aliansi',freq:'2 hari',what:'Kembangkan officer aliansi -> poin. Type 2 = Charm Design (mulai Minggu).'},
@@ -271,7 +271,7 @@ const EVENTS_INFO=[
    {n:'Merchant Empire',cat:'gather/dagang',freq:'7 hari',what:'Trading/gathering -> resource. Jalankan gather & tukar.'},
    {n:'Buccaneer Bounty',cat:'gather',freq:'7 hari',what:'Sumber Widget & skin terbaik F2P. ATURAN: Corsair Keys PERSIST antar event, Pearls TIDAK → tabung key, habiskan pearl sebelum tutup. Pakai 3 free refresh/hari. Hindari pack "Harbor Tome" 499 coin.'},
    {n:'Golden Glaives',cat:'combat',freq:'3 hari',what:'Tantangan tempur -> gear/shard.'},
-   {n:'Desert Trial',cat:'PvE \u00b7 hero Diana \u00b7 sink stamina',freq:'event 3 hari \u00b7 ~biweekly (hilang di Gen 4, diganti Champion\u2019s Way)',what:'Buru beast di MAP pakai stamina (~8/hunt) \u2192 drop Clawshard & Challenger Pouch. MISI UTAMA: Hunt 10 Dreadwolves \u2014 kamu harus INISIASI 10 rally sendiri, JOIN tidak dihitung! \u2192 10 shard Diana (maks 500 shard/event). Diana = hero unggulannya: hemat stamina utk hunt & MULAI rally + march lebih cepat \u2014 selalu bawa dia. Clawshard dipakai untuk hunt; baru bisa ditukar jadi Challenger Pouch SETELAH Diana 5\u2605. Isi 1 pouch: PASTI 5-10 mnt General Speedup + PASTI 1.000 Hero XP; 20% \u2192 100 gem, 50% \u2192 10-30 gem (rata-rata ~30 gem/pouch), 15% \u2192 1 stamina. F2P: sebelum Diana 5\u2605 TAHAN claw untuk shard dulu; sesudah 5\u2605, claw\u2192pouch = tempat bagus membuang stamina sisa (gem + speedup + Hero XP), dan shard Diana berlebih bisa di-scrap di Champagne Fair. TAHAN speedup hasilnya untuk hari City Construction (SG D1 / KvK D1 / stage Construction HoG) biar dobel jadi poin event. Dahulukan Cesare\u2019s Fury / Defeat Nearby Beasts kalau lagi aktif (poin ranking + shard Mythic). Ini beast MAP \u2014 beda dari Bear Hunt yang TANPA stamina.'},
+   {n:'Desert Trial',cat:'PvE \u00b7 hero Diana \u00b7 sink stamina',freq:'event 3 hari \u00b7 ~biweekly (hilang di Gen 4, diganti Champion\u2019s Way)',what:'Buru beast di MAP pakai stamina (~8/hunt) \u2192 drop Clawshard & Challenger Pouch. MISI UTAMA: Hunt 10 Dreadwolves \u2014 kamu harus INISIASI 10 rally sendiri, JOIN tidak dihitung! \u2192 10 shard Diana (maks 500 shard/event). Diana = hero unggulannya: hemat stamina utk hunt & MULAI rally + march lebih cepat \u2014 selalu bawa dia. Clawshard dipakai untuk hunt; baru bisa ditukar jadi Challenger Pouch SETELAH Diana 5\u2605. Isi 1 pouch: PASTI 5-10 mnt General Speedup + PASTI 1.000 Hero XP; 20% \u2192 100 gem, 50% \u2192 10-30 gem (rata-rata ~30 gem/pouch), 15% \u2192 1 stamina. F2P: sebelum Diana 5\u2605 Tahan claw untuk shard dulu; sesudah 5\u2605, claw\u2192pouch = tempat bagus membuang stamina sisa (gem + speedup + Hero XP), dan shard Diana berlebih bisa di-scrap di Champagne Fair. Tahan speedup hasilnya untuk hari City Construction (SG D1 / KvK D1 / stage Construction HoG) biar dobel jadi poin event. Dahulukan Cesare\u2019s Fury / Defeat Nearby Beasts kalau lagi aktif (poin ranking + shard Mythic). Ini beast MAP \u2014 beda dari Bear Hunt yang TANPA stamina.'},
    {n:'Cesares Fury',cat:'aliansi · rebel hunt',freq:'bulanan',what:'Buru rebel di peta (level 1→50, pilih 1 kesulitan/run). Stamina: scout 15 · solo 10 · rally 25 (hemat ~2 pakai Diana); full clear ~1.150 stamina. F2P: SELALU bawa Diana (hemat stamina); simpan 5 "Cesare’s Accord" (tip: pakai di stage kelipatan-10 utk bonus shard — bukan aturan keras, bisa di stage mana pun yg tak bisa di-clear); ke Captain kirim 1 troop TANPA hero dulu biar semua anggota dapat reward, baru all-in. Reward: shard Mythic + Gem + speedup. Trap: jangan pilih kesulitan di atas power (terkunci, 1 run/event).'},
    {n:'Beast Whisperer',cat:'PvE',freq:'7 hari',what:'Buru beast -> material & EXP. Pakai stamina/Diana (hemat stamina).'},
    {n:'Defeat Nearby Beasts',cat:'PvE',freq:'2 hari',what:'Bunuh beast di sekitar -> poin. Align dgn stamina harian.'},
@@ -288,18 +288,18 @@ const EVENTS_INFO=[
    {n:'Imperial Consortium',cat:'pack BERBAYAR',freq:'2 hari',what:'Tangga pack berbayar ($0.99-99.99) \u2014 beli tier rendah buka tier atas. F2P: SKIP (spend-only); paling banter pack termurah kalau routenya kasih mat charm/gear yang kamu butuh. Trap: didesain merantai pembelian, gampang boros.'},
    {n:'Truegold Wonders',cat:'Truegold · milestone',freq:'rotasi (Age of Truegold)',what:'Event milestone bertema Truegold. F2P: TABUNG Truegold (refine Crucible ~10/hari + intel + reward), lalu selesaikan SATU langkah upgrade gedung Truegold (TC dulu) DI DALAM window untuk poin milestone. Trap: jangan sebar Truegold tipis ke banyak gedung. [tahap event verifikasi in-game]'},
    {n:'Charm Craftsman',cat:'charm · poin',freq:'rotasi',what:'Poin dari menaikkan Governor Charm (Charm Guide + Charm Design — keluarga Stand of Arms ~5 poin/Charm Score). F2P: tabung design/guide dari daily, naikkan charm HANYA saat event ini — konsentrasi (level awal lompatan stat besar, L1=+9%). Trap: jangan ratakan 6 slot; jangan habiskan design sehari sebelum. [verifikasi]'},
-   {n:'Treasure Cove',cat:'PACK berbayar',freq:'5 hari',what:'⚠ BUKAN grind poin gratis — event peta 5 hari, fragmennya dibuka dengan BELI "Treasure Cove Pack" (spender). F2P: klaim HANYA chest login harian GRATIS (ikon terpisah, ada titik merah), selain itu SKIP. Trap: jangan kejar progress bar (butuh pack); grand prize via mail bisa hadiah default, bukan pilihanmu.'},
-   {n:'Top Governor — Governor Gear',cat:'poin · gear · ranking',freq:'rotasi (live)',what:'Varian Top/Strongest Governor bertema Governor Gear (ranking 7-hari). F2P: jadwalkan SATU upgrade Governor Gear/charm yang DITAHAN agar selesai DI window → poin ranking + milestone. Hold mat gear (Satin/Gilded/Artisan), spend breakpoint di window. Trap: jangan buang mat premium ke upgrade marginal. [tema/hari verifikasi]'},
+   {n:'Treasure Cove',cat:'PACK berbayar',freq:'5 hari',what:'⚠ BUKAN grind poin gratis — event peta 5 hari, fragmennya dibuka dengan BELI "Treasure Cove Pack" (spender). F2P: klaim HANYA chest login harian Gratis (ikon terpisah, ada titik merah), selain itu SKIP. Trap: jangan kejar progress bar (butuh pack); grand prize via mail bisa hadiah default, bukan pilihanmu.'},
+   {n:'Top Governor — Governor Gear',cat:'poin · gear · ranking',freq:'rotasi (live)',what:'Varian Top/Strongest Governor bertema Governor Gear (ranking 7-hari). F2P: jadwalkan SATU upgrade Governor Gear/charm yang DITahan agar selesai DI window → poin ranking + milestone. Hold mat gear (Satin/Gilded/Artisan), spend breakpoint di window. Trap: jangan buang mat premium ke upgrade marginal. [tema/hari verifikasi]'},
    {n:'Governor Gear Enhancement / Enhance Gear',cat:'poin · hero gear',freq:'rotasi (live)',what:'Poin dari pakai Forgehammer/mat enhance ke Hero Gear (keluarga Stand of Arms ~800 poin/Forgehammer). F2P: TABUNG Forgehammer, pakai HANYA saat event; fokus 1 hero rally utama; kejar Tier 6+ (Tier 1-5 = sia-sia). ⛔ jangan buang speedup. [verifikasi]'},
    {n:'Custom Arms Set',cat:'PACK berbayar',freq:'~2 hari',what:'PACK uang asli (di-tag PACK di kingshot.net) untuk material HERO GEAR — pilih mat dari menu. F2P: SKIP. Kalau low-spender: pilih Enhancement XP vs Lucky Hero Gear Chest sesuai yang kurang. Trap: terlihat "custom/F2P-friendly" tapi pack uang asli; jangan beli mat yang salah.'},
    {n:'Tech Storm',cat:'PACK berbayar',freq:'buka ~hari 3-4',what:'PACK uang asli berisi research speedup/resource — BUKAN kompetisi poin riset. F2P: SKIP pack; tahan riset & dump di hari scoring riset (HoG/SG D5) untuk poin event yang SEBENARNYA. Trap: mengira "Tech Storm" itu event scoring lalu riset di waktu salah.'},
    {n:'Conqueror',cat:'PACK berbayar',freq:'Kam-Sab',what:'PACK uang asli bertema tempur/troop (di-tag PACK di kingshot.net) — BUKAN event kill/training berpoin. F2P: SKIP. Lakukan training/kill untuk event scoring lain (SG/Swordland/KvK), bukan "untuk Conqueror". Trap: namanya seperti kompetisi PvP — padahal cuma bundle toko.'},
    {n:'World Traveler',cat:'PACK berbayar',freq:'saat migrasi/All-Out',what:'PACK uang asli berisi Advanced Teleporter + healing speedup (muncul saat event migrasi/relokasi). F2P: SKIP kecuali kamu memang sedang relokasi state & butuh Advanced Teleporter. Trap: di-drop pas event bikin "butuh teleporter sekarang" = FOMO rekayasa.'},
-   {n:'Wishful Emporium',cat:'PACK berbayar',freq:'24 jam (setelah event besar)',what:'PACK bundle uang asli yang bisa dikustom (3 slot pilih item + bonus tetap), muncul ~24 jam setelah event besar. F2P: SKIP (uang asli). Low-spender: salah satu pack terbaik — tumpuk slot ke 1 bottleneck (Forgehammer/Charm Design/gear chest). Trap: JANGAN keliru dgn "Emporium of Enigma" (toko key GRATIS) — ini beda & berbayar.'},
+   {n:'Wishful Emporium',cat:'PACK berbayar',freq:'24 jam (setelah event besar)',what:'PACK bundle uang asli yang bisa dikustom (3 slot pilih item + bonus tetap), muncul ~24 jam setelah event besar. F2P: SKIP (uang asli). Low-spender: salah satu pack terbaik — tumpuk slot ke 1 bottleneck (Forgehammer/Charm Design/gear chest). Trap: JANGAN keliru dgn "Emporium of Enigma" (toko key Gratis) — ini beda & berbayar.'},
  ]},
  {g:'Berkala / khusus', items:[
    {n:'Alliance Tech (riset aliansi)',cat:'fitur · aliansi',freq:'permanen (bukan rotasi event)',what:'Riset aliansi dari donasi: Regimentation (naikkan cap member) · Cooperative Protocols (potong waktu tiap Alliance Help) · Adaptive Tools (speed konstruksi aliansi) · Treaties (naikkan cap assist help). F2P: spam Help All harian + donasi ke tech ber-flag "preferred" R4 (+20% reward). Growth dulu, lalu Battle (rally cap), lalu Territory.'},
-   {n:'Anniversary Event',cat:'tahunan',freq:'~hari server 365',what:'Perayaan ulang tahun server — milestone & task berhadiah besar. F2P: kejar reward milestone GRATIS, jangan kejar leaderboard berbayar. (Kingdom baru: masih jauh.)'},
+   {n:'Anniversary Event',cat:'tahunan',freq:'~hari server 365',what:'Perayaan ulang tahun server — milestone & task berhadiah besar. F2P: kejar reward milestone Gratis, jangan kejar leaderboard berbayar. (Kingdom baru: masih jauh.)'},
    {n:'Moonlit Promise (Ramadan)',cat:'musiman · PvE',freq:'bulanan (event Ramadan, terbatas)',what:'Event musiman Ramadan: (1) Radiant Wishes — nyalakan lentera (gratis) untuk Crescent Emblem → shard hero Mythic; (2) Crescent Bazaar — tukar Emblem untuk Custom Mythic Gear / Forgehammer / Charm Design. F2P: kerjakan task gratis, tukar Emblem ke mat paling langka (Forgehammer/Charm Design). Trap: terbatas waktu — habiskan Emblem sebelum tutup.'},
    {n:'Update Des 2026 (catatan QoL)',cat:'changelog',freq:'-',what:'Fitur baru relevan: daily mission khusus Mystic Trial; Rebel Invasion quick-battle (unlock TC25); 2 slot formasi tambahan (TC26 & TC30) + bisa menamai formasi (3 huruf); tukar (exchange) material gear/charm berlebih di interface gear.'},
    {n:'Kingdom Transfer',cat:'pindah server',freq:'~tiap 40-60 hari',what:'Kesempatan pindah ke Kingdom lain (gate: ~hari 152 / Truegold Lv5 + Crucible). Ada batas power & biaya. Pikirkan matang \u2014 cek aturan in-game.'},
@@ -307,9 +307,9 @@ const EVENTS_INFO=[
    {n:'Fight Club',cat:'event tema \u00b7 PvE',freq:'berkala (event tema)',what:'Ring tinju bawah tanah bertema animatronik \u2014 kalahkan lawan demi kesempatan melawan Bear King. Event tema ringan: ikuti attempt gratis harian, kejar milestone, jangan beli attempt berbayar.'},
    {n:'Master System (Master Academy)',cat:'progresi \u00b7 update Apr 2026',freq:'permanen (gate Kingdom Progress \u00b7 TC25 / ~Hari 113)',what:'Quinn berpetualang ke Badlands \u2014 terima komisi Governor, selesaikan tantangan untuk merekrut MASTER yang pindah ke Master Academy di kotamu. Unlock per-kingdom (cek layar Kingdom Progress). Bonus patch: opsi tukar Truegold diskon 50% (limit mingguan). PRIORITAS master F2P (Gen 1): Valora (wajib unlock pertama \u2014 Weapon Obsession = +Forgehammer) \u2192 Pan (ekonomi harian, compound & tak perlu jadi rally lead = ROI F2P terbaik) \u2192 Cassia atau Roman. Fokus 1 master tuntas dulu, jangan sebar.'},
    {n:'Hero Rally',cat:'hero \u00b7 sub-event',freq:'berkala (cek in-game)',what:'Poin dari rekrut/naikkan hero. F2P: klaim recruitment gratis; pakai shard yang memang sudah direncanakan. JANGAN spend gem khusus event ini \u2014 gem paling bernilai di Hero Roulette saat HoG D2 (90.000/spin).'},
-   {n:'Arcane Trove',cat:'undian \u00b7 sub-event',freq:'berkala (cek in-game)',what:'Buka peti undian pakai kunci. F2P: pakai kunci GRATIS dari task saja \u2014 odds item top rendah, jangan beli kunci. Klaim milestone gratisnya.'},
+   {n:'Arcane Trove',cat:'undian \u00b7 sub-event',freq:'berkala (cek in-game)',what:'Buka peti undian pakai kunci. F2P: pakai kunci Gratis dari task saja \u2014 odds item top rendah, jangan beli kunci. Klaim milestone gratisnya.'},
    {n:'Develop New Tech',cat:'harian \u00b7 setelah reset',freq:'harian (reset 07:00 WIB)',what:'Sub-event harian: poin dari mulai/selesaikan riset. Mulai riset SETELAH reset biar kehitung; barengkan riset besar dengan hari riset HoG/SG/KvK biar poinnya dobel.'},
-   {n:'Power Up',cat:'milestone power',freq:'berkala (obs. pertama ~H18, Kingdom #2114)',what:'Event milestone kenaikan POWER dalam window event \u2014 mirip Burst of Life: power dari upgrade/riset/training/hero dihitung, tiap ambang = chest. F2P: TAHAN penyelesaian upgrade & riset besar untuk diselesaikan DI DALAM window-nya (idealnya barengan hari konstruksi HoG/SG = poin dobel). Tidak perlu spend khusus.'},
+   {n:'Power Up',cat:'milestone power',freq:'berkala (obs. pertama ~H18, Kingdom #2114)',what:'Event milestone kenaikan POWER dalam window event \u2014 mirip Burst of Life: power dari upgrade/riset/training/hero dihitung, tiap ambang = chest. F2P: Tahan penyelesaian upgrade & riset besar untuk diselesaikan DI DALAM window-nya (idealnya barengan hari konstruksi HoG/SG = poin dobel). Tidak perlu spend khusus.'},
  ]},
 ];
 
@@ -344,8 +344,8 @@ const MYSTIC_TRIAL={
    {key:'molten',name:'Molten Fort',days:'Jum-Sab',stat:'Governor Gear (Attack + Defense)',ratio:[60,15,25],unlock:'TC 22',heroes:false,teams:'tanpa hero',ownTroops:false,
     lead:'Hanya hitung Governor Gear (Attack + Defense). Hero/charm/pet/riset DIABAIKAN. Prioritas upgrade Inf → Archer → Cav; bottleneck material = Artisan Vision; set bonus di 3 & 6 piece se-rarity.',
     tips:['Hanya Governor Gear — hero/charm/pet/riset DIABAIKAN (taktik hero tak berlaku).','Prioritas upgrade Inf→Arc→Cav; bottleneck material = Artisan Vision.','Set bonus di 3 & 6 piece se-rarity. Gear beri Atk/Def; Lethality/Health dari Charm.']},
-   {key:'spire',name:'Radiant Spire',days:'Minggu',stat:'SEMUA stat + VIP + Skin + Oasis',ratio:[50,15,35],unlock:'Langsung',heroes:true,teams:'≤3 team',ownTroops:true,
-    lead:'Ujian pamungkas: SEMUA sumber stat berlaku + pakai TROOP SENDIRI (tier tinggi spt True Gold+ unggul besar). Hero sama seperti Coliseum; hindari hero ekonomi (Diana). Stage dalam butuh 3 team.',
+   {key:'spire',name:'Radiant Spire',days:'Minggu',stat:'Semua stat + VIP + Skin + Oasis',ratio:[50,15,35],unlock:'Langsung',heroes:true,teams:'≤3 team',ownTroops:true,
+    lead:'Ujian pamungkas: Semua sumber stat berlaku + pakai TROOP SENDIRI (tier tinggi spt True Gold+ unggul besar). Hero sama seperti Coliseum; hindari hero ekonomi (Diana). Stage dalam butuh 3 team.',
     marches:[
      {m:'Team 1 — UTAMA',hero:'Combat-skill terkuat + gear terbaik + troop tier tertinggi-mu',why:'Power, gear, & troop terbaik di sini (Spire pakai troop sendiri).'},
      {m:'Team 2 & 3 (stage dalam)',hero:'Combat-skill berikutnya, beri gear minimal',why:'Stage lanjut butuh 3 team. Trik: reset Armor XP hero utama → pinjam ke hero 2/3, lalu reset balik.'}],
@@ -368,7 +368,7 @@ const EVENT_TEMPLATES={
     hold:'speedup (semua), gem, Mythic shard, Truegold, Mithril, Forgehammer, Advanced Taming Mark, troop T9 + Training Capacity buff utk promote'},
   sg:{name:'Strongest Governor',len:7,battleWIB:null,minDay:75,
     days:['D1 City Construction','D2 Hero Dev','D3 Skill Up','D4 Combat','D5 Power Boost','D6 Combat','D7 Hero Dev'],
-    spend:['Buang SEMUA speedup (30/mnt) + selesaikan bangunan','Mithril 40k + Roulette + shard','Advanced Taming Mark (15k)','Aktifkan Training Capacity buff → promote troop (T11 49/unit)','Mithril + buang speedup','Governor Gear + Training Capacity buff → promote troop','Tempered Truegold + Taming Mark + speedup'],
+    spend:['Buang semua speedup (30/mnt) + selesaikan bangunan','Mithril 40k + Roulette + shard','Advanced Taming Mark (15k)','Aktifkan Training Capacity buff → promote troop (T11 49/unit)','Mithril + buang speedup','Governor Gear + Training Capacity buff → promote troop','Tempered Truegold + Taming Mark + speedup'],
     hold:'speedup (utk D1/D5/D7), Mithril (D2/D4/D5), Advanced Taming Mark (D3), troop T9 + Training Capacity buff (D4/D6), gem'},
   hog:{name:'Hall of Governors',len:7,battleWIB:null,
     /* Susunan terverifikasi HoG #4/#5 (Hero: Hilde, Top 100). Lihat tab HoG utk detail per-iterasi. */
@@ -400,7 +400,7 @@ const _HT={ /* baris task pakai-ulang: [label, poin] */
   spC:['⏩ Speedup Construction (/mnt)','300'], spR:['⏩ Speedup Research (/mnt)','300'], spT:['⏩ Speedup Train/Promote (/mnt)','300'],
 };
 const HOG_DETAIL={
-  intro:'Event kompetitif solo tiap 14 hari (mulai H6). HANYA muncul di Generasi 1-2 kingdom. Hero of the Season + susunan stage BERUBAH tiap iterasi. Reward: 4 tier milestone (gratis, tier akhir = gem + skill book) + shard hero dari leaderboard.',
+  intro:'Event kompetitif solo tiap 14 hari (mulai H6). Hanya muncul di Generasi 1-2 kingdom. Hero of the Season + susunan stage BERUBAH tiap iterasi. Reward: 4 tier milestone (gratis, tier akhir = gem + skill book) + shard hero dari leaderboard.',
   iters:[
     {no:'#1', hero:'Amadeus', rank:'Top 10', gen:'Gen 1', day:'H6',
      stages:[['1 · City Construction',[_HT.ccC,_HT.ccR]],['2 · Hero Development',[_HT.roul,_HT.sM,_HT.sE,_HT.sR,_HT.gath]],['3 · Train Troops',[_HT.troop]],['4 · Beast Slay',[_HT.terror,_HT.beast]],['5 · Power Boost',[_HT.pbC,_HT.pbR,_HT.pbT]]],
@@ -426,7 +426,7 @@ const HOG_DETAIL={
     '🐉 Hanya HoG #1 punya Beast Slay (Rally Terror 90rb + beast 30rb). HoG #2+ TIDAK — jangan tunggu beast day di HoG #4.',
     '🌾 Gather resource cuma 3 poin/task — abaikan, buang-buang stamina.',
     '⏩ Speedup baru berpoin di stage Hero Dev TERAKHIR (HoG #3/#4/#5) = 300/mnt. Selain itu speedup nyaris tak berpoin — pakai hanya untuk naikin power.',
-    '🎁 Milestone reward 4 tier bisa diraih GRATIS walau tak masuk leaderboard. Tier akhir = gem + skill book — selalu kejar.',
+    '🎁 Milestone reward 4 tier bisa diraih Gratis walau tak masuk leaderboard. Tier akhir = gem + skill book — selalu kejar.',
     '⏳ HoG cuma ada di Gen 1-2. Setelah ~Gen 3 (KvK ~H70, Strongest Governor ~H75), HoG berhenti muncul.',
   ],
 };
@@ -446,7 +446,7 @@ const SPEED_NOTE={kvk:'\u2705 PAKAI speedup (30/mnt) sesuai tema hari',sg:'\u270
 /* "Harus ngapain" per event mingguan kingdom (key = titleKey API kingshot.net) */
 const WEEKLY_GUIDE={
   sanctuaryBattle:'Join rally aliansi \u2014 bawa SATU joiner di slot-1 (Chenko/Yeonwoo). Menang \u2192 tahan 30 menit.',
-  allianceChampionship:'Tim didaftarkan R4/R5 (snapshot buff saat registrasi — aktifkan SEMUA buff dulu!). F2P: daftar kalau diminta, deploy troop SEBELUM tanding, hadir saat jam tanding, klaim reward. Strategi aliansi: 2-1 (tumpuk 2 lane, korbankan 1). Hanya top-20 power yang dihitung.',
+  allianceChampionship:'Tim didaftarkan R4/R5 (snapshot buff saat registrasi — aktifkan semua buff dulu!). F2P: daftar kalau diminta, deploy troop SEBELUM tanding, hadir saat jam tanding, klaim reward. Strategi aliansi: 2-1 (tumpuk 2 lane, korbankan 1). Hanya top-20 power yang dihitung.',
   allianceMobilization:'Penuhi kuota poin pribadi: pilih quest \u00d72.5+ yang sesuai rutinitas (train/gather/stamina). Jangan refresh pakai gem.',
   allianceBrawl:'Seperti Mobilization: kerjakan task harian, penuhi kuota poin pribadi untuk reward aliansi.',
   swordlandShowdown:'Match rebut menara \u2014 pasukan PULIH setelah match (tanpa korban permanen). Ikut rombongan besar, jangan solo.',
@@ -457,7 +457,7 @@ const WEEKLY_GUIDE={
   armamentCompetition2:'Skor dari hero gear (Forgehammer/Mithril). \u26d4 JANGAN buang speedup di sini.',
   officerProject1:'Task ringan berhadiah (login, stamina, dsb.) \u2014 selesaikan yang gratis saja.',
   officerProject2:'Task ringan berhadiah \u2014 selesaikan yang gratis saja.',
-  mysticDivination:'Undian \u2014 pakai tiket/attempt GRATIS harian saja, jangan beli.',
+  mysticDivination:'Undian \u2014 pakai tiket/attempt Gratis harian saja, jangan beli.',
   fishing:'Bait gratis +1/3 jam (cap 10 — jangan biarkan penuh). Upgrade gear SEGERA: Line → Hook → Sinker (reset tiap musim). Kejar reward level milestone — termasuk Conquest Manual (tabung kalau tak main Arena). Abaikan leaderboard (P2W).',
   champagneFair:'Event tema ringan \u2014 ambil reward gratis, skip pembelian.',
   goldenGlaives:'Event poin kombat ringan \u2014 ikut dari aktivitas normal, jangan spend khusus.',
@@ -470,7 +470,7 @@ const WEEKLY_GUIDE={
   allOut:'Kill event: SHIELD tiap offline; farm gatherer lawan (injured = killed, tanpa hospital).',
   kvkPrepPhase:'KvK Prep Phase: stage troop, isi formasi, kosongkan hospital, koordinasi aliansi.',
   kvkFieldTriage:'Fase pemulihan KvK \u2014 heal pasukan (batch + help aliansi), klaim reward.',
-  truegoldWonders:'Komisi mingguan \u2192 True Gold dust & gold. Kerjakan komisi GRATIS di War Academy.',
+  truegoldWonders:'Komisi mingguan \u2192 True Gold dust & gold. Kerjakan komisi Gratis di War Academy.',
   charmCraftsman:'Poin dari charm / Charm Design. Pakai material terencana \u2014 jangan beli khusus event.',
   treasureCove:'Event chest + daily task. Kerjakan daily efisien, berhenti sebelum milestone mahal.',
   governorGearEnhancement:'Poin dari enhance/upgrade gear. Pakai Forgehammer/Mithril/Artisan Vision di window; JANGAN buang speedup.',
@@ -480,7 +480,7 @@ const WEEKLY_GUIDE={
   conqueror:'PACK berbayar (bukan event kill/training). F2P: SKIP.',
   worldTraveler:'PACK berbayar (teleporter + heal). F2P: SKIP kecuali sedang relokasi.',
   wishfulEmporium:'PACK bundle berbayar (kustom 3 slot). F2P: SKIP; beda dari Emporium of Enigma gratis.',
-  topGovernor:'Varian Top Governor bertema (gear/dll). TAHAN material tema → selesaikan di window.'
+  topGovernor:'Varian Top Governor bertema (gear/dll). Tahan material tema → selesaikan di window.'
 };
 const WEEKLY_GUIDE_DEFAULT='Cek detail di tab Events in-game. Aturan F2P: pakai attempt/reward gratis, jangan beli pack.';
 /* Jangkar tanggal buka kingdom — sampel tiap 25 ID dari kingshot.net kingdom-tracker
@@ -651,7 +651,7 @@ const F2P_TRICKS=[
  ]],
  ['🤝 Aliansi / disiplin troop',[
   'Rally lebih SEDIKIT tapi PENUH > banyak tipis — tiap rally pecah pool joiner; 3 rally x5 joiner >> 5 rally x3. Suruh R4/R5 batasi jumlah rally vs anggota aktif.',
-  'Naikkan level gedung Bear Trap/Forgehammer — tiap level = +5% Attack SEMUA troop se-aliansi (ROI aliansi teratas).',
+  'Naikkan level gedung Bear Trap/Forgehammer — tiap level = +5% Attack semua troop se-aliansi (ROI aliansi teratas).',
   '1 pengecualian gem selain Roulette: sewa builder ke-2 (1.000 gem/2 hari) saat build besar — clear Saul 2-bintang dulu (~6% speed konstruksi permanen).',
   'Mulai FARM ACCOUNT sebelum tembok TC28-30 (bracket rakus resource) — stok farm bikin mulus + suplai main saat KvK.',
  ]],

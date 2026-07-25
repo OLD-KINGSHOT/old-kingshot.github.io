@@ -8,7 +8,6 @@
  "⛔ Produksi (Mill/Sawmill/Quarry/Iron Mine)": "⛔ Production (Mill/Sawmill/Quarry/Iron Mine)",
  "⛔ Speedup = 30/menit di KvK tapi 1/menit di Armament. Jangan buang bank speedup di Armament!": "⛔ Speedup = 30/min in KvK but 1/min in Armament. Don't waste your speedup bank on Armament!",
  "✅ Checklist harian: daily mission, Bear Hunt, help alliance, habiskan stamina, klaim gift code.": "✅ Daily checklist: daily mission, Bear Hunt, help alliance, spend stamina, claim gift code.",
- "✓ GRATIS — simpan utk hari skor (D1/D3)": "✓ FREE — save for scoring day (D1/D3)",
  "✓ Item TERBAIK. Skor hari Gear (D4/D5)": "✓ BEST item. Gear scoring day (D4/D5)",
  "✓ Skor hari Gear (D4/D5)": "✓ Gear scoring day (D4/D5)",
  "✓ Skor hari Gear. Jangan beli mahal": "✓ Gear scoring day. Don't buy expensive",
@@ -75,7 +74,6 @@
  "Academy (riset)": "Academy (research)",
  "Advanced Taming Mark (15k each) — hari terbesar non-whale": "Advanced Taming Mark (15k each) — biggest non-whale day",
  "Advisory Otomatis": "Auto Advisory",
- "Advisory otomatis: kapan TAHAN item, kapan PAKAI, dan jam berapa — digerakkan umur server.": "Auto advisory: when to HOLD items, when to USE, and what hour — driven by server age.",
  "Agony Rush (heal 40% HP) = skill CONQUEST → cuma aktif di Arena/Campaign, BUKAN garrison. Naikkan kalau main Arena; kalau tidak, tabung.": "Agony Rush (heal 40% HP) = CONQUEST skill → only active in Arena/Campaign, NOT garrison. Level it up if you play Arena; otherwise, save up.",
  "Aksi": "Action",
  "Aktifkan buff online/territory/decree": "Activate online/territory/decree buffs",
@@ -84,7 +82,6 @@
  "Akurasi tinggi": "High accuracy",
  "Alcar, Margot, Rosa (±190-200)": "Alcar, Margot, Rosa (±190-200)",
  "aliansi": "alliance",
- "Aliansi · defense · PENTING": "Alliance · defense · IMPORTANT",
  "aliansi · jelang KvK": "alliance · before KvK",
  "Aliansi · misi": "Alliance · mission",
  "Aliansi · musiman · PENTING": "Alliance · seasonal · IMPORTANT",
@@ -98,5 +95,8 @@
  "Alliance — leverage F2P terbesar": "Alliance — biggest F2P leverage",
  "Amane, Margot, (Hilde)": "Amane, Margot, (Hilde)",
  "Angka bisa beda tipis per versi — cek layar upgrade di game.": "Numbers may differ slightly per version — check the upgrade screen in-game.",
- "App ikut waktu server (UTC) — reset 07:00 WIB. Sinkron otomatis saat online. Kalau meleset, geser manual (menit):": "App follows server time (UTC) — reset 07:00 WIB. Auto-syncs when online. If off, adjust manually (min):"
+ "App ikut waktu server (UTC) — reset 07:00 WIB. Sinkron otomatis saat online. Kalau meleset, geser manual (menit):": "App follows server time (UTC) — reset 07:00 WIB. Auto-syncs when online. If off, adjust manually (min):",
+ "✓ Gratis — simpan utk hari skor (D1/D3)": "✓ Free — save for scoring day (D1/D3)",
+ "Advisory otomatis: kapan tahan item, kapan pakai, dan jam berapa — digerakkan umur server.": "Auto advisory: when to hold items, when to use, and what hour — driven by server age.",
+ "Aliansi · defense · penting": "Alliance · defense · important"
 }
