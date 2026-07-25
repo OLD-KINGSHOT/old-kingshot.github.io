@@ -1468,6 +1468,33 @@ td{padding:11px 10px}
 .navbtn.active{font-weight:600}
 summary{font-size:14px;font-weight:600}
 .kv{padding:9px 0;border-bottom:1px solid var(--bd-soft)}
+
+/* ── tahap 2: tab Sekarang (.sk) memakai token yang SAMA ──
+   .sk punya set warnanya sendiri (peninggalan mockup terang yang dipaksa gelap),
+   jadi permukaan & garisnya sedikit berbeda dari kartu tab lain — terlihat seperti
+   dua aplikasi yang ditempel. Di sini token .sk diarahkan ke token Studio. */
+.sk{
+  --sk-bg:var(--bg); --sk-surface:var(--bg-2); --sk-surface-2:var(--bg-3);
+  --sk-line:var(--bd); --sk-ink:var(--fg); --sk-ink-soft:var(--fg-mute);
+  --sk-ink-faint:var(--fg-dim); --sk-accent:var(--accent); --sk-r:var(--rad);
+  --sk-shadow:none;
+  font-size:14px; line-height:1.6; letter-spacing:0;
+}
+.sk .eyebrow h2,.sk .lbl{font-size:11.5px;font-weight:600;letter-spacing:.07em;color:var(--fg-dim)}
+.sk .eyebrow{margin:24px 2px 12px}
+.sk .eyebrow .hint{font-size:12.5px;font-weight:400;color:var(--fg-dim)}
+.sk .card{box-shadow:none}
+.sk .gc-head{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+
+/* ── tahap 3 (visual): ritme baris & jarak antar blok ──
+   Baris daftar dulu tanpa pemisah sehingga menyatu jadi satu blok abu-abu. */
+.sk .kv.sk-evrow{padding:11px 14px;border-bottom:0;border-top:1px solid var(--bd-soft)}
+.sk .sk-evgrid > .kv.sk-evrow:first-child{border-top:0}
+.sk .kv.sk-evrow:hover{background:var(--bg-3)}
+.card + .card,.lcard + .lcard{margin-top:16px}
+.lbl{margin-top:22px;margin-bottom:8px}
+.card-b > .alert:first-child{margin-top:0}
+details.hogstage > summary{border-radius:var(--rad-s)}
 </style>
 
 
