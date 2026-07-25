@@ -380,9 +380,7 @@
   "· Hero musim": "· Season hero",
   "— cukup": "— just",
   "untuk shard": "for shards",
-  "TAHAN gem": "HOLD gems",
   "— Roulette D2 = 90.000/spin": "— Roulette D2 = 90,000/spin",
-  "TAHAN Widget": "HOLD Widget",
   "— D5 = 100.000 (terbesar)": "— D5 = 100,000 (largest)",
   "— promote di hari Train Troops": "— promote on Train Troops day",
   "salin": "copy",
@@ -834,5 +832,8 @@
   "Jadwal live belum termuat. Buka tab Event → Jadwal Live, atau cek koneksi.": "Live schedule not loaded yet. Open the Event tab → Live Schedule, or check your connection.",
   "◷ Event terdekat": "◷ Soonest events",
   "◷ Sebulan ke depan": "◷ The month ahead",
-  "◷ Event server-mu": "◷ Your server's events"
+  "◷ Event server-mu": "◷ Your server's events",
+  "Tahan gem": "Hold gems",
+  "Tahan Widget": "Hold Widget",
+  "Tahan:": "Hold:"
 }

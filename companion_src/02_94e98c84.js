@@ -243,8 +243,9 @@ function renderSekarang(){
       const no=hogNoForDay(nextEv.day),it=HOG_DETAIL.iters[hogIdxForNo(no)];
       nameSuffix=' #'+no;
       if(it){ heroLine='Hero musim <b>'+esc(it.hero)+'</b> — cukup <b>'+esc(it.rank)+'</b> untuk shard'; durTxt=it.stages.length+' hari'; }
-      steps=['<b>TAHAN gem</b> — Roulette D2 = 90.000/spin','<b>TAHAN Widget</b> — D5 = 100.000 (terbesar)','<b>Stage troop T9</b> — promote di hari Train Troops'];
-    } else { steps=[tpl.hold?('<b>TAHAN:</b> '+esc(tpl.hold)):'Siapkan item sesuai tema event.']; }
+      /* huruf besar diganti tebal: penekanannya tetap, nadanya tidak berteriak */
+      steps=['<b>Tahan gem</b> — Roulette D2 = 90.000/spin','<b>Tahan Widget</b> — D5 = 100.000 (terbesar)','<b>Stage troop T9</b> — promote di hari Train Troops'];
+    } else { steps=[tpl.hold?('<b>Tahan:</b> '+esc(tpl.hold)):'Siapkan item sesuai tema event.']; }
     heroHTML='<div class="card hero"><div class="tagrow"><span class="chip prep">Prep · H-'+dleft+'</span>'+(durTxt?'<span class="chip">Durasi '+durTxt+'</span>':'')+'</div>'
       +'<h1>'+esc((tpl.name||nextEv.type).split('(')[0].trim())+nameSuffix+'</h1>'
       +'<div class="sub">Mulai <b>H'+nextEv.day+' · '+esc(addDaysFmt(start,nextEv.day))+'</b>'+(heroLine?' · '+heroLine:'')+'</div>'
