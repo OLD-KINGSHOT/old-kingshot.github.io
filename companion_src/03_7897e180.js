@@ -867,7 +867,10 @@ function predictedEvents(start,age){
   let kvk=age<70?70:70+Math.floor((age-70)/28)*28;
   const klen=(EVENT_TEMPLATES.kvk&&EVENT_TEMPLATES.kvk.len)||5;
   if(age>=kvk+klen) kvk+=28; /* current cycle already over → predict the next one */
-  out.push({type:'kvk',day:kvk,date:addDaysISO(start,kvk),conf:'sedang'});
+  /* `elig` = hari ini cuma GERBANG eligibility, bukan jadwal match. KvK perlu lawan
+     matchmaking; tanpa lawan sepadan bulan itu batal (Matchmaking Bye Rewards). HoG/SG
+     polanya pasti begitu gerbangnya lewat, jadi TIDAK ditandai. */
+  out.push({type:'kvk',day:kvk,date:addDaysISO(start,kvk),conf:'sedang',elig:true});
   /* Strongest Governor = kompetitif berbasis UMUR (gate H75, siklus 28 hari) — sama
      modelnya dgn KvK/HoG & dgn kalender. Tanpa ini SG jatuh ke feed rotasi GLOBAL →
      tanggal sama utk semua server (salah lintas-kingdom). */
@@ -910,6 +913,9 @@ function evAdvisory(ev){
     return {type:ev.type,name:tpl.name,status,cls,lines,start,tpl,di,len:effLen};
   }
   if(di<0){ const h=-di; status='H-'+h+' (prep)'; cls=h<=1?'bad':h<=3?'warn':'inf';
+    /* Tanggal KvK = ramalan dari gerbang eligibility, bukan jadwal yang diumumkan.
+       Tanpa catatan ini "H-5 KvK" terbaca sebagai kepastian. */
+    if(ev.type==='kvk') lines.push('\u2139 Hari 70 = ELIGIBILITY terbuka (paling cepat), bukan tanggal pasti. KvK butuh lawan matchmaking \u2014 tanpa lawan sepadan, bulan ini batal \u2192 "Matchmaking Bye Rewards". Acuan final = tab Events in-game.');
     lines.push('\ud83d\udd12 TAHAN & siapkan: '+tpl.hold+'.');
     lines.push('\ud83d\udeab Jangan selesaikan upgrade besar \u2014 tahan untuk diselesaikan saat event.');
     if(h<=1) lines.push('\u26a0 MULAI BESOK! Pastikan upgrade hampir selesai & buff siap.');

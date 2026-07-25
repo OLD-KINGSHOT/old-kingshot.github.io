@@ -173,14 +173,14 @@ function renderEvent(){
     const user=store.get('events',[]); const userTypes=new Set(user.map(e=>e.type));
     const auto=[];
     if(age<=7 && !userTypes.has('burst')) auto.push({type:'burst',date:addDaysISO(start,1),pred:true});
-    predictedEvents(start,age).forEach(pp=>{ if(!userTypes.has(pp.type)) auto.push({type:pp.type,date:pp.date,pred:true,conf:pp.conf}); });
+    predictedEvents(start,age).forEach(pp=>{ if(!userTypes.has(pp.type)) auto.push({type:pp.type,date:pp.date,pred:true,conf:pp.conf,elig:pp.elig}); });
     const merged=[...user.map((e,idx)=>({...e,pred:false,idx})),...auto];
     merged.forEach(e=>e._a=evAdvisory(e));
     const shown=merged.filter(e=>e._a&&e._a.di>=-7&&e._a.di<(e._a.len||e._a.tpl.len)).sort((a,b)=>new Date(a.date)-new Date(b.date));
-    schedHTML=`<div class="alert inf small"><b>Tanggal di bawah = ESTIMASI otomatis</b> dari umur server (belum kamu konfirmasi). <b>Akurasi tinggi</b> = pola pasti (HoG tiap 14 hari). <b>Akurasi sedang</b> = perkiraan kasar (KvK ~hari 70, fix setelah KvK pertama). Advisory "Hari Ini" tetap jalan otomatis — kalau tanggal asli di game beda, tekan "ralat" di bawah.</div>`
+    schedHTML=`<div class="alert inf small"><b>Tanggal di bawah = ESTIMASI otomatis</b> dari umur server (belum kamu konfirmasi). <b>Akurasi tinggi</b> = pola pasti (HoG tiap 14 hari). <b>Akurasi sedang</b> = perkiraan kasar (fix setelah kejadian pertama). <b>KvK hari 70 = eligibility TERBUKA (paling cepat), bukan jadwal pasti</b> — tanpa lawan matchmaking bulan itu batal (Matchmaking Bye). Advisory "Hari Ini" tetap jalan otomatis — kalau tanggal asli di game beda, tekan "ralat" di bawah.</div>`
       +(shown.length? shown.map(e=>{ const a=e._a; const pc=a.cls==='ok'?'f2p':a.cls==='bad'?'crit':a.cls==='warn'?'warn':'info';
         return `<div class="lcard" style="margin:10px 0">
-          <div class="lh"><span class="nm" style="font-size:13px">${EV_EMOJI[e.type]||'\u25c6'} ${esc(a.name)}</span>${e.pred?'<span class="tag">estimasi \u00b7 akurasi '+(e.conf||'?')+'</span>':''}<span class="pill ${pc}" style="margin-left:auto">${esc(a.status)}</span></div>
+          <div class="lh"><span class="nm" style="font-size:13px">${EV_EMOJI[e.type]||'\u25c6'} ${esc(a.name)}</span>${e.pred?(e.elig?'<span class="tag">estimasi \u00b7 eligibility, belum tentu terjadi</span>':'<span class="tag">estimasi \u00b7 akurasi '+(e.conf||'?')+'</span>'):''}<span class="pill ${pc}" style="margin-left:auto">${esc(a.status)}</span></div>
           <div class="dim small mono" style="margin-bottom:4px">mulai ${esc(e.date)}</div>
           ${a.lines.map(l=>`<div class="alert ${a.cls} small">${l}</div>`).join('')}
           ${e.pred?'':`<button class="btn ghost sm del" data-idx="${e.idx}">Hapus</button>`}</div>`;

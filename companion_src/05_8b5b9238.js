@@ -183,7 +183,7 @@ const HEROES=[
   {n:'Howard',t:'B',ty:'Infantry',f2p:true,note:'Tank/placeholder awal (joiner def 111) \u2014 ganti saat Zoe siap.'},
   {n:'Chenko',t:'B',ty:'Cavalry',f2p:true,note:'\u2605 Joiner epic \u2192 4\u2605 (effect 101 Lethality). Pakai SATU dari Chenko/Yeonwoo.'},
   {n:'Quinn',t:'B',ty:'Archer',f2p:true,note:'Placeholder awal (joiner def 111).'},
-  {n:'Diana',t:'B',ty:'Archer',f2p:true,note:'GRATIS. Hemat stamina Beast Hunt \u2014 bagus farming, bukan rally tempur.'},
+  {n:'Diana',t:'B',ty:'Archer',f2p:true,note:'GRATIS. Hemat stamina hunt beast MAP & mulai rally + march cepat \u2014 hero unggulan Desert Trial (farming), bukan rally tempur.'},
   {n:'Gordon',t:'B',ty:'Cavalry',f2p:true,note:'Joiner defensif epic (effect 113 Health).'},
   {n:'Fahd',t:'B',ty:'Cavalry',f2p:true,note:'Joiner epic (effect 201 kurangi dmg musuh).'},
   {n:'Amane',t:'B',ty:'Archer',f2p:true,note:'★ Joiner epic → 4★ (102 Attack). Dgn Chenko/Yeonwoo: efek 101×102 MENUMPUK multiplikatif ≈ 1,56× (vs 1,5× kalau aditif — unggul ~12%). Stack antar-joiner, bukan dlm 1 lineup.'},
