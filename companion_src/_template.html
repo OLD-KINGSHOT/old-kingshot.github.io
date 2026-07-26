@@ -1531,6 +1531,105 @@ body,.card-b,.alert,.muted,.check .d,table,.lrow{font-size:15px}
 }
 /* layar sedang & HP: kembali jadi satu baris seperti sebelumnya */
 @media(max-width:1099px){ .navgrp{display:contents} .navgrp-t{display:none} }
+
+/* ════════════════════════════════════════════════════════════════
+   STUDIO — LAPIS KOMPONEN (tahap 5)
+   Tahap sebelumnya hanya menyentuh token & tipografi, jadi tombol, kolom
+   input, alert, tabel, dan kotak stat masih memakai gaya lama: tiga bentuk
+   tombol berbeda, alert berbingkai penuh, kotak stat bergaris berat, dan sisa
+   hiasan sudut di kartu "hud". Di sini komponennya yang dirombak.
+   ════════════════════════════════════════════════════════════════ */
+
+/* hiasan sudut peninggalan tema lama — dimatikan */
+.card.hud::before,.card.hud::after{display:none}
+
+/* ── tombol: satu geometri, tiga tingkat kepentingan ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:38px;padding:0 16px;border-radius:10px;border:1px solid transparent;
+  background:var(--accent);color:#0a1020;font:600 13.5px/1 var(--font-ui);
+  letter-spacing:0;text-transform:none;clip-path:none;box-shadow:none;
+  transition:background .14s var(--ease),border-color .14s var(--ease),color .14s var(--ease)}
+.btn:hover{background:#7ea4f7;transform:none}
+.btn:active{background:#5a83e8}
+.btn.sec{background:transparent;color:var(--fg);border-color:var(--bd-strong)}
+.btn.sec:hover{background:var(--bg-3);border-color:var(--bd-strong);color:var(--fg)}
+.btn.ghost{background:transparent;color:var(--fg-mute);border-color:transparent}
+.btn.ghost:hover{background:var(--bg-3);color:var(--fg);border-color:transparent}
+.btn.sm{min-height:32px;padding:0 12px;font-size:12.5px}
+.btn[disabled],.btn:disabled{opacity:.45;pointer-events:none}
+
+/* ── kolom input: satu bentuk, cincin fokus jelas ── */
+input,select,textarea{min-height:38px;padding:8px 12px;border-radius:10px;
+  background:var(--bg);border:1px solid var(--bd-strong);color:var(--fg);
+  font-size:14px;box-shadow:none;transition:border-color .14s var(--ease),box-shadow .14s var(--ease)}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(107,147,242,.20)}
+input::placeholder{color:var(--fg-faint)}
+label.fl,.fl{font:600 11.5px/1.4 var(--font-ui);letter-spacing:.06em;
+  text-transform:uppercase;color:var(--fg-dim)}
+input[type=checkbox]{min-height:0;accent-color:var(--accent)}
+
+/* ── alert: batang aksen di kiri, bukan kotak berbingkai penuh ── */
+.alert{position:relative;border:0;border-radius:10px;padding:12px 14px 12px 16px;
+  margin:10px 0;background:var(--bg-3);color:var(--fg);overflow:hidden}
+.alert::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--fg-faint)}
+.alert.inf{background:rgba(107,147,242,.08)}   .alert.inf::before{background:var(--accent)}
+.alert.ok{background:rgba(55,184,119,.08)}     .alert.ok::before{background:var(--profit)}
+.alert.warn{background:rgba(224,161,62,.09)}   .alert.warn::before{background:var(--warn)}
+.alert.bad{background:rgba(240,101,74,.09)}    .alert.bad::before{background:var(--loss)}
+.alert.bad,.alert.warn,.alert.ok,.alert.inf{color:var(--fg)}
+
+/* ── kotak stat: tanpa garis, cukup permukaan ── */
+.stat{background:var(--bg-3);border:0;border-radius:12px;padding:12px 16px}
+.stat .sv{font-size:23px;font-weight:600}
+.stats{gap:10px}
+
+/* ── tabel: kepala tenang, baris menyala saat disentuh ── */
+table{border-collapse:collapse}
+th{background:transparent;border-bottom:1px solid var(--bd-strong);padding:9px 10px;
+  text-transform:uppercase}
+td{border-top:1px solid var(--bd-soft)}
+tbody tr:hover td{background:rgba(255,255,255,.022)}
+.scrollx{border-radius:10px}
+
+/* ── details: satu bentuk, penanda buka-tutup ── */
+details{border:1px solid var(--bd);border-radius:10px;background:transparent;overflow:hidden}
+details + details{margin-top:8px}
+details > summary{list-style:none;cursor:pointer;padding:11px 14px;font:600 14px/1.4 var(--font-ui);
+  display:flex;align-items:center;gap:10px;background:transparent;transition:background .14s var(--ease)}
+details > summary::-webkit-details-marker{display:none}
+details > summary::before{content:"›";font-size:17px;line-height:1;color:var(--fg-dim);
+  transition:transform .16s var(--ease);flex:0 0 auto}
+details[open] > summary::before{transform:rotate(90deg)}
+details > summary:hover{background:var(--bg-3)}
+details > .dt{padding:0 14px 14px}
+
+/* ── baris centang & baris daftar ── */
+.check{background:var(--bg-3);border:0;border-radius:10px;padding:11px 13px;margin:6px 0}
+.check.note{background:transparent;border-top:1px solid var(--bd-soft);border-radius:0;padding:10px 2px;margin:0}
+.check:hover{background:var(--bg-4)}
+.check.note:hover{background:transparent}
+.kv{border-bottom:1px solid var(--bd-soft);padding:10px 0}
+
+/* ── kedalaman: latar & kartu dulu cuma beda ~4% terang, jadi seluruh layar
+   terbaca sebagai satu lembar gelap. Jaraknya dilebarkan supaya kartu benar-benar
+   "duduk di atas" halaman, plus bayangan halus. ── */
+:root{
+  --bg:#0a0e14; --bg-2:#151c27; --bg-3:#1c2532; --bg-4:#232d3d;
+  --bd:#232c3a; --bd-strong:#33405430; --bd-soft:#1b232f;
+}
+body{background:var(--bg)}
+.card{background:var(--bg-2);border:1px solid #232c3a;box-shadow:0 1px 2px rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.22)}
+.card-h{background:transparent;border-bottom:1px solid #232c3a}
+input,select,textarea{background:#0c1219;border-color:#2b3646}
+.topnav{background:#0c1119;border-right-color:#1e2735}
+.apphead{background:rgba(10,14,20,.92)}
+.stat{background:var(--bg-3)}
+.btn{color:#f2f6ff}
+.btn:hover{color:#fff}
+.mobnav{background:rgba(10,14,20,.97);border-top-color:#1e2735}
+.navsheet-p{background:var(--bg-2)}
+.sk .card{box-shadow:0 1px 2px rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.22)}
 </style>
 
 
