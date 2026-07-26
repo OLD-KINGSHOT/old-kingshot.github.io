@@ -305,8 +305,24 @@ function hogLen(no){ return no<=1?5 : no===2?6 : 7; }
 /* SATU sumber kebenaran penomoran HoG: siklus 14 hari, iterasi #1 mulai H6.
    Dulu nomor & datanya dihitung dari dua sumber berbeda (nomor dari hari event, data
    dari umur server) → judul "#2" tapi hero/durasi milik #1 saat #1 masih jalan. */
-function hogNoForDay(day){ return day<6?1:Math.floor((day-6)/14)+1; }
-function hogStartDay(no){ return 6+(no-1)*14; }
+/* HoG selalu mulai hari SENIN. Model lama "hari ke-6" kebetulan benar untuk
+   Kingdom 2114 (buka Rabu → hari-6 = Senin) tapi meleset untuk kingdom lain:
+   2184 buka Kamis, hari-6 = Selasa, padahal HoG-nya jatuh Senin (tercatat
+   in-game 13 Jul = hari 33, bukan hari 34). Sejak sini jangkarnya dihitung dari
+   kalender: Senin PERTAMA setelah kingdom buka (Hari-1 = tanggal buka). */
+function _hogProfStart(){
+  try{ const p=store.get('profile',{})||{}; return p.start||null; }catch(e){ return null; }
+}
+function hogFirstDay(startISO){
+  const s=startISO||_hogProfStart();
+  if(!s) return 6;                                   /* tanpa tanggal buka: perilaku lama */
+  const d=new Date(s+'T00:00:00Z'); if(isNaN(d)) return 6;
+  const dow=d.getUTCDay();                           /* 0=Minggu … 1=Senin */
+  const menujuSenin=((8-dow)%7)||7;                  /* 1..7 hari menuju Senin BERIKUTNYA */
+  return 1+menujuSenin;                              /* Hari-1 = tanggal buka */
+}
+function hogNoForDay(day,startISO){ const f=hogFirstDay(startISO); return day<f?1:Math.floor((day-f)/14)+1; }
+function hogStartDay(no,startISO){ return hogFirstDay(startISO)+(no-1)*14; }
 /* Menafsirkan sebuah tanggal D1 (dicatat/diralat pengguna) → iterasi mana.
    BEDA dari hogNoForDay: yang itu menjawab "iterasi apa yang sedang/terakhir jalan
    pada umur X" (pembulatan KE BAWAH). Kalau dipakai untuk tanggal D1 yang meleset

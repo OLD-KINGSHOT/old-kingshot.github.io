@@ -73,12 +73,23 @@ t('kingdomsForHogDate: 13 Jul 2026 = D1 HoG #4 Kingdom 2114', () => {
   ok(!hit.some(h => h.kid === '2184'), '2184 tidak boleh cocok (jatuh di H33)');
 });
 
-t('advisory HoG memperingatkan kalau tanggal tak cocok umur kingdom aktif', () => {
+/* KOREKSI 26 Jul: test ini dulu memakai 13 Jul 2026 sebagai contoh "tak cocok
+   untuk Kingdom 2184" — itu mengabadikan model lama yang salah (hari-6). Setelah
+   jangkar HoG diperbaiki jadi hari SENIN, 13 Jul justru COCOK untuk 2184 (hari
+   33 = HoG#3), persis seperti catatan in-game pengguna. Jadi contohnya diganti
+   ke tanggal yang benar-benar meleset: Selasa 14 Jul. */
+t('tanggal Senin yang sah untuk kingdom ini TIDAK diperingatkan', () => {
   const e84 = env('2184', K2184);
   const a = e84.evalIn('evAdvisory')({ type: 'hog', date: '2026-07-13' });
+  ok(!/tidak cocok|tak cocok/i.test((a.lines || []).join(' ')),
+     '13 Jul = hari 33 = jangkar HoG#3 Kingdom 2184 (tercatat in-game)');
+});
+
+t('advisory HoG memperingatkan kalau tanggal tak cocok umur kingdom aktif', () => {
+  const e84 = env('2184', K2184);
+  const a = e84.evalIn('evAdvisory')({ type: 'hog', date: '2026-07-14' });   // Selasa
   const txt = (a.lines || []).join(' ');
   ok(/tidak cocok|tak cocok/i.test(txt), 'harus bilang tanggalnya tidak cocok');
-  ok(/2114/.test(txt), 'harus menyebut kingdom yang cocok (2114)');
 });
 
 t('tanggal yang COCOK tidak memicu peringatan', () => {
