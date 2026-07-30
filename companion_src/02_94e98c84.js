@@ -243,6 +243,9 @@ function renderSekarang(){
   const nm=esc(p.nick||p.name||'Governor');
   const pid=esc(p.pid||p.id||'—');
 
+  /* Robot redeem bekerja diam-diam di latar; tanpa satu baris jejak ia akan disangka
+     tidak jalan — dan justru itu keluhan yang melahirkannya. */
+  const robot=(typeof ksRobotRingkas==='function')?ksRobotRingkas():'';
   /* ---- profile header ---- */
   const header='<div class="card profile"><div style="display:flex;align-items:center;gap:12px">'
     +'<div class="crest">⚔</div><div>'
@@ -362,7 +365,7 @@ function renderSekarang(){
     +'<div class="card tile" data-go="bangun"><span class="ti">▣</span><span class="tl">Bangun & Progres</span></div>'
     +'<div class="card tile" data-go="kode"><span class="ti">🎟️</span><span class="tl">Gift Code</span></div></div>';
 
-  el.innerHTML='<div class="sk">'+header+prepSection+eventSection+'<div id="now_live"></div>'+todaySection+tiles+'</div>';
+  el.innerHTML='<div class="sk">'+header+robot+prepSection+eventSection+'<div id="now_live"></div>'+todaySection+tiles+'</div>';
 
   /* ---- wiring ---- */
   /* daily checklist: render top-5, expandable to all */

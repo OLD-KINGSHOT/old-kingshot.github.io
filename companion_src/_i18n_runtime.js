@@ -80,6 +80,18 @@
     [/^Stamina hanya cukup untuk ([\d.]+) rally dari ([\d.]+) yang diminta\.$/g,
       'Stamina only covers $1 of the $2 rallies requested.'],
     [/^HoG jalan, tapi stage hari ini bukan (.+)$/g, 'HoG is running, but today’s stage is not $1'],
+    /* redeem + robot (angka/kode disisipkan) */
+    [/^Server menolak sementara \(kode (.+?)\) — dicoba lagi otomatis nanti$/g,
+      'Server refused temporarily (code $1) — will retry automatically later'],
+    [/^🤖 Robot redeem: (\d+) berhasil, sisanya dibatasi server — dilanjutkan otomatis nanti\.$/g,
+      '🤖 Redeem robot: $1 succeeded, the rest were rate-limited — will continue automatically later.'],
+    [/^🤖 Robot redeem ([\d:]+ UTC): (\d+) kode masuk\.$/g, '🤖 Redeem robot $1: $2 codes claimed.'],
+    [/^🤖 Robot redeem ([\d:]+ UTC): (\d+) kode masuk, (\d+) tidak berlaku\.$/g,
+      '🤖 Redeem robot $1: $2 codes claimed, $3 not valid.'],
+    [/^🤖 Robot redeem ([\d:]+ UTC): (\d+) kode masuk · jam disinkronkan otomatis\.$/g,
+      '🤖 Redeem robot $1: $2 codes claimed · clock resynced automatically.'],
+    [/^🤖 Robot redeem ([\d:]+ UTC): (\d+) kode masuk, (\d+) tidak berlaku · jam disinkronkan otomatis\.$/g,
+      '🤖 Redeem robot $1: $2 codes claimed, $3 not valid · clock resynced automatically.'],
     [/^([\d.]+) hunt$/g, '$1 hunts'],
     [/^([\d.]+) gem · ([\d.]+) mnt$/g, '$1 gems · $2 min'],
     /* event advisory (dynamic, number-interpolated) */

@@ -423,18 +423,31 @@ async function ksRedeem(fid,code,kid){
      /api/player, yang sudah dihapus Century — kini harus diketik manual). */
   if(ec===40020||m.includes('USER INFO'))
     return {cls:'bad',txt:'Player ID / Kingdom tidak cocok — cek nomor Kingdom di profil'};
-  /* dicek SEBELUM aturan EXPIRE di bawah, kalau tidak terbaca "Kedaluwarsa" */
+  /* dicek SEBELUM aturan EXPIRE di bawah, kalau tidak terbaca "Kedaluwarsa".
+     TERBUKTI lewat probe langsung 30 Jul 2026 (fid 330300846, kid 2114, kode palsu):
+       time benar      → 40014 "CDK NOT FOUND."   (jalur auth sehat)
+       time +600 dtk   → msg "time Expired"
+       time -600 dtk   → msg "time Expired"
+       time -554 dtk   → msg "time Expired"   ← persis meleset-nya timeapi.io
+     Jadi ini BUKAN "format waktu salah" dan BUKAN bug app: jam kita di luar jendela
+     ±5 menit milik server. Pesan lama menyuruh pengguna melapor bug, padahal yang
+     perlu terjadi adalah menyinkronkan jam lalu mencoba lagi — dan itu bisa
+     dilakukan app sendiri (lihat ksRedeemAuto). */
   if(m.includes('TIME EXPIRED'))
-    return {cls:'bad',txt:'Format waktu ditolak server — laporkan sebagai bug app'};
+    return {cls:'warn',txt:'Jam meleset dari server (jendela ±5 menit) — disinkronkan lalu dicoba lagi',clockOff:true};
   if(m.includes('CDK')||m.includes('NOT FOUND')) return {cls:'bad',txt:'Kode salah/tak ada'};
   if(m.includes('CAPTCHA')) return {cls:'warn',txt:'Butuh captcha \u2014 redeem in-game'};
   if(m.includes('EXPIRE')) return {cls:'bad',txt:'Kedaluwarsa'};
-  /* Terverifikasi lewat probe langsung ke API (Jul 2026): `time` yang meleset
-     \u00b124 jam pun tetap diterima (40014 CDK NOT FOUND normal), dan sign yang salah
-     dijawab msg "Sign Error" err_code 0. Jadi 40004/40009 BUKAN jam perangkat \u2014
-     itu sesi login belum ada/hangus (hit login gagal atau kena rate limit 30/menit). */
+  /* KOREKSI 30 Jul 2026. Komentar lama di sini mengklaim jendela `time` \u00b124 jam dan
+     menyebut 40004/40009 sebagai "sesi login" \u2014 dua-duanya sudah tidak benar:
+       \u00b7 probe membuktikan \u00b1600 dtk SUDAH ditolak (jendelanya ~\u00b15 menit), dan
+       \u00b7 langkah login /api/player DIHAPUS Century, jadi tak ada sesi login untuk gagal.
+         Jalur sukses tadi sama sekali tak menyentuhnya.
+     Pesan lama ("Sesi login ke server game gagal") karena itu menyesatkan: ia menyuruh
+     menunggu sesi yang tak pernah ada. Kode ini sekarang diperlakukan apa adanya \u2014
+     penolakan sementara dari server, layak dicoba ulang, BUKAN ditandai selesai. */
   if(ec===40004||ec===40009||m.includes('LOGIN')||m==='40004')
-    return {cls:'warn',txt:'Sesi login ke server game gagal \u2014 tunggu ~1 menit lalu coba lagi'};
+    return {cls:'warn',txt:'Server menolak sementara (kode '+(ec||m)+') \u2014 dicoba lagi otomatis nanti',retryLater:true};
   if(m.includes('SIGN')) return {cls:'bad',txt:'Sign ditolak server \u2014 laporkan sebagai bug app'};
   /* hanya kalau server BENAR-BENAR bilang soal waktu (window-nya \u00b124 jam, jadi ini langka) */
   if(m.includes('TIME')) return {cls:'bad',txt:'Jam perangkat meleset jauh \u2014 sinkronkan jam lalu coba lagi'};
@@ -591,6 +604,28 @@ async function ksRedeemThrottled(fid,code,kid){
   /* sudah terlanjur kena: diamkan satu putaran penuh sebelum menembak lagi */
   if(r&&r.tooFrequent) _ksCooldownUntil=Date.now()+KS_REDEEM_COOLDOWN;
   return r;
+}
+/* Satu-satunya kegagalan yang bisa app sembuhkan SENDIRI: jam di luar jendela ±5 menit.
+   Server menjawab "time Expired"; sebelumnya app menyerah di situ dan menyuruh pengguna
+   melapor bug. Sekarang: sinkronkan jam sekali, lalu ulangi sekali. Kalau setelah sinkron
+   masih ditolak, barulah dilaporkan — dan pesannya menyebut jam, bukan "sesi login".
+   Sengaja HANYA satu kali ulang: gagal berulang dengan jam yang sudah benar berarti
+   masalahnya lain, dan menembak terus hanya memancing TOO FREQUENT. */
+let _ksClockFixAt=0;
+async function ksRedeemAuto(fid,code,kid){
+  let r=await ksRedeemThrottled(fid,code,kid);
+  if(!r||!r.clockOff) return r;
+  /* sinkron ulang paling sering sekali per menit — satu jam meleset akan memicu
+     clockOff untuk SETIAP kode di antrean, dan sinkron per kode itu sia-sia. */
+  const now=Date.now();
+  if(now-_ksClockFixAt>60000){
+    _ksClockFixAt=now;
+    try{ if(ksClock&&typeof ksClock.sync==='function') await ksClock.sync(); }catch(e){}
+  }
+  const r2=await ksRedeemThrottled(fid,code,kid);
+  if(r2&&r2.clockOff) return Object.assign({},r2,{
+    txt:'Jam masih meleset setelah disinkronkan — cocokkan jam perangkat, lalu coba lagi'});
+  return r2;
 }
 /* Live gift codes — aggregated from TWO sources (kingshot.net's API regularly lags
    behind: per 2026-06 it listed 1 active code while kingshotwiki.com had 2).

@@ -978,5 +978,8 @@
   "⚔️ Latih troop Lv10": "⚔️ Train troops Lv10",
   "Champion’s Way (Gen 4+)": "Champion’s Way (Gen 4+)",
   "Weapon Scrap & Precious Keepsake → gem, stamina, speedup, Hero XP; scrap → rally Elite Rebel → peti di 1/3/5/7/10 kill": "Weapon Scraps & Precious Keepsakes → gems, stamina, speedups, Hero XP; scraps → Elite Rebel rallies → chests at 1/3/5/7/10 kills",
-  "pengganti Desert Trial sejak Gen 4 · peluang drop-nya tak dipublikasikan, jadi yang dihitung hanya jumlah hunt": "replaces Desert Trial from Gen 4 · its drop rates are not published, so only the hunt count is calculated"
+  "pengganti Desert Trial sejak Gen 4 · peluang drop-nya tak dipublikasikan, jadi yang dihitung hanya jumlah hunt": "replaces Desert Trial from Gen 4 · its drop rates are not published, so only the hunt count is calculated",
+  "Jam meleset dari server (jendela ±5 menit) — disinkronkan lalu dicoba lagi": "Clock is outside the server window (±5 minutes) — resyncing and retrying",
+  "Jam masih meleset setelah disinkronkan — cocokkan jam perangkat, lalu coba lagi": "Clock still off after resyncing — fix your device clock, then try again",
+  "🤖 Robot redeem menunggu: isi nomor Kingdom di tab Profil — tanpa itu server pasti menolak.": "🤖 Redeem robot is waiting: enter your Kingdom number in the Profile tab — without it the server always refuses."
 }

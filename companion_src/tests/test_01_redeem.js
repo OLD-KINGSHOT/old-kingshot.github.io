@@ -213,5 +213,66 @@ console.log('Fix #1 — protokol redeem baru (kid + detik + tanpa login)');
     });
   }
 
+  /* ---- 5. "time Expired" = JAM MELESET, bukan bug format ----
+     Probe langsung 30 Jul 2026 (fid 330300846, kid 2114, kode palsu):
+       time benar     -> 40014 "CDK NOT FOUND."   (jalur auth sehat, TANPA login)
+       time +600 dtk  -> msg "time Expired"
+       time -600 dtk  -> msg "time Expired"
+       time -554 dtk  -> msg "time Expired"       (persis meleset-nya timeapi.io)
+     Pesan lama menyuruh pengguna "laporkan sebagai bug app" dan app menyerah di situ,
+     jadi jam yang meleset memblokir SEMUA redeem selamanya tanpa petunjuk benar. */
+  {
+    const { env } = envWithGiftResponse({ code: 1, msg: 'time Expired', err_code: 0 });
+    const res = await env.evalIn('ksRedeem')(FID, CDK, KID);
+    t('"time Expired" menunjuk ke JAM, bukan menyuruh lapor bug', () => {
+      eq(res.clockOff, true, 'harus ditandai clockOff supaya bisa disembuhkan otomatis');
+      ok(/jam/i.test(res.txt), 'pesan harus menyebut jam: ' + JSON.stringify(res.txt));
+      ok(!/bug/i.test(res.txt), 'jangan lagi menyuruh melaporkan bug app');
+    });
+  }
+
+  /* ---- 6. 40004/40009 bukan "sesi login" — langkah login sudah dihapus Century ---- */
+  {
+    const { env } = envWithGiftResponse({ code: 1, msg: '40004', err_code: 40004 });
+    const res = await env.evalIn('ksRedeem')(FID, CDK, KID);
+    t('40004 tidak lagi disebut sesi login, dan layak dicoba ulang', () => {
+      ok(!/sesi login/i.test(res.txt), 'tak boleh menyebut sesi login: ' + res.txt);
+      eq(res.retryLater, true, 'harus ditandai sementara, bukan final');
+      ok(!res.done, 'jangan pernah ditandai selesai — kodenya belum tertebus');
+    });
+  }
+
+  /* ---- 7. ksRedeemAuto: sinkron jam lalu ULANGI SEKALI ---- */
+  {
+    let n = 0;
+    const env = createEnv({
+      fetch: (url) => {
+        const gift = /gift_code/.test(url);
+        if (gift) n++;
+        const json = gift
+          ? (n === 1 ? { code: 1, msg: 'time Expired', err_code: 0 } : { code: 0, msg: 'SUCCESS' })
+          : { code: 0, data: {} };
+        return Promise.resolve({ json: () => Promise.resolve(json), text: () => Promise.resolve(JSON.stringify(json)), headers: { get: () => null } });
+      },
+    });
+    env.evalIn('KS_REDEEM_GAP=0; KS_REDEEM_COOLDOWN=0');
+    const res = await env.evalIn('ksRedeemAuto')(FID, CDK, KID);
+    t('jam meleset -> disinkronkan -> percobaan kedua berhasil', () => {
+      eq(n, 2, 'harus menembak persis dua kali (bukan mengulang tanpa henti)');
+      eq(res.cls, 'ok', 'hasil akhir: ' + JSON.stringify(res));
+    });
+  }
+
+  /* ---- 8. masih meleset setelah sinkron -> jujur, dan tetap tidak menyalahkan app ---- */
+  {
+    const { env } = envWithGiftResponse({ code: 1, msg: 'time Expired', err_code: 0 });
+    env.evalIn('KS_REDEEM_GAP=0; KS_REDEEM_COOLDOWN=0');
+    const res = await env.evalIn('ksRedeemAuto')(FID, CDK, KID);
+    t('gagal terus setelah sinkron -> suruh cocokkan jam perangkat', () => {
+      ok(/jam/i.test(res.txt) && /perangkat/i.test(res.txt), 'pesan: ' + res.txt);
+      ok(!/bug/i.test(res.txt));
+    });
+  }
+
   done();
 })();

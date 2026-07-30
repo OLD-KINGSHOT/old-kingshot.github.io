@@ -29,7 +29,16 @@ Deklarasi `const`/`let` top-level **tidak** menempel di objek global, jadi tidak
 
 Diverifikasi lewat probe langsung ke API (Jul 2026) — jangan diubah tanpa probe ulang:
 
-- `/api/gift_code` menerima `time` yang meleset **±24 jam** (di luar itu → 40009). Jadi **40004/40009 BUKAN soal jam perangkat** — itu sesi login. Sign salah dijawab `msg:"Sign Error", err_code:0`.
+- `/api/gift_code` — **diprobe ulang 30 Jul 2026** (fid 330300846, kid 2114, kode palsu), dan catatan lama di baris ini SALAH:
+
+  | `time` yang dikirim | jawaban server |
+  |---|---|
+  | benar | `40014 "CDK NOT FOUND."` — jalur auth sehat, **tanpa langkah login sama sekali** |
+  | +600 dtk | `msg:"time Expired"` |
+  | −600 dtk | `msg:"time Expired"` |
+  | −554 dtk (meleset khas timeapi.io) | `msg:"time Expired"` |
+
+  Jadi jendelanya **~±5 menit, bukan ±24 jam**, dan jam yang meleset menghasilkan **`time Expired`** — bukan 40004/40009. Karena langkah login `/api/player` sudah **dihapus Century**, tak ada "sesi login" yang bisa gagal; pesan lama app yang berbunyi begitu sudah dibuang. `time Expired` kini ditandai `clockOff` dan disembuhkan sendiri oleh `ksRedeemAuto` (sinkron jam → ulangi **sekali**). Sign salah tetap dijawab `msg:"Sign Error", err_code:0`.
 - Respons API **tidak** mengirim `Access-Control-Expose-Headers`, dan `Date` bukan header CORS-safelisted → `headers.get('date')` **selalu null di browser**. Node/curl tidak menegakkan CORS, jadi ini terlihat "jalan" saat diprobe dari CLI. Stub di test ini sengaja meniru browser (`headers.get()` → null).
 - Durasi HoG per-iterasi: #1=5, #2=6, #3+=7 hari; siklus 14, mulai H6. HoG #4 **terverifikasi in-game** (Kingdom 2114, 2026-07-17): Hilde, Top 100, urutan stage cocok.
 

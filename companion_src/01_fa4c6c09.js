@@ -1833,6 +1833,63 @@ function codeTable(codes){
    yang belum ber-hasil ok/used pada karakter ITU \u2014 riwayatnya per-karakter
    (ks_p_<pid>_codesDone), jadi karakter kedua tidak ikut ter-skip gara-gara
    karakter pertama sudah redeem. Membuka tab berulang kali tetap gratis. */
+/* ── ROBOT REDEEM ─────────────────────────────────────────────────────────────
+   Dulu auto-redeem HANYA jalan dari fetchCodesUI(), yaitu ketika tab Kode dibuka.
+   Jadi "buka web → kode baru langsung ditebus" tidak pernah terjadi kecuali kamu
+   ingat mampir ke tab itu. Robot ini menjalankannya saat app dibuka, tanpa UI.
+
+   Aturan yang dijaga (semuanya sudah terbukti mahal kalau dilanggar):
+   · pakai ksRedeemAuto → jam meleset disembuhkan sendiri, bukan dilaporkan sebagai bug;
+   · hormati throttle 11 dtk + cooldown 60 dtk milik ksRedeemThrottled;
+   · TOO FREQUENT / penolakan sementara TIDAK ditandai selesai — sisanya harus utuh;
+   · tanpa Kingdom, jangan tembak server sama sekali (pasti 40020) dan jangan tandai;
+   · satu kali per pembukaan app, dan tak lebih sering dari sekali per 30 menit,
+     supaya buka-tutup app tidak berubah jadi mesin rate-limit. */
+const KS_ROBOT_JEDA=30*60*1000;
+let _ksRobotJalan=false;
+async function ksRobotRedeem(){
+  if(_ksRobotJalan) return null; _ksRobotJalan=true;
+  const hasil={dicoba:0,ok:0,gagal:0,dibatasi:false,jamDiperbaiki:false,alasan:''};
+  try{
+    const targets=(typeof ksRedeemTargets==='function')?ksRedeemTargets():[];
+    const siap=targets.filter(t=>t.kingdom);
+    if(!siap.length){ hasil.alasan=targets.length?'kingdom-kosong':'tanpa-profil'; return hasil; }
+    const terakhir=Number(store.get('robotAt',0))||0;
+    if(Date.now()-terakhir<KS_ROBOT_JEDA){ hasil.alasan='baru-saja'; return hasil; }
+    const codes=await ksLiveCodes();
+    if(!codes||!codes.length){ hasil.alasan='kode-tak-termuat'; return hasil; }
+    store.set('robotAt',Date.now());
+    outer:
+    for(const t of siap){
+      for(const g of ksCodesTodo(t.pid,codes)){
+        hasil.dicoba++;
+        let r; try{ r=await ksRedeemAuto(t.pid,g.code,t.kingdom); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+        if(r&&r.clockOff) hasil.jamDiperbaiki=true;
+        /* dibatasi = kode ini BELUM ditebus: berhenti & jangan tandai apa pun */
+        if(r&&(r.tooFrequent||r.retryLater)){ hasil.dibatasi=true; break outer; }
+        ksMarkCode(t.pid,g.code,r);
+        if(r&&r.cls==='ok') hasil.ok++; else hasil.gagal++;
+      }
+    }
+  }catch(e){ hasil.alasan='galat:'+(e&&e.message||e); }
+  finally{ _ksRobotJalan=false; store.set('robotHasil',hasil); }
+  return hasil;
+}
+/* Ringkasan satu baris untuk ditempel di tab Sekarang — robot yang bekerja diam-diam
+   tanpa jejak akan disangka tidak jalan, dan itu persis keluhan yang memulai ini. */
+function ksRobotRingkas(){
+  const h=store.get('robotHasil',null); if(!h) return '';
+  const at=Number(store.get('robotAt',0))||0;
+  const jam=at?new Date(at).toISOString().slice(11,16)+' UTC':'';
+  if(h.alasan==='kingdom-kosong') return '<div class="alert warn small">🤖 Robot redeem menunggu: isi nomor Kingdom di tab Profil — tanpa itu server pasti menolak.</div>';
+  if(h.alasan==='tanpa-profil') return '';
+  if(h.dicoba===0) return '';
+  if(h.dibatasi) return '<div class="alert warn small">🤖 Robot redeem: '+h.ok+' berhasil, sisanya dibatasi server — dilanjutkan otomatis nanti.</div>';
+  return '<div class="alert ok small">🤖 Robot redeem '+jam+': '+h.ok+' kode masuk'
+    +(h.gagal?', '+h.gagal+' tidak berlaku':'')
+    +(h.jamDiperbaiki?' · jam disinkronkan otomatis':'')+'.</div>';
+}
+
 async function autoRedeemNew(){
   const host=$('#cd_auto'); if(!host||_codesFallback||!_liveCodes.length) return;
   const targets=ksRedeemTargets();
@@ -1850,7 +1907,9 @@ async function autoRedeemNew(){
   for(const w of work){
     html+=`<div class="lbl" style="margin:10px 0 4px">${esc(w.t.nick||'(tanpa nama)')} <span class="muted small">#${esc(w.t.kingdom||'?')} \u00b7 ${esc(w.t.pid)}</span></div>`;
     for(const g of w.todo){
-      let r; try{ r=await ksRedeemThrottled(w.t.pid,g.code,w.t.kingdom); }catch(e){ r={cls:'bad',txt:'gagal'}; }
+      /* ksRedeemAuto, bukan ksRedeemThrottled: jam yang meleset disembuhkan sendiri
+         (sinkron + ulang sekali) alih-alih dilaporkan sebagai "bug app" seperti dulu. */
+      let r; try{ r=await ksRedeemAuto(w.t.pid,g.code,w.t.kingdom); }catch(e){ r={cls:'bad',txt:'gagal'}; }
       /* Kena batas laju = kode ini BELUM ditebus. Berhenti (meneruskan cuma
          memperpanjang hukuman) dan jangan tandai apa pun, supaya sisanya utuh
          di antrean dan dilanjutkan saat tab dibuka lagi. */
@@ -2209,7 +2268,21 @@ function init(){
   ksClock.sync().then(ok=>{ if(ok){ const nd=ksClock.now().toISOString().slice(0,10); const changed=nd!==_lastGameDay; _lastGameDay=nd; renderTopClock();
     /* only force a re-render if the sync actually moved us to a different game day — otherwise it would wipe in-progress typing */
     if(changed){ const ae=document.activeElement; if(!ae||!/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) activate(store.get('lastTab','sekarang')); }
-  } });
+  } })
+  /* Robot redeem menyusul SETELAH jam disinkronkan — jendela server cuma ±5 menit, jadi
+     menembak duluan dengan jam yang belum benar hanya membuang jatah rate limit. Memakai
+     rantai sync yang SAMA (jangan panggil sync() dua kali: itu dua kali lalu lintas
+     jaringan untuk jawaban yang sama). Tidak memblokir apa pun. */
+  .finally(()=>{
+    if(typeof ksRobotRedeem!=='function') return;
+    ksRobotRedeem().then(h=>{
+      /* gambar ulang HANYA kalau ada yang benar-benar ditembak, dan hanya kalau
+         pengguna sedang di tab Sekarang tanpa sedang mengetik */
+      if(!h||!h.dicoba) return;
+      const ae=document.activeElement;
+      if(store.get('lastTab','sekarang')==='sekarang'&&(!ae||!/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))) activate('sekarang');
+    }).catch(()=>{});
+  });
   /* bumper splash: tahan ~2.4s biar animasi starfield + shimmer terlihat, lalu fade */
   const sp=document.getElementById('splash');
   if(sp){ const t0=window.__splashT0||Date.now();
