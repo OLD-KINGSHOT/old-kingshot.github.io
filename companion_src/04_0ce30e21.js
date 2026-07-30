@@ -515,6 +515,15 @@ const STAMINA_EVENTS=[
    hasil:'poin event per beast — besaran poinnya tak pernah dipublikasikan'},
   {id:'beastWhisperer',nama:'Beast Whisperer',model:'hunt',poinPerHunt:null,
    hasil:'material & Hero EXP dari beast'},
+  /* Champion's Way MENGGANTIKAN Desert Trial mulai Gen 4 (kingshotguide.com, heaven-guardian,
+     clashiverse — 30 Jul 2026): event 3 hari, tiap 2 minggu. Loop-nya sama — hunt beast di map
+     → Weapon Scraps + Precious Keepsakes (gem, stamina, speedup, Hero XP) → rally Cesare's
+     Elite Rebel → peti milestone di 1/3/5/7/10 kill. Bedanya: scrap bisa langsung ditukar tanpa
+     harus maks-kan hero-nya dulu, dan rally yang diluncurkan TAK dibatasi. Peluang drop-nya
+     TIDAK dipublikasikan seperti pouch Desert Trial, jadi app hanya menghitung jumlah hunt. */
+  {id:'championsWay',nama:'Champion’s Way (Gen 4+)',model:'hunt',poinPerHunt:null,
+   hasil:'Weapon Scrap & Precious Keepsake → gem, stamina, speedup, Hero XP; scrap → rally Elite Rebel → peti di 1/3/5/7/10 kill',
+   catatan:'pengganti Desert Trial sejak Gen 4 · peluang drop-nya tak dipublikasikan, jadi yang dihitung hanya jumlah hunt'},
   {id:'cesaresFury',nama:'Cesare’s Fury',model:'rebel',poinPerHunt:null,
    hasil:'shard Mythic + gem + speedup',
    catatan:'ongkosnya beda: scout 15 · solo 10 · rally 25 stamina (hemat ~2 dengan Diana) — tidak ikut hitungan hunt'},
