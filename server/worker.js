@@ -125,9 +125,19 @@ export default {
       }
       if (p === '/events' && req.method === 'GET') {
         const w = url.searchParams.get('week');
+        /* Payload ini dipakai untuk DUA hal dengan kebutuhan kesegaran yang berlawanan:
+           jadwal event (boleh basi 30 menit) dan `timestamp` sebagai SUMBER JAM (tak
+           boleh basi sama sekali — jendela gift-code Century cuma ±5 menit, jadi
+           timestamp berumur 30 menit adalah jam yang salah 30 menit).
+           App menandai permintaan jam dengan `_ts`; hanya permintaan itu yang menembus
+           cache. Tanpa cabang ini, cache-bust di sisi app percuma: query `_ts` tak
+           pernah ikut ke upstream, jadi edge tetap menyajikan salinan lama. */
+        const utkJam = url.searchParams.has('_ts');
         const r = await fetch('https://kingshot.net/api/events' + (w ? '?week=' + encodeURIComponent(w) : ''),
-          { cf: { cacheTtl: 1800, cacheEverything: true } });
-        return new Response(await r.text(), { status: r.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=1800', ...CORS } });
+          { cf: utkJam ? { cacheTtl: 0 } : { cacheTtl: 1800, cacheEverything: true } });
+        return new Response(await r.text(), { status: r.status, headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': utkJam ? 'no-store' : 'public, max-age=1800', ...CORS } });
       }
       if (p === '/codes' && req.method === 'GET') {
         const r = await fetch('https://kingshot.net/api/gift-codes', { cf: { cacheTtl: 3600, cacheEverything: true } });
