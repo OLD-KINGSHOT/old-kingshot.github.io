@@ -11,7 +11,10 @@ const parseNum=v=>{ if(v==null) return 0; v=(''+v).replace(/[.\s]/g,'').replace(
 /* ── Multi-profil: kunci per-profil disimpan ks_p_<pid>_<key>; sisanya global.
    (lastSit sengaja TIDAK per-profil — ephemeral & ada di ksSync._skip.) ── */
 const PROFILE_KEYS=new Set(['profile','roster','trackProg','buildDone','codesDone',
-  'islandMarks','islandSeedV','daily','events','notifFlags','evLog','tcOwned','tcBuffs']);
+  'islandMarks','islandSeedV','daily','events','notifFlags','evLog','tcOwned','tcBuffs',
+  /* rencana poin HoG: gudang itu milik AKUN, bukan kingdom — dua akun di kingdom yang
+     sama punya stok berbeda, jadi scoping-nya harus per-profil seperti key lain di sini. */
+  'hogPlan']);
 function _ksActivePid(){ try{ return JSON.parse(localStorage.getItem('ks_activePid'))||''; }catch(e){ return ''; } }
 function _ksRealKey(k){ return PROFILE_KEYS.has(k) ? ('p_'+_ksActivePid()+'_'+k) : k; }
 const store={
@@ -993,6 +996,10 @@ function evAdvisory(ev){
         +(_alt.length?' Tanggal ini justru PAS untuk Kingdom '+_alt.map(h=>h.kid+' (HoG #'+h.no+')').join(', ')+' — salah profil?'
                      :' Cek lagi hari pertama HoG di tab Events game.'));
     }
+    /* Duduk pas di jangkar tapi di luar #1-#5 → bukan kesalahan pengguna, melainkan temuan. */
+    else if(_fit.beyondCap){
+      lines.unshift('📌 Hari '+_sd+' = jangkar HoG #'+_fit.no+', di luar rotasi yang terdokumentasi (#1-#5, berhenti karena era KvK). Ini bukti baru dari game.');
+    }
   }
   return {type:ev.type,name:tpl.name,status,cls,lines,start,tpl,di,len:effLen};
 }
@@ -1044,4 +1051,174 @@ function phasePlan(age,tc){
   if(age>=45) a.push('\ud83c\udfc6 Kejar milestone event aktif (Strongest Governor / Hall of Governors).');
   a.push('\ud83d\udee1 Simpan resource di backpack (anti-jarah) sebelum logout.');
   return a;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   KALKULATOR POIN EVENT — mesin murni (tanpa DOM, bisa diuji headless)
+   ════════════════════════════════════════════════════════════════════════
+   Data ada di 04_*.js (HOG_SCORING / HOG_GUDANG / HOG_DETAIL / DT_FARM). Berkas ini
+   dimuat SEBELUM 04, jadi setiap akses dijaga `typeof` — pola sama dengan
+   hogAdvOccurrence() di atas. Angka tak pernah di-hardcode di sini. */
+
+/* Angka dari input pengguna: kosong/omong-kosong → 0, negatif → 0, tak pernah NaN. */
+function numIn(v){ var n=(typeof v==='number')?v:parseFloat(String(v==null?'':v).replace(/[^\d.-]/g,'')); return (isNaN(n)||n<0)?0:n; }
+
+/* Peta balik baris task (_HT) → kunci. Baris di HOG_DETAIL.stages adalah REFERENSI
+   objek yang sama dengan _HT, jadi identitas objek cukup — tak perlu mencocokkan teks. */
+function hogTaskKeyMap(){
+  if(typeof _HT==='undefined') return null;
+  if(hogTaskKeyMap._m) return hogTaskKeyMap._m;
+  var m=new Map(); Object.keys(_HT).forEach(function(k){ m.set(_HT[k],k); });
+  hogTaskKeyMap._m=m; return m;
+}
+/* Kunci task yang tersedia per stage pada satu iterasi → [{nama, keys:[…]}] */
+function hogStageKeys(idx){
+  if(typeof HOG_DETAIL==='undefined'||!HOG_DETAIL.iters) return [];
+  var it=HOG_DETAIL.iters[idx]; if(!it) return [];
+  var km=hogTaskKeyMap(); if(!km) return [];
+  return it.stages.map(function(st){
+    return {nama:st[0], keys:st[1].map(function(row){ return km.get(row); }).filter(Boolean)};
+  });
+}
+/* Poin satu satuan sebuah task. troop = array per level (level 1-10). */
+function hogPts(key,lv){
+  if(typeof HOG_SCORING==='undefined') return 0;
+  var s=HOG_SCORING[key]; if(!s) return 0;
+  if(Array.isArray(s.pts)) return s.pts[(lv||1)-1]||0;
+  return s.pts;
+}
+
+/* ── Rencana dari GUDANG ──────────────────────────────────────────────────
+   gudang = {spin,sM,sE,sR,wid,ham,gxp,terror,beast,chr,ggr,powC,powR,powT,spC,spR,spT,gath,
+             troops:{1..10:jumlah}}
+   Barang ditaruh di stage berpoin TERTINGGI yang memuat task-nya; seri → stage paling AWAL
+   (deterministik supaya test stabil). Barang yang task-nya tak ada di iterasi ini masuk
+   takTerpakai — hilang tanpa kabar itu yang paling berbahaya. */
+function hogPlanScore(gudang,idx){
+  var stages=hogStageKeys(idx);
+  var out={stages:stages.map(function(s){ return {nama:s.nama,pts:0,dipakai:[]}; }),total:0,takTerpakai:[],alternatif:[]};
+  if(!stages.length||typeof HOG_GUDANG==='undefined') return out;
+  var g=gudang||{};
+
+  /* satu field gudang → stage terbaik */
+  HOG_GUDANG.forEach(function(def){
+    var qty=numIn(g[def.f]); if(!qty) return;
+    var best=-1,bestPts=-1,bestKey=null,ties=[];
+    stages.forEach(function(s,si){
+      def.k.forEach(function(k){
+        if(s.keys.indexOf(k)<0) return;
+        var p=hogPts(k);
+        if(p>bestPts){ bestPts=p; best=si; bestKey=k; ties=[si]; }
+        else if(p===bestPts&&ties.indexOf(si)<0) ties.push(si);
+      });
+    });
+    if(best<0){ out.takTerpakai.push({lbl:def.lbl,qty:qty,sebab:'task ini tidak ada di iterasi ini'}); return; }
+    var pts=qty*bestPts;
+    out.stages[best].pts+=pts;
+    out.stages[best].dipakai.push({lbl:def.lbl,qty:qty,satuan:(HOG_SCORING[bestKey]||{}).unit||'',pts:pts});
+    if(ties.length>1) out.alternatif.push({lbl:def.lbl,stage:out.stages[best].nama,
+      jugaBisa:ties.filter(function(t){ return t!==best; }).map(function(t){ return out.stages[t].nama; })});
+  });
+
+  /* troop: per level, semua ke stage yang punya task troop */
+  var tr=g.troops||{}, trSi=-1;
+  stages.forEach(function(s,si){ if(trSi<0&&s.keys.indexOf('troop')>=0) trSi=si; });
+  var trTotal=0,trQty=0;
+  for(var lv=1;lv<=10;lv++){ var q=numIn(tr[lv]); if(!q) continue; trQty+=q; trTotal+=q*hogPts('troop',lv); }
+  if(trQty){
+    if(trSi<0) out.takTerpakai.push({lbl:'⚔️ Latih troop',qty:trQty,sebab:'task ini tidak ada di iterasi ini'});
+    else { out.stages[trSi].pts+=trTotal; out.stages[trSi].dipakai.push({lbl:'⚔️ Latih troop (campuran)',qty:trQty,satuan:'troop',pts:trTotal}); }
+  }
+  out.total=out.stages.reduce(function(a,s){ return a+s.pts; },0);
+  return out;
+}
+
+/* Subtotal satu stage dari input manual {key:jumlah, troops:{lv:jumlah}} — untuk mode
+   "per stage" yang menimpa rencana gudang saat event berjalan. */
+function hogStageScore(input,namaStage,idx){
+  var stages=hogStageKeys(idx), st=null;
+  stages.forEach(function(s){ if(s.nama===namaStage) st=s; });
+  if(!st) return {pts:0,baris:[]};
+  var inp=input||{},baris=[],tot=0;
+  st.keys.forEach(function(k){
+    if(k==='troop'){
+      var tr=inp.troops||{};
+      for(var lv=1;lv<=10;lv++){ var q=numIn(tr[lv]); if(!q) continue;
+        var p=q*hogPts('troop',lv); tot+=p; baris.push({key:'troop',lv:lv,qty:q,pts:p}); }
+      return;
+    }
+    var q=numIn(inp[k]); if(!q) return;
+    var p=q*hogPts(k); tot+=p; baris.push({key:k,qty:q,pts:p});
+  });
+  return {pts:tot,baris:baris};
+}
+
+/* Tabel poin per satuan, urut turun — "mana yang paling berharga sebelum dibuang". */
+function hogRoi(){
+  if(typeof HOG_SCORING==='undefined'||typeof _HT==='undefined') return [];
+  var rows=[];
+  Object.keys(HOG_SCORING).forEach(function(k){
+    var s=HOG_SCORING[k], lbl=(_HT[k]&&_HT[k][0])||k;
+    if(Array.isArray(s.pts)){ for(var i=0;i<s.pts.length;i++) rows.push({key:'troop',lv:i+1,lbl:'⚔️ Latih 1 troop Lv'+(i+1),pts:s.pts[i],unit:'troop'}); }
+    else rows.push({key:k,lbl:lbl,pts:s.pts,unit:s.unit});
+  });
+  return rows.sort(function(a,b){ return b.pts-a.pts; });
+}
+
+/* Sisa poin → berapa banyak tiap tuas untuk menutupnya. Tidak memakai kata "termurah",
+   karena harga gem/item per aksi TIDAK ada di data terverifikasi — mengarang kurs akan
+   membuat saran terlihat pasti padahal karangan. idx opsional: batasi ke tuas yang
+   benar-benar ada di iterasi itu. */
+function hogGapEquiv(sisa,idx){
+  var gap=numIn(sisa); if(!gap) return {gap:0,setara:[]};
+  var ada=null;
+  if(typeof idx==='number'){ ada={}; hogStageKeys(idx).forEach(function(s){ s.keys.forEach(function(k){ ada[k]=1; }); }); }
+  var setara=hogRoi().filter(function(r){ return r.pts>0&&(!ada||ada[r.key]); }).map(function(r){
+    return {lbl:r.lbl,unit:r.unit,butuh:Math.ceil(gap/r.pts),pts:r.pts};
+  });
+  return {gap:gap,setara:setara};
+}
+
+/* ── Simpanan rencana: per PROFIL (lewat PROFILE_KEYS) dan per ITERASI ────
+   'hogPlan' ada di PROFILE_KEYS, jadi store sudah menyimpannya sebagai ks_p_<pid>_hogPlan —
+   isolasi antar akun/server ikut mekanisme yang sudah terbukti, tanpa logika scoping kedua
+   yang bisa menyimpang. Di dalamnya cukup dipisah per nomor iterasi. */
+function hogPlanKosong(){ return {gudang:{troops:{}},timpaan:{},aktual:{},ambang:[]}; }
+function hogPlanGet(no){
+  try{ return (store.get('hogPlan',{})||{})[String(no)]||hogPlanKosong(); }
+  catch(e){ return hogPlanKosong(); }
+}
+function hogPlanSet(no,obj){
+  try{ var all=store.get('hogPlan',{})||{}; all[String(no)]=obj; store.set('hogPlan',all); return true; }
+  catch(e){ return false; }
+}
+
+/* ── Desert Trial: stamina → hasil ────────────────────────────────────────
+   opt = {diana:bool, rangersPct:0..100, rally:jumlah rally Dreadwolf yang mau dijalankan,
+          beastPts:bool → hitung juga poin HoG kalau stage Beast Slay aktif (hanya HoG #1)}
+   Semua gem/speedup adalah NILAI HARAPAN dari peluang resmi pouch, bukan janji. */
+function dtFarmEstimate(stamina,opt){
+  if(typeof DT_FARM==='undefined') return null;
+  var D=DT_FARM,o=opt||{},st=numIn(stamina);
+  var cut=(o.diana?D.dianaHuntCut:0)+numIn(o.rangersPct)/100;
+  if(cut>0.9) cut=0.9;
+  var perHunt=D.huntStamina*(1-cut);
+  var perRally=(o.diana?D.rallyStaminaDiana:D.rallyStamina)*(1-numIn(o.rangersPct)/100);
+  var rallyMau=Math.floor(numIn(o.rally));
+  var rallyDone=perRally>0?Math.min(rallyMau,Math.floor(st/perRally)):0;
+  var stRally=rallyDone*perRally;
+  var hunts=perHunt>0?Math.floor((st-stRally)/perHunt):0;
+  var claw=hunts*D.pClaw, pouch=hunts*D.pPouch;
+  var P=D.pouch;
+  var gemPer=P.gemBig.p*P.gemBig.amt + P.gemSmall.p*((P.gemSmall.amt[0]+P.gemSmall.amt[1])/2);
+  var spdPer=(P.spd[0]+P.spd[1])/2;
+  return {
+    perHunt:perHunt, perRally:perRally,
+    hunts:hunts, claw:claw, pouch:pouch,
+    gem:pouch*gemPer, gemPerPouch:gemPer,
+    speedupMnt:pouch*spdPer, heroXp:pouch*P.heroXp, staminaBalik:pouch*P.stam.p*P.stam.amt,
+    rally:rallyDone, staminaRally:stRally,
+    dianaShard:[rallyDone*D.dwShard[0],rallyDone*D.dwShard[1]],
+    hogBeastPts:o.beastPts?hunts*hogPts('beast'):0,
+  };
 }

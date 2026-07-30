@@ -52,10 +52,14 @@ t('hogNoForStart: jangkar persis tetap benar', () => {
 
 t('hogAnchorFit melaporkan cocok/tidak + selisih harinya', () => {
   const f = e14.evalIn('hogAnchorFit');
-  eq(f(34), { no: 3, off: 0, fits: true });
-  eq(f(33), { no: 3, off: -1, fits: false });
+  eq(f(34), { no: 3, off: 0, fits: true, beyondCap: false });
+  eq(f(33), { no: 3, off: -1, fits: false, beyondCap: false });
   const mid = f(27);                       // tengah siklus: jauh dari jangkar mana pun
   eq(mid.fits, false, 'tanggal tengah siklus tidak boleh dianggap cocok');
+  // Jangkar dipindai MELAMPAUI cap #5 supaya HoG nyata di H76 bisa dicatat tanpa dituduh
+  // "bukan jangkar kingdom ini" — tapi wajib ditandai beyondCap (lihat test_21).
+  eq(f(76), { no: 6, off: 0, fits: true, beyondCap: true });
+  eq(f(62).beyondCap, false, '#5 masih di dalam rotasi terdokumentasi');
 });
 
 t('hogNoForDay (umur berjalan) TIDAK ikut berubah — tetap pembulatan ke bawah', () => {

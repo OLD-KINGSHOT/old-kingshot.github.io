@@ -399,6 +399,63 @@ const _HT={ /* baris task pakai-ulang: [label, poin] */
   pbC:['🏗️ Power dari Construction','30'], pbR:['🔬 Power dari Research','30'], pbT:['⚔️ Power dari train/promote troop','20'],
   spC:['⏩ Speedup Construction (/mnt)','300'], spR:['⏩ Speedup Research (/mnt)','300'], spT:['⏩ Speedup Train/Promote (/mnt)','300'],
 };
+/* ── Angka NUMERIK per satuan untuk kalkulator poin ──
+   Kunci = kunci _HT di atas (yang dipakai tabel tampilan). Angka TIDAK di-parse dari string
+   _HT saat runtime: '90.000' / '3 /task' / '90 → 1.960' adalah teks tampilan yang gampang
+   berubah bentuk, dan parser yang diam-diam gagal jauh lebih berbahaya daripada angka ganda.
+   Konsistensi keduanya ditegakkan test_21_hog_kalkulator.js — kalau salah satu diubah tanpa
+   yang lain, test merah.
+   Satuan terverifikasi silang dua sumber (kingshotdata.com + kingshot-data.com, Jul 2026):
+   power dihitung PER 1 POWER, charm/gear PER 1 POIN MAX SCORE, troop PER 1 TROOP. */
+const HOG_SCORING={
+  roul:{pts:90000,unit:'spin'},
+  sM:{pts:35000,unit:'shard'}, sE:{pts:14000,unit:'shard'}, sR:{pts:4000,unit:'shard'},
+  gath:{pts:3,unit:'task'},
+  troop:{pts:[90,120,180,265,385,595,830,1130,1485,1960],unit:'troop'},
+  ggr:{pts:500,unit:'score'}, chr:{pts:1000,unit:'score'},
+  wid:{pts:100000,unit:'widget'}, ham:{pts:50000,unit:'hammer'}, gxp:{pts:30000,unit:'100 XP'},
+  beast:{pts:30000,unit:'beast'}, terror:{pts:90000,unit:'rally'},
+  ccC:{pts:45,unit:'power'}, ccR:{pts:45,unit:'power'},
+  pbC:{pts:30,unit:'power'}, pbR:{pts:30,unit:'power'}, pbT:{pts:20,unit:'power'},
+  spC:{pts:300,unit:'menit'}, spR:{pts:300,unit:'menit'}, spT:{pts:300,unit:'menit'},
+};
+/* Field gudang → kunci task yang bisa menampungnya. Urutan = prioritas kalau task yang sama
+   muncul di beberapa stage; mesin memilih stage berpoin tertinggi (lihat hogPlanScore). */
+const HOG_GUDANG=[
+  {f:'spin',k:['roul'],lbl:'🎰 Spin Hero Roulette'},
+  {f:'sM',k:['sM'],lbl:'🦸 Shard Mythic'},
+  {f:'sE',k:['sE'],lbl:'🦸 Shard Epic'},
+  {f:'sR',k:['sR'],lbl:'🦸 Shard Rare'},
+  {f:'wid',k:['wid'],lbl:'🔨 Widget Hero Exclusive Gear'},
+  {f:'ham',k:['ham'],lbl:'🔨 Forgehammer'},
+  {f:'gxp',k:['gxp'],lbl:'🔨 Enhancement XP (per 100) — hanya HoG #2'},
+  {f:'terror',k:['terror'],lbl:'🐉 Rally Terror — hanya HoG #1'},
+  {f:'beast',k:['beast'],lbl:'🐺 Beast Lv1-30 — hanya HoG #1'},
+  {f:'chr',k:['chr'],lbl:'💠 Charm: max score NAIK berapa'},
+  {f:'ggr',k:['ggr'],lbl:'🛡️ Governor Gear: max score NAIK berapa'},
+  {f:'powC',k:['ccC','pbC'],lbl:'🏗️ Power dari Construction'},
+  {f:'powR',k:['ccR','pbR'],lbl:'🔬 Power dari Research'},
+  {f:'powT',k:['pbT'],lbl:'⚔️ Power dari latih/promote troop'},
+  {f:'spC',k:['spC'],lbl:'⏩ Speedup Construction (menit)'},
+  {f:'spR',k:['spR'],lbl:'⏩ Speedup Research (menit)'},
+  {f:'spT',k:['spT'],lbl:'⏩ Speedup Train/Promote (menit)'},
+  {f:'gath',k:['gath'],lbl:'🌾 Task gather selesai'},
+];
+/* ── Desert Trial: farming stamina → hasil ──
+   Terverifikasi 30 Jul 2026: kingshot.fandom.com + byewiki.com (drop 50/50), kingshotwiki.com
+   (isi pouch, 15% stamina), heaven-guardian.com (rally 25 → 20 stamina dengan Diana maks,
+   join rally TANPA stamina, maks 50 hadiah partisipasi per event 3 hari).
+   Validasi silang model: harapan gem = 0,20×100 + 0,50×20 = 30/pouch — persis angka
+   "rata-rata ~30 gem/pouch" yang sudah tercatat di entri Desert Trial jauh sebelum ini. */
+const DT_FARM={
+  huntStamina:8,          /* ~8 stamina per hunt beast di MAP (catatan lama app) */
+  dianaHuntCut:0.20,      /* Iron Constitution: stamina −20% */
+  rallyStamina:25, rallyStaminaDiana:20,
+  pClaw:0.5, pPouch:0.5,  /* tiap beast: 50% Clawshard / 50% Challenger Pouch */
+  dwShard:[2,4],          /* Dreadwolf tumbang → 2-4 shard Diana */
+  dwShardMaxEvent:500,    /* batas shard Diana per event */
+  pouch:{spd:[5,10],heroXp:1000,gemBig:{p:0.20,amt:100},gemSmall:{p:0.50,amt:[10,30]},stam:{p:0.15,amt:1}},
+};
 const HOG_DETAIL={
   intro:'Event kompetitif solo tiap 14 hari (mulai H6). Hanya muncul di Generasi 1-2 kingdom. Hero of the Season + susunan stage BERUBAH tiap iterasi. Reward: 4 tier milestone (gratis, tier akhir = gem + skill book) + shard hero dari leaderboard.',
   iters:[
@@ -427,7 +484,7 @@ const HOG_DETAIL={
     '🌾 Gather resource cuma 3 poin/task — abaikan, buang-buang stamina.',
     '⏩ Speedup baru berpoin di stage Hero Dev TERAKHIR (HoG #3/#4/#5) = 300/mnt. Selain itu speedup nyaris tak berpoin — pakai hanya untuk naikin power.',
     '🎁 Milestone reward 4 tier bisa diraih Gratis walau tak masuk leaderboard. Tier akhir = gem + skill book — selalu kejar.',
-    '⏳ HoG cuma ada di Gen 1-2. Setelah ~Gen 3 (KvK ~H70, Strongest Governor ~H75), HoG berhenti muncul.',
+    '⏳ HoG berhenti setelah #5 (H62-H68) karena rotasi event berpindah ke KvK (gerbang H70) & Strongest Governor (H75) — BUKAN karena "Gen 3", sebab generasi hero ke-3 baru datang di hari ~105-120. Hari transisinya bervariasi antar kingdom, jadi kalau di kingdommu HoG ternyata masih muncul, catat tanggalnya.',
   ],
 };
 /* Misi jelas per-stage HoG (key = nama stage tanpa nomor). Dipakai render tabel HoG. */

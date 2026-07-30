@@ -199,6 +199,9 @@ function renderEvent(){
               if(!fit.fits){ const alt=kingdomsForHogDate(e.date).filter(h=>String(h.kid)!==String((p&&p.kingdom)||''));
                 warn=`<div class="alert bad small" style="margin-top:2px">⚠ hari ${sd} bukan jangkar HoG kingdom ini`
                   +(alt.length?` — cocoknya Kingdom ${esc(alt.map(h=>h.kid+' (HoG #'+h.no+')').join(', '))}`:``)+`</div>`; }
+              /* Duduk di jangkar tapi di luar #1-#5: bukan salah catat, justru bukti baru. */
+              else if(fit.beyondCap){
+                warn=`<div class="alert inf small" style="margin-top:2px">📌 hari ${sd} = jangkar HoG #${fit.no}, di luar rotasi yang terdokumentasi (#1-#5). Ini bukti baru dari game — kabari supaya datanya diperbarui.</div>`; }
             }
             return `<div class="obs small" style="margin-top:4px"><b>${esc(nm)}</b> <span class="dim">${esc(e.date)}</span> `
               +`<button class="btn sec sm del" data-idx="${idx}">↩</button>${warn}</div>`;
@@ -245,7 +248,8 @@ function renderEvent(){
        <div class="alert warn small">\ud83d\udc3a ${esc(KVK_PREP.buffs)}</div>
        <h3>Spend per hari</h3><div class="scrollx"><table><thead><tr><th>Hari</th><th>Fokus skor</th></tr></thead><tbody>${KVK_PREP.days.map(([d,f])=>`<tr><td><b>${esc(d)}</b></td><td class="small">${esc(f)}</td></tr>`).join('')}</tbody></table></div>
        <div class="alert inf small">\ud83c\udfe5 ${esc(KVK_PREP.revive)}</div>`),
-    roi: card('Nilai Item & Speedup (ROI)','\u25c6',roi+'<h3>Pakai / Tahan / Bebas</h3>'+itemGuide),
+    roi: card('Nilai Item & Speedup (ROI)','\u25c6',roi+'<h3>Pakai / Tahan / Bebas</h3>'+itemGuide)
+      +dtFarmHTML(),
     ency: card('Ensiklopedia Event','\u25a4',`<p class="muted small">Cara main F2P tiap event. Jadwal = perkiraan; tab Events di game = acuan final.</p>${ency}`),
     anti: card('Kesalahan F2P (Anti-P2W)','\u26a0',MISTAKES.map((m,i)=>`<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">${pad(i+1)}</span> &nbsp;${esc(m)}</div></div>`).join(''))
       +card('Trik Lawan P2W','\ud83e\udd77',`<p class="muted small">Cara F2P/low-spender bersaing & mengungguli whale. Sumber: kingshotmastery, kingshotguide, lootbar, kingshotoptimizer, komunitas (Jun 2026).</p>`
@@ -282,7 +286,12 @@ function renderEvent(){
       const actStage=i=>{ if(age==null||i!==hogCurIdx(age)) return null;
         const no=hogNoForDay(age), di=age-hogStartDay(no);
         return (di>=0&&di<hogLen(no))?di:null; };
-      const draw=i=>{ c.innerHTML=hogStageTbl(i,actStage(i)); $$('.hibtn',el).forEach(b=>b.classList.toggle('active',+b.dataset.hi===i)); if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); }; $$('.hibtn',el).forEach(b=>b.onclick=()=>draw(+b.dataset.hi)); draw(hogCurIdx(age)); } }
+      /* satu iterasi terpilih menggerakkan DUA kartu: tabel stage & kalkulator — kalau
+         kalkulator tidak ikut, pengguna merencanakan iterasi yang tidak sedang dilihat. */
+      const drawCalc=i=>{ const cc=$('#hogcalc',el); if(!cc) return;
+        cc.innerHTML=hogCalcBody(i); hogCalcWire(el,i); };
+      const draw=i=>{ c.innerHTML=hogStageTbl(i,actStage(i)); drawCalc(i); $$('.hibtn',el).forEach(b=>b.classList.toggle('active',+b.dataset.hi===i)); if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); }; $$('.hibtn',el).forEach(b=>b.onclick=()=>draw(+b.dataset.hi)); draw(hogCurIdx(age)); } }
+    if(k==='roi') dtFarmWire(el);
     if(k==='adv'&&age!=null){
       const add=$('#sch_add',el); if(add) add.onclick=()=>{ const date=$('#sch_date').value; if(!date){$('#sch_date').focus();return;} const arr=store.get('events',[]); const ty=$('#sch_type').value; const i=arr.findIndex(x=>x.type===ty); if(i>=0)arr[i]={type:ty,date}; else arr.push({type:ty,date}); store.set('events',arr); renderEvent(); };
       $$('.del',el).forEach(b=>b.onclick=()=>{ const arr=store.get('events',[]); arr.splice(+b.dataset.idx,1); store.set('events',arr); renderEvent(); });
@@ -328,11 +337,14 @@ function hogStartDay(no,startISO){ return hogFirstDay(startISO)+(no-1)*14; }
    pada umur X" (pembulatan KE BAWAH). Kalau dipakai untuk tanggal D1 yang meleset
    1 hari, hasilnya iterasi SEBELUMNYA — hero/ambang/durasinya ikut salah. Di sini
    dipakai jangkar TERDEKAT, plus laporan apakah tanggalnya benar-benar cocok. */
+/* Dipindai sampai HOG_ANCHOR_SCAN (>cap), supaya HoG nyata di H76 tidak dituduh "bukan jangkar
+   kingdom ini". Yang di luar cap ditandai beyondCap — jadi app tetap jujur menyebutnya di luar
+   rotasi terdokumentasi, bukan diam-diam menganggapnya normal. */
 function hogAnchorFit(day){
-  var best=null;
-  for(var no=1;no<=HOG_LAST_NO;no++){ var off=day-hogStartDay(no);
+  var best=null, scan=(typeof HOG_ANCHOR_SCAN!=='undefined')?HOG_ANCHOR_SCAN:HOG_LAST_NO;
+  for(var no=1;no<=scan;no++){ var off=day-hogStartDay(no);
     if(!best||Math.abs(off)<Math.abs(best.off)) best={no:no,off:off}; }
-  return {no:best.no,off:best.off,fits:best.off===0};
+  return {no:best.no,off:best.off,fits:best.off===0,beyondCap:!hogExists(best.no)};
 }
 function hogNoForStart(day){ return hogAnchorFit(day).no; }
 /* Umur tiap kingdom beda → tanggal HoG yang sama tidak berlaku lintas kingdom.
@@ -349,8 +361,19 @@ function kingdomsForHogDate(dateISO){
   return out;
 }
 function hogIdxForNo(no){ return no<=1?0 : no===2?1 : no===3?2 : 3; }
-/* HoG cuma ada di Gen 1-2: #5 (H62) yang terakhir. Setelahnya jangan diramalkan lagi. */
+/* #5 (H62-H68) adalah iterasi TERAKHIR — setelahnya jangan diramalkan lagi.
+   Alasannya rotasi event, bukan "Gen 3" (generasi hero ke-3 baru hari ~105-120, jauh setelah ini).
+   Riset 30 Jul 2026: frasa "6th Hall of Governors" nol hasil di web; kingshotwiki, kingshotdata.com
+   dan kingshot-data.com (diperbarui 25 Mar 2026, saat server tertua sudah ~380 hari) sama-sama
+   berhenti di #5. Event kembarnya di Whiteout Survival — Hall of Chiefs, identik sampai durasi
+   5/6/7 hari & pola hero Gen1/Gen2 — "permanently replaced once your state enters State vs. State;
+   the exact server-day varies by state" (WoS Handbook 2026). Padanan SvS = KvK, gerbang H70-80,
+   sehingga #6 (H76) jatuh tepat di era KvK. Karena batasnya bervariasi antar kingdom, jangkar
+   tetap bisa dihitung melampaui cap (lihat hogAnchorFit) supaya catatan in-game pengguna menang. */
 const HOG_LAST_NO=5;
+/* Sejauh mana jangkar masih dihitung untuk MENAFSIRKAN tanggal yang dicatat pengguna (bukan untuk
+   meramal). Tanpa ini, HoG nyata di H76 akan dituduh "bukan jangkar kingdom ini". */
+const HOG_ANCHOR_SCAN=8;
 function hogExists(no){ return no>=1&&no<=HOG_LAST_NO; }
 function hogCurIdx(age){
   if(age==null) return 3;
@@ -372,7 +395,9 @@ function hogStatusLine(age){
   var it=HOG_DETAIL.iters[hogCurIdx(age)]; var hi=it?(' · '+esc(it.hero)+' · '+esc(it.rank)):'';
   /* server tua (HoG sudah tamat) juga harus menyebut kingdom & umur — tanpa itu
      pengguna multi-server tak tahu ini menjawab server yang mana. */
-  var gen3='<div class="alert warn small">'+src+'<b>📍</b> HoG kemungkinan sudah selesai (cuma Gen 1-2) — fokus KvK / Strongest Governor.</div>';
+  /* Dulu pesan ini beralasan "cuma Gen 1-2 → Gen 3", padahal generasi hero ke-3 baru hari ~105-120
+     — jadi alasan itu mustahil untuk kingdom umur 69 hari. Alasan sebenarnya: rotasi event. */
+  var gen3='<div class="alert warn small">'+src+'<b>📍</b> HoG sudah selesai — #5 iterasi terakhir, rotasi event berpindah ke <b>KvK</b> (gerbang H70) & <b>Strongest Governor</b> (H75). Hari transisinya bervariasi antar kingdom: kalau di kingdommu HoG ternyata masih muncul, catat tanggalnya di tab Sekarang → itu bukti yang mengalahkan data ini.</div>';
   if(di<len) return hogExists(no)?'<div class="alert ok small">'+src+'<b>📍 Sekarang:</b> HoG #'+no+' · hari '+(di+1)+'/'+len+hi+'</div>':gen3;
   var nno=no+1, nstart=hogStartDay(nno);
   if(!hogExists(nno)) return gen3;
@@ -401,6 +426,220 @@ function hogStageTbl(idx,activeStage){
     + '<div style="margin-top:8px">'+rows+'</div>'
     + '<div class="alert inf small" style="margin-top:6px">'+esc(it.note)+'</div>';
 }
+/* ── Perkiraan farming stamina (Desert Trial) ─────────────────────────────
+   Ditaruh di sub-tab Item & ROI, bukan HoG: Desert Trial event tersendiri. Angka gem &
+   speedup adalah NILAI HARAPAN dari peluang resmi isi Challenger Pouch (DT_FARM di 04) —
+   bukan janji. Validasi silang: harapan gem/pouch keluar 30, persis catatan lama app. */
+function dtFarmHTML(){
+  if(typeof DT_FARM==='undefined') return '';
+  var s=store.get('dtFarm',{})||{};
+  return card('Farming Stamina → Gem & Speedup (Desert Trial)','🌵',
+    '<p class="muted small">Beast di MAP: <b>50% Clawshard / 50% Challenger Pouch</b>. Claw dipakai melacak Dreadwolf (rally 25 stamina, 20 dengan Diana maks) → 2-4 shard Diana. Pouch = gem + speedup + Hero XP.</p>'
+    +'<div class="tcbuff">'
+    +'<label class="calcf"><span>Stamina yang mau dipakai</span>'+_hcInp('data-df="stamina"',s.stamina)+'</label>'
+    +'<label class="calcf"><span>Rally Dreadwolf yang mau dijalankan</span>'+_hcInp('data-df="rally"',s.rally)+'</label>'
+    +'<label class="calcf"><span>Wilderness Rangers % <span class="muted small">potongan stamina</span></span>'+_hcInp('data-df="rangersPct"',s.rangersPct)+'</label>'
+    +'<label class="calcf chk"><input data-dfc="diana" type="checkbox"'+(s.diana?' checked':'')+'> Bawa Diana (hunt −20%, rally 25→20)</label>'
+    +'<label class="calcf chk"><input data-dfc="beastPts" type="checkbox"'+(s.beastPts?' checked':'')+'> Hitung juga poin HoG (hanya kalau stage Beast Slay aktif — HoG #1)</label>'
+    +'</div><div id="dtfarm_out">'+dtFarmOut(s)+'</div>');
+}
+function dtFarmOut(s){
+  var f=dtFarmEstimate(s.stamina,s); if(!f) return '';
+  var st=numIn(s.stamina);
+  if(!st) return '<div class="muted small" style="margin-top:8px">Isi stamina untuk melihat perkiraannya.</div>';
+  var out='<div class="scrollx" style="margin-top:10px"><table><tbody>'
+    +'<tr><td class="small">Stamina per hunt</td><td class="num">'+esc(String(Math.round(f.perHunt*100)/100))+'</td></tr>'
+    +'<tr><td class="small">Hunt beast</td><td class="num">'+fmt(f.hunts)+'</td></tr>'
+    +'<tr><td class="small">Clawshard (50%)</td><td class="num">'+fmt(Math.round(f.claw*10)/10)+'</td></tr>'
+    +'<tr><td class="small">Challenger Pouch (50%)</td><td class="num">'+fmt(Math.round(f.pouch*10)/10)+'</td></tr>'
+    +'<tr><td class="small"><b>Gem</b> <span class="muted small">harapan '+fmt(f.gemPerPouch)+'/pouch</span></td><td class="num"><b>'+fmt(Math.round(f.gem))+'</b></td></tr>'
+    +'<tr><td class="small"><b>Speedup</b></td><td class="num"><b>'+fmt(Math.round(f.speedupMnt))+' mnt</b></td></tr>'
+    +'<tr><td class="small">Hero XP</td><td class="num">'+fmt(Math.round(f.heroXp))+'</td></tr>'
+    +'<tr><td class="small">Stamina kembali <span class="muted small">15%/pouch</span></td><td class="num">'+fmt(Math.round(f.staminaBalik*10)/10)+'</td></tr>';
+  if(f.rally) out+='<tr><td class="small">Rally Dreadwolf ('+fmt(f.staminaRally)+' stamina)</td><td class="num">'+fmt(f.rally)+' → '+fmt(f.dianaShard[0])+'-'+fmt(f.dianaShard[1])+' shard Diana</td></tr>';
+  if(f.hogBeastPts) out+='<tr><td class="small">Poin HoG dari beast</td><td class="num">'+fmt(f.hogBeastPts)+'</td></tr>';
+  out+='</tbody></table></div>'
+    +'<div class="muted small" style="margin-top:4px">Gem & speedup = nilai harapan (20% → 100 gem · 50% → 10-30 gem · pasti 5-10 mnt speedup + 1.000 Hero XP). Sekali jalan bisa lebih beruntung atau lebih sial.</div>';
+  if(numIn(s.rally)>f.rally) out+='<div class="alert warn small" style="margin-top:6px">Stamina hanya cukup untuk '+fmt(f.rally)+' rally dari '+fmt(numIn(s.rally))+' yang diminta.</div>';
+  return out;
+}
+function dtFarmWire(el){
+  var box=$('#dtfarm_out',el); if(!box) return;
+  var pakai=function(){ var s=store.get('dtFarm',{})||{};
+    $$('[data-df]',el).forEach(function(i){ s[i.dataset.df]=numIn(i.value); });
+    $$('[data-dfc]',el).forEach(function(i){ s[i.dataset.dfc]=!!i.checked; });
+    store.set('dtFarm',s); box.innerHTML=dtFarmOut(s);
+    if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
+  $$('[data-df]',el).forEach(function(i){ i.oninput=pakai; });
+  $$('[data-dfc]',el).forEach(function(i){ i.onchange=pakai; });
+}
+
+/* ── Kalkulator poin HoG ──────────────────────────────────────────────────
+   Angka & satuan tinggal di HOG_SCORING (04), mesin hitung di 03 — berkas ini HANYA
+   tampilan + simpan. Tiga mode: Gudang (isi sekali, app yang membagi ke stage),
+   Per stage (timpaan manual saat event berjalan), Lacak (poin aktual + ambang milestone).
+   Ambang TIDAK dibundel: tak satu pun sumber pernah memublikasikannya, jadi diisi pengguna.
+   Kunci simpanan = label iterasi ('#1'…'#4 & #5'); #4 dan #5 memakai susunan stage yang
+   sama sehingga berbagi satu slot rencana — praktis, karena #4 sudah lewat saat #5 datang. */
+var _hcMode='gudang', _hcStage=0;
+function hogCalcKey(idx){ var it=HOG_DETAIL.iters[idx]; return it?it.no:String(idx); }
+function _hcVal(v){ return (v==null||v==='')?'':String(v); }
+function _hcInp(attr,val,extra){ return '<input '+attr+' type="number" min="0" inputmode="numeric" value="'+esc(_hcVal(val))+'"'+(extra||'')+'>'; }
+
+function hogCalcHTML(idx){
+  var it=HOG_DETAIL.iters[idx]; if(!it) return '';
+  var seg=[['gudang','🎒 Gudang'],['stage','▦ Per stage'],['lacak','📈 Lacak']]
+    .map(function(m){ return '<button class="btn ghost sm hcbtn'+(m[0]===_hcMode?' active':'')+'" data-cm="'+m[0]+'">'+m[1]+'</button>'; }).join(' ');
+  var roi='<details style="margin-top:10px"><summary>💹 Poin per satuan — urut dari yang paling berharga</summary><div class="dt"><div class="scrollx">'
+    + '<table><thead><tr><th>Aksi</th><th>Poin</th><th>per</th></tr></thead><tbody>'
+    + hogRoi().map(function(r){ return '<tr><td class="small">'+esc(r.lbl)+'</td><td class="num">'+fmt(r.pts)+'</td><td class="small muted">'+esc(r.unit)+'</td></tr>'; }).join('')
+    + '</tbody></table></div></div></details>';
+  return card('Kalkulator Poin — HoG '+esc(it.no),'🧮',
+    '<p class="muted small">Satuan resmi (silang-cek dua sumber): power dihitung <b>per 1 Power</b>, charm & gear <b>per 1 poin max score</b>, troop <b>per 1 troop</b>. Gem tidak dikonversi ke spin — harga spin tak ada di data terverifikasi, jadi isi jumlah spin langsung.</p>'
+    + '<div class="seg" style="margin:8px 0">'+seg+'</div><div id="hogcalc"></div>'+roi);
+}
+function hogCalcBody(idx){
+  var pl=hogPlanGet(hogCalcKey(idx));
+  if(_hcMode==='stage') return hogCalcStage(idx,pl);
+  if(_hcMode==='lacak') return hogCalcLacak(idx,pl);
+  return hogCalcGudang(idx,pl);
+}
+/* Mode 1 — isi gudang sekali, mesin menaruh tiap barang di stage berpoin tertinggi. */
+function hogCalcGudang(idx,pl){
+  var g=pl.gudang||{}, tr=g.troops||{};
+  var form=HOG_GUDANG.map(function(def){
+    return '<label class="calcf"><span>'+esc(def.lbl)+'</span>'+_hcInp('data-g="'+def.f+'"',g[def.f])+'</label>';
+  }).join('');
+  var adaTroop=[1,2,3,4,5,6,7,8,9,10].some(function(lv){ return numIn(tr[lv])>0; });
+  var trForm='<details'+(adaTroop?' open':'')+'><summary>⚔️ Troop yang akan dilatih (per level)</summary><div class="dt">'
+    + [1,2,3,4,5,6,7,8,9,10].map(function(lv){
+        return '<label class="calcf"><span>Lv'+lv+' <span class="muted small">'+fmt(hogPts('troop',lv))+' poin/troop</span></span>'+_hcInp('data-tr="'+lv+'"',tr[lv])+'</label>'; }).join('')
+    + '</div></details>';
+  return '<div class="tcbuff">'+form+trForm+'</div>'
+    + '<label class="calcf" style="margin-top:8px"><span>🎯 Target poin <span class="muted small">baca dari game (ambang milestone / leaderboard)</span></span>'+_hcInp('data-target="1"',pl.target)+'</label>'
+    + '<div id="hogcalc_out">'+hogCalcOut(idx,pl)+'</div>';
+}
+/* Total = rencana gudang, kecuali stage yang punya timpaan manual (mode Per stage). */
+function hogCalcTotals(idx,pl){
+  var r=hogPlanScore(pl.gudang||{},idx), timp=pl.timpaan||{}, aktual=pl.aktual||{};
+  var baris=r.stages.map(function(s){
+    var t=timp[s.nama], pakai=(t==null)?s.pts:numIn(t);
+    return {nama:s.nama,rencana:s.pts,timpaan:(t==null?null:numIn(t)),pakai:pakai,aktual:(aktual[s.nama]==null?null:numIn(aktual[s.nama])),dipakai:s.dipakai};
+  });
+  return {baris:baris,r:r,
+    proyeksi:baris.reduce(function(a,b){ return a+b.pakai; },0),
+    aktual:baris.reduce(function(a,b){ return a+(b.aktual||0); },0),
+    adaAktual:baris.some(function(b){ return b.aktual!=null; })};
+}
+function hogCalcOut(idx,pl){
+  var T=hogCalcTotals(idx,pl);
+  var rows=T.baris.map(function(b){
+    /* label dipisah ke <span> sendiri: terjemahan EN mencocokkan SIMPUL TEKS penuh, jadi
+       label yang menempel angka tak akan pernah cocok. */
+    var det=b.dipakai.length?'<div class="muted small">'+b.dipakai.map(function(d){
+      return '<span>'+esc(d.lbl)+'</span> ×'+fmt(d.qty)+' = '+fmt(d.pts); }).join(' · ')+'</div>':'';
+    return '<tr><td class="small">'+esc(b.nama)+det+'</td><td class="num">'+fmt(b.pakai)
+      +(b.timpaan!=null?' <span class="pill">timpaan</span>':'')+'</td></tr>';
+  }).join('');
+  var out='<div class="scrollx" style="margin-top:10px"><table><thead><tr><th>Stage</th><th>Poin</th></tr></thead><tbody>'
+    +rows+'<tr><td><b>TOTAL</b></td><td class="num"><b>'+fmt(T.proyeksi)+'</b></td></tr></tbody></table></div>';
+  if(T.r.takTerpakai.length) out+='<div class="alert warn small" style="margin-top:6px"><b>Tak terpakai di iterasi ini:</b> '
+    +T.r.takTerpakai.map(function(x){ return '<span>'+esc(x.lbl)+'</span> ×'+fmt(x.qty)+' (<span>'+esc(x.sebab)+'</span>)'; }).join(' · ')+'</div>';
+  if(T.r.alternatif.length) out+='<div class="muted small" style="margin-top:4px">Poin sama di stage lain, jadi boleh dipindah: '
+    +T.r.alternatif.map(function(a){ return esc(a.lbl)+' → '+esc(a.jugaBisa.join(', ')); }).join(' · ')+'</div>';
+  var target=numIn(pl.target);
+  if(target){
+    var sisa=target-T.proyeksi;
+    if(sisa<=0) out+='<div class="alert ok small" style="margin-top:6px">✅ Target '+fmt(target)+' terlampaui — lebih '+fmt(-sisa)+' poin.</div>';
+    else{
+      var g=hogGapEquiv(sisa,idx);
+      out+='<div class="alert inf small" style="margin-top:6px"><b>Kurang '+fmt(sisa)+' poin.</b> <span>Setara salah satu dari:</span> '
+        +g.setara.slice(0,6).map(function(s){ return fmt(s.butuh)+' <span>'+esc(s.unit)+'</span> — <span>'+esc(s.lbl)+'</span>'; }).join(' · ')
+        +'<div class="muted small" style="margin-top:2px">Bukan "yang termurah": harga gem/item per aksi tidak ada di data terverifikasi, jadi app tak mengarang kurs.</div></div>';
+    }
+  }
+  return out;
+}
+/* Mode 2 — input per task untuk SATU stage, lalu simpan sebagai timpaan. */
+function hogCalcStage(idx,pl){
+  var stages=hogStageKeys(idx); if(!stages.length) return '';
+  if(_hcStage>=stages.length) _hcStage=0;
+  var st=stages[_hcStage], simpan=(pl.timpaanInput||{})[st.nama]||{}, tr=simpan.troops||{};
+  var pilih='<div class="seg" style="margin-bottom:8px">'+stages.map(function(s,i){
+    /* nama stage panjang (7 buah) → tombol cukup nomor; nama utuhnya tampil di judul bawah */
+    return '<button class="btn ghost sm hsbtn'+(i===_hcStage?' active':'')+'" data-hs="'+i+'" title="'+esc(s.nama)+'">S'+(i+1)+'</button>'; }).join(' ')+'</div>';
+  var mis=(typeof HOG_STAGE_MISSION!=='undefined'&&HOG_STAGE_MISSION[st.nama.replace(/^\d+\s*·\s*/,'')])||'';
+  var form=st.keys.filter(function(k){ return k!=='troop'; }).map(function(k){
+    return '<label class="calcf"><span>'+esc((_HT[k]||[k])[0])+' <span class="muted small">'+fmt(hogPts(k))+'/'+esc((HOG_SCORING[k]||{}).unit||'')+'</span></span>'+_hcInp('data-sk="'+k+'"',simpan[k])+'</label>';
+  }).join('');
+  if(st.keys.indexOf('troop')>=0) form+=[1,2,3,4,5,6,7,8,9,10].map(function(lv){
+    return '<label class="calcf"><span>Troop Lv'+lv+' <span class="muted small">'+fmt(hogPts('troop',lv))+'/troop</span></span>'+_hcInp('data-str="'+lv+'"',tr[lv])+'</label>'; }).join('');
+  var s=hogStageScore(simpan,st.nama,idx);
+  return pilih+'<div class="lbl">'+esc(st.nama)+'</div>'
+    +(mis?'<div class="muted small" style="margin-bottom:6px"><b>📋 Misi:</b> '+esc(mis)+'</div>':'')
+    +'<div class="tcbuff">'+form+'</div>'
+    +'<div class="kv" style="margin-top:8px"><span>Subtotal stage ini</span><b>'+fmt(s.pts)+'</b></div>'
+    +'<div class="row" style="margin-top:6px"><button class="btn sec sm" data-hsave="1">Pakai angka ini (timpa rencana)</button>'
+    +'<button class="btn ghost sm" data-hclear="1">Kembali ke rencana gudang</button></div>'
+    +((pl.timpaan||{})[st.nama]!=null?'<div class="alert inf small" style="margin-top:6px">Stage ini sedang memakai timpaan '+fmt(numIn(pl.timpaan[st.nama]))+' poin.</div>':'');
+}
+/* Mode 3 — ambang dari game + poin aktual per stage. */
+function hogCalcLacak(idx,pl){
+  var T=hogCalcTotals(idx,pl), amb=pl.ambang||[];
+  var ms='<div class="lbl">Ambang 4 tier milestone <span class="muted small">isi dari layar event di game</span></div>'
+    + [0,1,2,3].map(function(i){ return '<label class="calcf"><span>Tier '+(i+1)+'</span>'+_hcInp('data-ms="'+i+'"',amb[i])+'</label>'; }).join('')
+    + '<div class="muted small" style="margin:-4px 0 8px">Tak ada satu pun sumber di web yang memublikasikan angka ini — karena itu app tidak menebaknya.</div>';
+  var ak='<div class="lbl" style="margin-top:10px">Poin aktual per stage</div>'
+    + T.baris.map(function(b){ return '<label class="calcf"><span>'+esc(b.nama)+' <span class="muted small">proyeksi '+fmt(b.pakai)+'</span></span>'+_hcInp('data-ak="'+esc(b.nama)+'"',b.aktual)+'</label>'; }).join('');
+  var ring='<div class="kv" style="margin-top:8px"><span>Proyeksi</span><b>'+fmt(T.proyeksi)+'</b></div>'
+    +'<div class="kv"><span>Aktual tercatat</span><b>'+fmt(T.aktual)+'</b></div>';
+  if(T.adaAktual){ var d=T.aktual-T.proyeksi;
+    ring+='<div class="alert '+(d>=0?'ok':'warn')+' small" style="margin-top:6px">'+(d>=0?'Di atas rencana ':'Di bawah rencana ')+fmt(Math.abs(d))+' poin.</div>'; }
+  var prog=amb.filter(function(v){ return numIn(v)>0; }).map(function(v,i){
+    var pakai=T.adaAktual?T.aktual:T.proyeksi, pct=Math.min(100,Math.round(pakai/numIn(v)*100));
+    return '<div class="kv"><span>Tier '+(i+1)+' · '+fmt(numIn(v))+'</span><b>'+pct+'%'+(pct>=100?' ✅':'')+'</b></div>'; }).join('');
+  return ms+ak+ring+(prog?'<div class="lbl" style="margin-top:10px">Kemajuan ke milestone</div>'+prog
+    :'<div class="muted small" style="margin-top:6px">Isi ambang di atas untuk melihat kemajuan — tanpa angka dari game, bar kemajuan hanya akan berbohong.</div>');
+}
+function hogCalcWire(el,idx){
+  var key=hogCalcKey(idx), box=$('#hogcalc',el); if(!box) return;
+  var simpan=function(mut){ var pl=hogPlanGet(key); mut(pl); hogPlanSet(key,pl); return pl; };
+  var segarOut=function(){ var o=$('#hogcalc_out',el); if(o) o.innerHTML=hogCalcOut(idx,hogPlanGet(key)); };
+  var ulang=function(){ box.innerHTML=hogCalcBody(idx); hogCalcWire(el,idx);
+    if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
+  /* mode & pilihan stage: render ulang penuh */
+  $$('.hcbtn',el).forEach(function(b){ b.onclick=function(){ _hcMode=b.dataset.cm;
+    $$('.hcbtn',el).forEach(function(x){ x.classList.toggle('active',x===b); }); ulang(); }; });
+  $$('.hsbtn',box).forEach(function(b){ b.onclick=function(){ _hcStage=+b.dataset.hs; ulang(); }; });
+  /* input: hanya bagian hasil yang digambar ulang, supaya fokus ketik tidak lompat */
+  $$('[data-g]',box).forEach(function(i){ i.oninput=function(){
+    simpan(function(pl){ pl.gudang=pl.gudang||{}; pl.gudang[i.dataset.g]=numIn(i.value); }); segarOut(); }; });
+  $$('[data-tr]',box).forEach(function(i){ i.oninput=function(){
+    simpan(function(pl){ pl.gudang=pl.gudang||{}; pl.gudang.troops=pl.gudang.troops||{}; pl.gudang.troops[i.dataset.tr]=numIn(i.value); }); segarOut(); }; });
+  $$('[data-target]',box).forEach(function(i){ i.oninput=function(){
+    simpan(function(pl){ pl.target=numIn(i.value); }); segarOut(); }; });
+  /* mode per stage */
+  var stages=hogStageKeys(idx), stNama=(stages[_hcStage]||{}).nama;
+  var simpanInput=function(){ var pl=hogPlanGet(key), o={troops:{}};
+    $$('[data-sk]',box).forEach(function(x){ o[x.dataset.sk]=numIn(x.value); });
+    $$('[data-str]',box).forEach(function(x){ o.troops[x.dataset.str]=numIn(x.value); });
+    pl.timpaanInput=pl.timpaanInput||{}; pl.timpaanInput[stNama]=o; hogPlanSet(key,pl); return o; };
+  $$('[data-sk],[data-str]',box).forEach(function(i){ i.oninput=function(){ var o=simpanInput();
+    var s=hogStageScore(o,stNama,idx), kv=$('.kv b',box);
+    /* subtotal ada di kv pertama setelah form; gambar ulang penuh kalau tak ketemu */
+    if(kv) kv.textContent=fmt(s.pts); else ulang(); }; });
+  $$('[data-hsave]',box).forEach(function(b){ b.onclick=function(){ var o=simpanInput();
+    var s=hogStageScore(o,stNama,idx);
+    simpan(function(pl){ pl.timpaan=pl.timpaan||{}; pl.timpaan[stNama]=s.pts; }); ulang(); }; });
+  $$('[data-hclear]',box).forEach(function(b){ b.onclick=function(){
+    simpan(function(pl){ if(pl.timpaan) delete pl.timpaan[stNama]; }); ulang(); }; });
+  /* mode lacak */
+  $$('[data-ms]',box).forEach(function(i){ i.oninput=function(){
+    simpan(function(pl){ pl.ambang=pl.ambang||[]; pl.ambang[+i.dataset.ms]=numIn(i.value); }); }; });
+  $$('[data-ak]',box).forEach(function(i){ i.oninput=function(){
+    simpan(function(pl){ pl.aktual=pl.aktual||{}; pl.aktual[i.dataset.ak]=numIn(i.value); }); }; });
+}
+
 function hogHTML(age){
   var H=HOG_DETAIL; var cur=hogCurIdx(age);
   var summary='<div class="scrollx"><table><thead><tr><th>HoG</th><th>Hero</th><th>Ambang</th><th>Durasi</th><th>Mulai</th></tr></thead><tbody>'
@@ -414,6 +653,7 @@ function hogHTML(age){
   var tips='<div class="colw">'+H.tips.map(function(t,i){ return '<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">'+pad(i+1)+'</span> &nbsp;'+esc(t)+'</div></div>'; }).join('')+'</div>';
   return card('Hall of Governors','\ud83c\udfdb',hogStatusLine(age)+'<p class="small" style="margin-top:6px">'+esc(H.intro)+'</p><div class="alert warn small" style="margin-top:6px">\u26a0\ufe0f Yang BERUBAH tiap iterasi = Hero of the Season, ambang leaderboard, durasi, & susunan stage. Poin per task SAMA. Tab Events di game = acuan final.</div><div class="lbl" style="margin:10px 0 4px">Ringkasan 4 iterasi</div>'+summary)
     + card('Tabel Skor per Stage (seperti game)','\u25a6','<p class="muted small">Pilih iterasi \u2014 satu tabel berisi urutan Stage \u2192 Task \u2192 Poin, persis alur di game.</p><div class="seg" style="margin-bottom:8px">'+sel+'</div><div id="hog_st"></div>')
+    + hogCalcHTML(cur)
     + card('Skala Poin Detail','\u25a4',scale)
     + card('Tips F2P','\ud83d\udca1',tips);
 }
