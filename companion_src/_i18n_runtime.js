@@ -80,6 +80,10 @@
     [/^Stamina hanya cukup untuk ([\d.]+) rally dari ([\d.]+) yang diminta\.$/g,
       'Stamina only covers $1 of the $2 rallies requested.'],
     [/^HoG jalan, tapi stage hari ini bukan (.+)$/g, 'HoG is running, but today’s stage is not $1'],
+    /* kalkulator inventaris (angka disisipkan) */
+    [/^alternatif: (.+)$/g, 'alternative: $1'],
+    [/^([\d.]+) hunt → ([\d.,]+) pouch$/g, '$1 hunts → $2 pouches'],
+    [/^×([\d.]+) — barang ini tak punya task/g, '×$1 — these have no task'],
     /* redeem + robot (angka/kode disisipkan) */
     [/^Server menolak sementara \(kode (.+?)\) — dicoba lagi otomatis nanti$/g,
       'Server refused temporarily (code $1) — will retry automatically later'],

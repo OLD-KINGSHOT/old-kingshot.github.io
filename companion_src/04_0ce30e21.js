@@ -500,6 +500,40 @@ const EV_POIN={
         ['🌾 Gather (2.500 bread/wood · 500 stone · 100 iron)',3,'task']].concat(_SPD(30))]]},
 };
 
+/* ── Kosakata barang untuk kalkulator inventaris ─────────────────────────
+   Jembatan antara DUA namespace tabel poin yang sengaja TIDAK digabung:
+     · HoG  → berkunci (_HT / HOG_SCORING), skala besar (Widget 100.000)
+     · KvK & SG → berbaris berlabel (EV_POIN), skala jauh lebih kecil (Widget 8.000)
+   Menggabungkan tabelnya akan membuat satu event dihitung dengan angka event lain —
+   sudah ada test yang melarangnya. INV_ITEMS adalah JEMBATAN, bukan peleburan:
+   `hog` menunjuk kunci HOG_SCORING, `ev` mencocokkan label baris EV_POIN. */
+const INV_ITEMS=[
+  {id:'wid',lbl:'🔨 Widget Hero Exclusive Gear',unit:'widget',hog:'wid',ev:/Widget/i},
+  {id:'ham',lbl:'🔨 Forgehammer',unit:'hammer',hog:'ham',ev:/Forgehammer/i},
+  {id:'spin',lbl:'🎰 Spin Hero Roulette',unit:'spin',hog:'roul',ev:/Hero Roulette/i},
+  {id:'sM',lbl:'🦸 Shard Mythic',unit:'shard',hog:'sM',ev:/Mythic Hero Shard/i},
+  {id:'sE',lbl:'🦸 Shard Epic',unit:'shard',hog:'sE',ev:/Epic Hero Shard/i},
+  {id:'sR',lbl:'🦸 Shard Rare',unit:'shard',hog:'sR',ev:/Rare Hero Shard/i},
+  {id:'chr',lbl:'💠 Charm: kenaikan max score',unit:'score',hog:'chr',ev:/Charm/i},
+  {id:'ggr',lbl:'🛡️ Governor Gear: kenaikan max score',unit:'score',hog:'ggr',ev:/Governor Gear \+1/i},
+  {id:'powC',lbl:'🏗️ Power dari Construction',unit:'power',hog:'ccC',ev:null},
+  {id:'powR',lbl:'🔬 Power dari Research',unit:'power',hog:'ccR',ev:null},
+  {id:'powT',lbl:'⚔️ Power dari latih/promote troop',unit:'power',hog:'pbT',ev:null},
+  {id:'spC',lbl:'⏩ Speedup Construction (menit)',unit:'menit',hog:'spC',ev:/Speedup Construction/i},
+  {id:'spR',lbl:'⏩ Speedup Research (menit)',unit:'menit',hog:'spR',ev:/Speedup Research/i},
+  {id:'spT',lbl:'⏩ Speedup Train/Promote (menit)',unit:'menit',hog:'spT',ev:/Speedup Train/i},
+  /* hanya ada di KvK/SG — tak punya padanan di HoG */
+  {id:'mithril',lbl:'⛏️ Mithril',unit:'mithril',hog:null,ev:/Mithril/i},
+  {id:'truegold',lbl:'💎 Truegold (upgrade bangunan)',unit:'truegold',hog:null,ev:/Truegold/i},
+  {id:'intel',lbl:'🕵️ Intel Mission siap diselesaikan',unit:'misi',hog:null,ev:/Intel Mission/i},
+  {id:'tamingA',lbl:'🐾 Advanced Taming Mark',unit:'mark',hog:null,ev:/Advanced Taming/i},
+  {id:'tamingC',lbl:'🐾 Common Taming Mark',unit:'mark',hog:null,ev:/Common Taming/i},
+  {id:'petAdv',lbl:'🐾 Pet advancement: kenaikan score',unit:'score',hog:null,ev:/Pet advancement/i},
+  /* hanya ada di HoG #1 */
+  {id:'terror',lbl:'🐉 Rally Terror',unit:'rally',hog:'terror',ev:null},
+  {id:'beast',lbl:'🐺 Beast Lv1-30',unit:'beast',hog:'beast',ev:null},
+];
+
 /* ── Event yang MEMAKAN stamina ──────────────────────────────────────────
    Dipakai untuk mendeteksi otomatis "stamina hari ini terbayar ke mana saja". `id` HARUS
    id kanonik yang dipakai evUpcoming() (titleKey feed atau tipe event umur), supaya

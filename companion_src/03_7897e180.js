@@ -14,7 +14,7 @@ const PROFILE_KEYS=new Set(['profile','roster','trackProg','buildDone','codesDon
   'islandMarks','islandSeedV','daily','events','notifFlags','evLog','tcOwned','tcBuffs',
   /* rencana poin HoG: gudang itu milik AKUN, bukan kingdom — dua akun di kingdom yang
      sama punya stok berbeda, jadi scoping-nya harus per-profil seperti key lain di sini. */
-  'hogPlan','evPlan']);
+  'hogPlan','evPlan','inv']);
 function _ksActivePid(){ try{ return JSON.parse(localStorage.getItem('ks_activePid'))||''; }catch(e){ return ''; } }
 function _ksRealKey(k){ return PROFILE_KEYS.has(k) ? ('p_'+_ksActivePid()+'_'+k) : k; }
 const store={
@@ -1294,6 +1294,73 @@ function evPlanGet(evKey){ try{ return (store.get('evPlan',{})||{})[evKey]||{}; 
 function evPlanSet(evKey,obj){
   try{ var all=store.get('evPlan',{})||{}; all[evKey]=obj; store.set('evPlan',all); return true; }catch(e){ return false; }
 }
+
+/* ── Kalkulator inventaris ────────────────────────────────────────────────
+   Membalik arah tiga kalkulator yang sudah ada: alih-alih "pilih event lalu isi",
+   ini "isi barangmu, app yang menentukan event, hari, dan perkiraan poin".
+
+   Daftar event diambil dari evUpcoming() — sumber YANG SAMA dengan tab Sekarang.
+   Sepanjang pengerjaan ini sudah dua kali muncul bug karena satu aturan ditulis di
+   dua tempat (jangkar HoG di jam-atas, rasio Bear Hunt), jadi kalkulator ini sengaja
+   TIDAK punya daftar event sendiri. */
+function _invJadwal(){
+  const out={};
+  try{ (evUpcoming()||[]).forEach(function(x){ if(x&&x.id&&!out[x.id]) out[x.id]=x; }); }catch(e){}
+  return out;
+}
+/* Poin satu barang di satu event bertabel-baris (KvK/SG): ambil baris berpoin
+   tertinggi yang cocok, sekalian catat hari keberapa. */
+function _invEvBest(evKey,item){
+  if(!item.ev||typeof EV_POIN==='undefined') return null;
+  let best=null;
+  (evPoinStages(evKey)||[]).forEach(function(st,si){
+    (st[1]||[]).forEach(function(r){
+      if(!item.ev.test(r[0])) return;
+      if(!best||r[1]>best.pts) best={pts:r[1],stage:st[0],si:si};
+    });
+  });
+  return best;
+}
+function invPlan(inv){
+  const g=inv||{}, jadwal=_invJadwal();
+  const hogIdx=(typeof hogCurIdx==='function')?hogCurIdx((function(){try{return profileAge().age}catch(e){return null}})()):3;
+  const hogNo=(typeof HOG_DETAIL!=='undefined'&&HOG_DETAIL.iters[hogIdx])?HOG_DETAIL.iters[hogIdx].no:'';
+  const baris=[], takTerpakai=[], perEvent={};
+  (typeof INV_ITEMS==='undefined'?[]:INV_ITEMS).forEach(function(it){
+    const qty=numIn(g[it.id]); if(!qty) return;
+    const kandidat=[];
+    if(it.hog&&typeof hogPts==='function'){
+      /* hanya kalau task-nya benar-benar ada di iterasi yang sedang/akan berjalan */
+      const punya=(hogStageKeys(hogIdx)||[]).filter(function(s){ return s.keys.indexOf(it.hog)>=0; });
+      if(punya.length) kandidat.push({ev:'hog',nama:'HoG '+hogNo,pts:qty*hogPts(it.hog),hari:punya[0].nama});
+    }
+    ['kvk','sg'].forEach(function(k){
+      const b=_invEvBest(k,it);
+      if(b) kandidat.push({ev:k,nama:(EV_POIN[k]||{}).nama||k,pts:qty*b.pts,hari:b.stage});
+    });
+    if(!kandidat.length){ takTerpakai.push({lbl:it.lbl,qty:qty}); return; }
+    kandidat.sort(function(a,b){ return b.pts-a.pts; });
+    const menang=kandidat[0];
+    baris.push({id:it.id,lbl:it.lbl,qty:qty,unit:it.unit,ev:menang.ev,evNama:menang.nama,
+      hari:menang.hari,pts:menang.pts,
+      lain:kandidat.slice(1).map(function(k){ return k.nama+' '+fmt(k.pts); })});
+    perEvent[menang.ev]=(perEvent[menang.ev]||0)+menang.pts;
+  });
+  baris.sort(function(a,b){ return b.pts-a.pts; });
+  /* stamina: hasilnya BUKAN poin (hunt → claw/pouch → gem/speedup), jadi jalur sendiri */
+  let stamina=null;
+  if(numIn(g.stamina)) { try{ stamina=staminaPlan(g.stamina,{diana:!!g.diana,rally:numIn(g.rally)}); }catch(e){} }
+  const ringkas=Object.keys(perEvent).map(function(k){
+    const j=jadwal[k]||null;
+    return {ev:k,nama:(k==='hog'?'HoG '+hogNo:((EV_POIN[k]||{}).nama||k)),pts:perEvent[k],
+      aktif:!!(j&&j.active), mulaiUTC:(j&&j.startUTC)||null, selesaiUTC:(j&&j.endUTC)||null,
+      adaJadwal:!!j};
+  }).sort(function(a,b){ return b.pts-a.pts; });
+  return {baris:baris,ringkas:ringkas,takTerpakai:takTerpakai,stamina:stamina,
+    total:baris.reduce(function(a,b){ return a+b.pts; },0)};
+}
+function invGet(){ try{ return store.get('inv',{})||{}; }catch(e){ return {}; } }
+function invSet(o){ try{ store.set('inv',o); return true; }catch(e){ return false; } }
 
 /* ── Deteksi otomatis: stamina hari ini terbayar ke event apa saja ────────
    Sumber "sedang berjalan" = evUpcoming(), daftar yang SAMA dipakai tab Sekarang (koreksi

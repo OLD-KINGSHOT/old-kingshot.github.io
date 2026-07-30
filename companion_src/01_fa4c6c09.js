@@ -250,7 +250,7 @@ function renderEvent(){
        <div class="alert inf small">\ud83c\udfe5 ${esc(KVK_PREP.revive)}</div>`)
       +evCalcHTML(),
     roi: card('Nilai Item & Speedup (ROI)','\u25c6',roi+'<h3>Pakai / Tahan / Bebas</h3>'+itemGuide)
-      +dtFarmHTML(),
+      +invCardHTML()+dtFarmHTML(),
     ency: card('Ensiklopedia Event','\u25a4',`<p class="muted small">Cara main F2P tiap event. Jadwal = perkiraan; tab Events di game = acuan final.</p>${ency}`),
     anti: card('Kesalahan F2P (Anti-P2W)','\u26a0',MISTAKES.map((m,i)=>`<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">${pad(i+1)}</span> &nbsp;${esc(m)}</div></div>`).join(''))
       +card('Trik Lawan P2W','\ud83e\udd77',`<p class="muted small">Cara F2P/low-spender bersaing & mengungguli whale. Sumber: kingshotmastery, kingshotguide, lootbar, kingshotoptimizer, komunitas (Jun 2026).</p>`
@@ -292,7 +292,7 @@ function renderEvent(){
       const drawCalc=i=>{ const cc=$('#hogcalc',el); if(!cc) return;
         cc.innerHTML=hogCalcBody(i); hogCalcWire(el,i); };
       const draw=i=>{ c.innerHTML=hogStageTbl(i,actStage(i)); drawCalc(i); $$('.hibtn',el).forEach(b=>b.classList.toggle('active',+b.dataset.hi===i)); if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); }; $$('.hibtn',el).forEach(b=>b.onclick=()=>draw(+b.dataset.hi)); draw(hogCurIdx(age)); } }
-    if(k==='roi') dtFarmWire(el);
+    if(k==='roi'){ invWire(el); dtFarmWire(el); }
     if(k==='kvk'){ const b=$('#evcalc',el); if(b){ b.innerHTML=evCalcBody(); evCalcWire(el); } }
     if(k==='adv'&&age!=null){
       const add=$('#sch_add',el); if(add) add.onclick=()=>{ const date=$('#sch_date').value; if(!date){$('#sch_date').focus();return;} const arr=store.get('events',[]); const ty=$('#sch_type').value; const i=arr.findIndex(x=>x.type===ty); if(i>=0)arr[i]={type:ty,date}; else arr.push({type:ty,date}); store.set('events',arr); renderEvent(); };
@@ -500,6 +500,73 @@ function evCalcWire(el){
     s[_evCalcStage][i.dataset.evr]=numIn(i.value); evPlanSet(_evCalcKey,s);
     var sub=evStagePoin(_evCalcKey,_evCalcStage,s[_evCalcStage]), kv=$('.kv b',box);
     if(kv) kv.textContent=fmt(sub.pts); else ulang(); }; });
+}
+
+/* ── Kalkulator inventaris ────────────────────────────────────────────────
+   Membalik arah tiga kalkulator lain: isi barangmu sekali, app yang menentukan
+   event, hari, dan perkiraan poinnya. Data & mesin ada di 04/03 — di sini hanya
+   tampilan + simpan, sesuai pola kartu lain di app ini. */
+function invCardHTML(){
+  if(typeof INV_ITEMS==='undefined') return '';
+  const v=invGet();
+  const form=INV_ITEMS.map(function(it){
+    return '<label class="calcf"><span>'+esc(it.lbl)+' <span class="muted small">'+esc(it.unit)+'</span></span>'
+      +_hcInp('data-inv="'+it.id+'"',v[it.id])+'</label>'; }).join('');
+  return card('Kalkulator Inventaris — barangku dipakai di mana?','🎒',
+    '<p class="muted small">Isi apa yang kamu punya, sekali saja. App mencari event berpoin TERTINGGI untuk tiap barang, menyebut harinya, dan menghitung perkiraan poinnya. Event yang tabel poinnya sudah terverifikasi: HoG, KvK, Strongest Governor.</p>'
+    +'<div class="tcbuff">'+form
+    +'<label class="calcf"><span>🌵 Stamina yang mau dipakai <span class="muted small">hasilnya bukan poin</span></span>'+_hcInp('data-inv="stamina"',v.stamina)+'</label>'
+    +'<label class="calcf"><span>🌵 Rally Dreadwolf yang mau dijalankan</span>'+_hcInp('data-inv="rally"',v.rally)+'</label>'
+    +'<label class="calcf chk"><input data-invc="diana" type="checkbox"'+(v.diana?' checked':'')+'> Bawa Diana (hunt −20%, rally 25→20)</label>'
+    +'</div><div id="inv_out">'+invOut()+'</div>');
+}
+function invOut(){
+  const r=invPlan(invGet());
+  if(!r.baris.length&&!r.stamina) return '<div class="muted small" style="margin-top:10px">Isi minimal satu barang di atas untuk melihat rekomendasinya.</div>';
+  let out='';
+  if(r.baris.length){
+    out+='<div class="scrollx" style="margin-top:10px"><table><thead><tr><th>Barang</th><th>Dipakai di</th><th>Poin</th></tr></thead><tbody>'
+      +r.baris.map(function(b){
+        return '<tr><td class="small"><b>'+fmt(b.qty)+'</b> <span>'+esc(b.lbl)+'</span></td>'
+          +'<td class="small"><span>'+esc(b.evNama)+'</span><div class="muted small">'+esc(b.hari)+'</div></td>'
+          +'<td class="num">'+fmt(b.pts)
+          +(b.lain.length?'<div class="muted small">alternatif: '+esc(b.lain.join(' · '))+'</div>':'')+'</td></tr>'; }).join('')
+      +'<tr><td colspan="2"><b>TOTAL</b></td><td class="num"><b>'+fmt(r.total)+'</b></td></tr></tbody></table></div>';
+  }
+  if(r.ringkas.length){
+    out+='<div class="lbl" style="margin-top:12px">Per event</div>';
+    out+=r.ringkas.map(function(x){
+      /* countdown memakai .sk-cd yang sudah berdetak sendiri; kalau jadwalnya belum
+         diketahui, barisnya TETAP muncul — tabel kosong tak menolong siapa pun. */
+      let kapan;
+      if(!x.adaJadwal) kapan='<span class="dim">jadwal belum termuat</span>';
+      else if(x.aktif) kapan='<b class="acc">BERJALAN</b>'+(x.selesaiUTC?' <span class="dim">sisa <span class="sk-cd" data-t="'+x.selesaiUTC+'" data-u="d">-</span>h <span class="sk-cd" data-t="'+x.selesaiUTC+'" data-u="h">-</span>j</span>':'');
+      else if(x.mulaiUTC) kapan='<span class="dim">mulai <span class="sk-cd" data-t="'+x.mulaiUTC+'" data-u="d">-</span>h <span class="sk-cd" data-t="'+x.mulaiUTC+'" data-u="h">-</span>j lagi</span>';
+      else kapan='<span class="dim">jadwal belum termuat</span>';
+      return '<div class="kv"><span>'+esc(x.nama)+'</span><b>'+fmt(x.pts)+' <span class="muted small">'+kapan+'</span></b></div>'; }).join('');
+  }
+  if(r.stamina){
+    const f=r.stamina.f;
+    out+='<div class="lbl" style="margin-top:12px">Stamina</div>'
+      +'<div class="kv"><span>'+fmt(f.hunts)+' hunt → '+fmt(Math.round(f.pouch*10)/10)+' pouch</span><b>~'+fmt(Math.round(f.gem))+' gem · '+fmt(Math.round(f.speedupMnt))+' mnt speedup</b></div>'
+      +(f.rally?'<div class="kv"><span>'+fmt(f.rally)+' rally Dreadwolf</span><b>'+fmt(f.dianaShard[0])+'-'+fmt(f.dianaShard[1])+' shard Diana</b></div>':'')
+      +'<div class="muted small">Hasil stamina sengaja TIDAK dijadikan poin — ia menghasilkan barang (gem, speedup, shard), dan beast yang sama bisa dibayar beberapa event sekaligus. Lihat kartu farming di bawah untuk rinciannya.</div>';
+  }
+  if(r.takTerpakai.length) out+='<div class="alert warn small" style="margin-top:8px"><b>Belum ada tempatnya:</b> '
+    +r.takTerpakai.map(function(x){ return '<span>'+esc(x.lbl)+'</span> ×'+fmt(x.qty); }).join(' · ')
+    +' — barang ini tak punya task di HoG/KvK/SG, atau tabel poin event-nya belum kita punya.</div>';
+  return out;
+}
+function invWire(el){
+  const box=$('#inv_out',el); if(!box) return;
+  const simpan=function(){
+    const v=invGet();
+    $$('[data-inv]',el).forEach(function(i){ v[i.dataset.inv]=numIn(i.value); });
+    $$('[data-invc]',el).forEach(function(i){ v[i.dataset.invc]=!!i.checked; });
+    invSet(v); box.innerHTML=invOut();
+    if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
+  $$('[data-inv]',el).forEach(function(i){ i.oninput=simpan; });
+  $$('[data-invc]',el).forEach(function(i){ i.onchange=simpan; });
 }
 
 /* ── Perkiraan farming stamina (Desert Trial) ─────────────────────────────
