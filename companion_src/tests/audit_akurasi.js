@@ -143,6 +143,28 @@ else W('tak ada satu pun penanda tanggal verifikasi yang terbaca — sulit tahu 
 
 /* ── laporan ────────────────────────────────────────────────────────────────── */
 const tgl = HARI_INI.toISOString().slice(0, 10);
+
+/* Mode --hook: dipanggil SessionStart, jadi keluarannya harus JSON amplop hook.
+   Sengaja hanya meringkas — laporan panjang di awal sesi akan dilewati mata.
+   TIDAK PERNAH exit bukan-nol: audit yang menghalangi sesi dimulai akan dimatikan
+   orang dalam seminggu, dan audit yang dimatikan sama dengan tak ada. */
+if (process.argv.includes('--hook')) {
+  const ringkas = gagal.length
+    ? '⚠ Audit akurasi Kingshot: ' + gagal.length + ' KONTRADIKSI.\n'
+      + gagal.slice(0, 6).map(m => '· ' + m.split('\n')[0]).join('\n')
+      + (gagal.length > 6 ? '\n· …dan ' + (gagal.length - 6) + ' lagi' : '')
+      + '\nRincian: node companion_src/tests/audit_akurasi.js'
+    : warn.length
+      ? '✓ Audit akurasi bersih (' + oke.length + ' pemeriksaan) · ' + warn.length + ' peringatan kedaluwarsa:\n'
+        + warn.map(m => '· ' + m).join('\n')
+      : '✓ Audit akurasi bersih — ' + oke.length + ' pemeriksaan lulus, tak ada kontradiksi.';
+  process.stdout.write(JSON.stringify({
+    systemMessage: ringkas,
+    hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: 'Audit akurasi Kingshot (' + tgl + '): ' + ringkas },
+  }));
+  process.exit(0);
+}
+
 console.log('AUDIT AKURASI · ' + tgl + '\n');
 oke.forEach(m => console.log('  ✓ ' + m));
 warn.forEach(m => console.log('  ⚠ ' + m));
