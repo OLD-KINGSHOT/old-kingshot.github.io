@@ -536,8 +536,18 @@ const STAMINA_EVENTS=[
    Validasi silang model: harapan gem = 0,20×100 + 0,50×20 = 30/pouch — persis angka
    "rata-rata ~30 gem/pouch" yang sudah tercatat di entri Desert Trial jauh sebelum ini. */
 const DT_FARM={
-  huntStamina:8,          /* ~8 stamina per hunt beast di MAP (catatan lama app) */
-  dianaHuntCut:0.20,      /* Iron Constitution: stamina −20% */
+  /* KOREKSI 31 Jul 2026. Dulu 8 dan diperlakukan sebagai angka DASAR, lalu diskon Diana
+     −20% dipotongkan lagi di atasnya → 6,4. Itu menghitung Diana DUA KALI: 8 justru sudah
+     hasil 10×0,8. Bukti internal app sendiri: rally-nya tercatat 25 → 20 dengan Diana,
+     dan 20 = 25×0,8 — pola yang sama menuntut hunt 10 → 8, bukan 8 → 6,4.
+     Dikuatkan tabel kingshothandbook (guides/stamina-management-guide): solo march 10,
+     rally 25, JOIN rally gratis. */
+  huntStamina:10,         /* solo hunt beast di MAP; dengan Diana jadi 8 */
+  dianaHuntCut:0.20,      /* Iron Constitution: stamina −20% (maks Lv6) */
+  /* Regenerasi (sumber sama): 1 stamina / 5 menit, CAP 200 — begitu penuh, regen BERHENTI
+     dan sisa waktunya hangus. Storehouse memberi ~120 tiap 12 jam tapi harus dipungut
+     manual. Total praktis ~528/hari (288 regen + 240 storehouse). */
+  regenPerJam:12, cap:200, storehousePer12Jam:120, harianTotal:528,
   rallyStamina:25, rallyStaminaDiana:20,
   pClaw:0.5, pPouch:0.5,  /* tiap beast: 50% Clawshard / 50% Challenger Pouch */
   dwShard:[2,4],          /* Dreadwolf tumbang → 2-4 shard Diana */
@@ -569,7 +579,7 @@ const HOG_DETAIL={
     '💥 Poin tunggal terbesar: Widget Hero Exclusive Gear = 100.000, lalu Hero Roulette = 90.000/spin. Simpan gem + Widget untuk stage-nya.',
     '⚔️ Troop tier tinggi JAUH lebih berpoin (Lv10 = 1.960 vs Lv1 = 90). Stage Train Troops: latih/promote troop tier TERTINGGI yang bisa, jangan spam tier rendah.',
     '🐉 Hanya HoG #1 punya Beast Slay (Rally Terror 90rb + beast 30rb). HoG #2+ TIDAK — jangan tunggu beast day di HoG #4.',
-    '🌾 Gather resource cuma 3 poin/task — abaikan, buang-buang stamina.',
+    '🌾 Gather resource cuma 3 poin/task — abaikan untuk mengejar poin. Yang mahal BUKAN stamina: gathering tidak memakainya sama sekali (yang terpakai slot march & waktunya). Stamina habis di beast, rally, dan Intel Mission.',
     '⏩ Speedup baru berpoin di stage Hero Dev TERAKHIR (HoG #3/#4/#5) = 300/mnt. Selain itu speedup nyaris tak berpoin — pakai hanya untuk naikin power.',
     '🎁 Milestone reward 4 tier bisa diraih Gratis walau tak masuk leaderboard. Tier akhir = gem + skill book — selalu kejar.',
     '⏳ HoG berhenti setelah #5 (H62-H68) karena rotasi event berpindah ke KvK (gerbang H70) & Strongest Governor (H75) — BUKAN karena "Gen 3", sebab generasi hero ke-3 baru datang di hari ~105-120. Hari transisinya bervariasi antar kingdom, jadi kalau di kingdommu HoG ternyata masih muncul, catat tanggalnya.',

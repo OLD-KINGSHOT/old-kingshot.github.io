@@ -981,5 +981,13 @@
   "pengganti Desert Trial sejak Gen 4 · peluang drop-nya tak dipublikasikan, jadi yang dihitung hanya jumlah hunt": "replaces Desert Trial from Gen 4 · its drop rates are not published, so only the hunt count is calculated",
   "Jam meleset dari server (jendela ±5 menit) — disinkronkan lalu dicoba lagi": "Clock is outside the server window (±5 minutes) — resyncing and retrying",
   "Jam masih meleset setelah disinkronkan — cocokkan jam perangkat, lalu coba lagi": "Clock still off after resyncing — fix your device clock, then try again",
-  "🤖 Robot redeem menunggu: isi nomor Kingdom di tab Profil — tanpa itu server pasti menolak.": "🤖 Redeem robot is waiting: enter your Kingdom number in the Profile tab — without it the server always refuses."
+  "🤖 Robot redeem menunggu: isi nomor Kingdom di tab Profil — tanpa itu server pasti menolak.": "🤖 Redeem robot is waiting: enter your Kingdom number in the Profile tab — without it the server always refuses.",
+  "Ongkos stamina:": "Stamina costs:",
+  "hunt 10": "hunt 10",
+  "mulai rally 25": "starting a rally 25",
+  "ikut rally orang lain GRATIS": "joining someone else’s rally is FREE",
+  "tidak": "does not",
+  ". Gathering": ". Gathering",
+  " memakai stamina sama sekali — yang terpakai slot march. Jatahmu ~528/hari: 288 regen (1 per 5 menit) + 240 dari Storehouse (120 tiap 12 jam, harus dipungut). Cap 200 — begitu penuh regen BERHENTI, jadi jangan tinggalkan penuh.": " use stamina at all — what it uses is a march slot. Your daily budget is ~528: 288 from regen (1 per 5 min) + 240 from the Storehouse (120 every 12 h, must be collected). Cap is 200 — once full, regen STOPS, so never leave it capped.",
+  "🌾 Gather resource cuma 3 poin/task — abaikan untuk mengejar poin. Yang mahal BUKAN stamina: gathering tidak memakainya sama sekali (yang terpakai slot march & waktunya). Stamina habis di beast, rally, dan Intel Mission.": "🌾 Gathering is only 3 pts/task — ignore it for scoring. The cost is NOT stamina: gathering uses none at all (it uses a march slot and time). Stamina goes to beasts, rallies and Intel Missions."
 }

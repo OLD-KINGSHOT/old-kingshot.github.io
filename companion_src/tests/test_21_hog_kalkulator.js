@@ -126,40 +126,44 @@ t('sisa poin diterjemahkan ke tiap tuas yang ADA di iterasi itu', () => {
   eq(gapEquiv(0, I45).setara.length, 0, 'tak ada sisa → tak ada saran');
 });
 
+/* KOREKSI 31 Jul 2026: ongkos hunt DASAR adalah 10, bukan 8. Angka 8 yang dulu dipakai
+   sebagai dasar ternyata sudah termasuk diskon Diana (10x0,8), lalu app memotong Diana
+   lagi di atasnya -> 6,4. Bukti internal: rally tercatat 25 -> 20 dengan Diana, dan
+   20 = 25x0,8; pola yang sama menuntut 10 -> 8. Dikuatkan tabel kingshothandbook
+   (solo march 10, rally 25, join gratis). */
 t('Desert Trial: 100 stamina tanpa Diana', () => {
   const f = farm(100, {});
-  eq(f.perHunt, 8);
-  eq(f.hunts, 12, '100 / 8');
-  eq(f.claw, 6, '50% dari 12');
-  eq(f.pouch, 6, '50% dari 12');
+  eq(f.perHunt, 10, 'ongkos DASAR, belum didiskon Diana');
+  eq(f.hunts, 10, '100 / 10');
+  eq(f.claw, 5, '50% dari 10');
+  eq(f.pouch, 5, '50% dari 10');
   eq(f.gemPerPouch, 30, 'harapan gem = 0,20×100 + 0,50×20 — cocok catatan lama app');
-  eq(f.gem, 180);
-  eq(f.speedupMnt, 45, '6 pouch × rata-rata 7,5 mnt');
-  eq(f.heroXp, 6000);
-  eq(f.staminaBalik, 0.8999999999999999 < 1 ? f.staminaBalik : 0.9);
-  ok(Math.abs(f.staminaBalik - 0.9) < 1e-9, '15% × 6 pouch');
+  eq(f.gem, 150, '5 pouch × 30');
+  eq(f.speedupMnt, 37.5, '5 pouch × rata-rata 7,5 mnt');
+  eq(f.heroXp, 5000);
+  ok(Math.abs(f.staminaBalik - 0.75) < 1e-9, '15% × 5 pouch');
 });
 
 t('Diana memotong stamina hunt 20% dan rally 25→20', () => {
   const f = farm(100, { diana: true });
-  ok(Math.abs(f.perHunt - 6.4) < 1e-9, '8 × 0,8');
-  eq(f.hunts, 15, 'floor(100 / 6,4) — 3 hunt lebih banyak daripada tanpa Diana');
+  eq(f.perHunt, 8, '10 × 0,8 — inilah angka 8 yang dulu keliru dipakai sebagai DASAR');
+  eq(f.hunts, 12, 'floor(100 / 8) — 2 hunt lebih banyak daripada tanpa Diana');
   const r = farm(100, { diana: true, rally: 2 });
-  eq(r.perRally, 20);
+  eq(r.perRally, 20, '25 × 0,8');
   eq(r.rally, 2);
   eq(r.staminaRally, 40);
-  eq(r.hunts, 9, 'sisa 60 stamina / 6,4');
+  eq(r.hunts, 7, 'sisa 60 stamina / 8');
   eq(r.dianaShard, [4, 8], '2 rally × 2-4 shard');
 });
 
 t('rally dibatasi stamina yang benar-benar ada', () => {
   const f = farm(30, { rally: 5 });
   eq(f.rally, 1, '30 stamina hanya cukup 1 rally 25');
-  eq(f.hunts, 0, 'sisa 5 stamina < 8 per hunt');
+  eq(f.hunts, 0, 'sisa 5 stamina < 10 per hunt');
 });
 
 t('stamina jadi poin HoG hanya kalau stage Beast Slay aktif', () => {
-  eq(farm(100, { beastPts: true }).hogBeastPts, 12 * 30000, '12 hunt × 30.000 (HoG #1)');
+  eq(farm(100, { beastPts: true }).hogBeastPts, 10 * 30000, '10 hunt × 30.000 (HoG #1)');
   eq(farm(100, {}).hogBeastPts, 0, 'tanpa stage Beast Slay: 0');
 });
 
@@ -253,7 +257,7 @@ t('poin beast HoG hanya dihitung saat stage Beast Slay benar-benar berjalan', ()
   const P = e('staminaPlan')(80, {});
   const hog = P.baris.find(b => /Beast Slay/.test(b.nama));
   eq(hog.aktif, true, 'stage-nya cocok → harus terdeteksi');
-  eq(hog.poin, 10 * 30000, '80 stamina / 8 = 10 hunt × 30.000');
+  eq(hog.poin, 8 * 30000, '80 stamina / 10 = 8 hunt × 30.000');
 });
 
 t('stage HoG yang salah → tidak dihitung, DAN alasannya disebut', () => {

@@ -511,6 +511,7 @@ function dtFarmHTML(){
   var s=store.get('dtFarm',{})||{};
   return card('Farming Stamina → Gem & Speedup (Desert Trial)','🌵',
     '<p class="muted small">Beast di MAP: <b>50% Clawshard / 50% Challenger Pouch</b>. Claw dipakai melacak Dreadwolf (rally 25 stamina, 20 dengan Diana maks) → 2-4 shard Diana. Pouch = gem + speedup + Hero XP.</p>'
+    +'<div class="alert inf small">Ongkos stamina: <b>hunt 10</b> · <b>mulai rally 25</b> · <b>ikut rally orang lain GRATIS</b>. Gathering <b>tidak</b> memakai stamina sama sekali — yang terpakai slot march. Jatahmu ~528/hari: 288 regen (1 per 5 menit) + 240 dari Storehouse (120 tiap 12 jam, harus dipungut). Cap 200 — begitu penuh regen BERHENTI, jadi jangan tinggalkan penuh.</div>'
     +'<div class="tcbuff">'
     +'<label class="calcf"><span>Stamina yang mau dipakai</span>'+_hcInp('data-df="stamina"',s.stamina)+'</label>'
     +'<label class="calcf"><span>Rally Dreadwolf yang mau dijalankan</span>'+_hcInp('data-df="rally"',s.rally)+'</label>'
