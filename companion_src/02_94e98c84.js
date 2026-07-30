@@ -202,12 +202,20 @@ function rosterGet(){ return store.get('roster',{}); }
 function rosterStar(n){ return +(rosterGet()[n]||0); }
 function rosterAny(){ const r=rosterGet(); for(const k in r){ if(+r[k]>0) return true; } return false; }
 function rosterBest(ty){ const r=rosterGet(); return HEROES.filter(h=>h.ty===ty&&+r[h.n]>0).sort((a,b)=>r[b.n]-r[a.n])[0]||null; }
+/* SATU sumber rasio Bear Hunt. Dulu tangga ini ditulis DUA KALI di berkas ini
+   (kartu lineup & ringkasan "hari ini"), jadi mengubah satu tanpa yang lain akan
+   membuat dua bagian app menyarankan komposisi march yang berbeda untuk event yang
+   sama — kelas bug yang persis sama dengan jangkar HoG yang disalin ke jam-atas.
+   Beruang = INFANTRY, jadi ARCHER menang counter (+10%); karena beruang TIDAK
+   menyerang balik, tak ada korban dan komposisi murni soal damage — itulah kenapa
+   rasionya menggeser ke archer begitu jumlah troop mencukupi. */
+function bearRatio(age){ return age==null?{inf:10,cav:30,arc:60} : age>=197?{inf:1,cav:10,arc:89} : age>=113?{inf:10,cav:10,arc:80} : age>=50?{inf:10,cav:20,arc:70} : {inf:10,cav:30,arc:60}; }
 function lineupCard(s,age){
   const heroes=s.heroes.map(h=>{ const st=rosterStar(h.n); return `<span class="hc">${esc(h.n)}${h.note?' <small>('+esc(h.note)+')</small>':''}${st?' <span class="pill f2p">'+st+'★</span>':''}</span>`; }).join(s.pick?'<span class="dim small" style="align-self:center">atau</span>':'');
   /* Bear Hunt: rasio bergeser ke archer tiap generasi — otomatis sesuai umur server */
   let ratio=s.ratio, ratioNote='';
   if(s.key==='bear-trap'&&age!=null){
-    ratio = age>=197?{inf:1,cav:10,arc:89} : age>=113?{inf:10,cav:10,arc:80} : age>=50?{inf:10,cav:20,arc:70} : {inf:10,cav:30,arc:60};
+    ratio = bearRatio(age);
     ratioNote=` <span class="dim small">(${genForAge(age)}${age>=197?' · min 5.000 infantry · tes 1/10/89 vs 10/10/80 di march preview':''} — bergeser ke archer tiap gen)</span>`;
   }
   const gate=(age!=null&&s.minDay>0&&age<s.minDay)?`<div class="alert warn small" style="margin:0 0 8px">\u23f3 Belum aktif \u2014 mulai ~hari ${s.minDay} (server hari ${age}). Simpan persiapan.</div>`:'';
@@ -306,7 +314,7 @@ function renderSekarang(){
   const sit=k=>SITUATIONS.find(s=>s.key===k);
   const et=evtTimes();
   const heroesLine=s=>s&&s.heroes?s.heroes.map(h=>esc(h.n)).join(' / '):'';
-  const bearGen=(function(){ const s=sit('bear-trap'); if(!s) return null; let r=s.ratio; if(age>=197)r={inf:1,cav:10,arc:89};else if(age>=113)r={inf:10,cav:10,arc:80};else if(age>=50)r={inf:10,cav:20,arc:70};else r={inf:10,cav:30,arc:60}; return {s,r}; })();
+  const bearGen=(function(){ const s=sit('bear-trap'); if(!s) return null; return {s,r:(age==null?s.ratio:bearRatio(age))}; })();
   /* bear cooldown state */
   const today=ksClock.now().toISOString().slice(0,10);
   let bd=store.get('bearDone',{date:today,done:false}); if(bd.date!==today){ bd={date:today,done:false}; store.set('bearDone',bd); }

@@ -80,6 +80,9 @@ const SALINAN = [
   { nama: 'jangkar HoG', pola: /\(\s*no\s*-\s*1\s*\)\s*\*\s*14/, sumber: /hogStartDay|hogFirstDay|hogStartUTC/ },
   { nama: 'jangkar Castle', pola: /\b54\s*\+\s*[^;]*\*\s*14/, sumber: /castleFirstDay|nextCastleDay/ },
   { nama: 'siklus SG 28 hari', pola: /\b75\s*\+[^;]*\*\s*28/, sumber: /sgNextOccurrence/ },
+  /* Rasio Bear Hunt pernah ditulis dua kali di berkas yang sama — dua bagian app bisa
+     menyarankan komposisi march berbeda untuk event yang sama. */
+  { nama: 'rasio Bear Hunt', pola: /arc\s*:\s*89|arc\s*:\s*80\b/, sumber: /bearRatio/ },
 ];
 for (const f of berkasSumber) {
   tanpaKomentar(isi(f)).split('\n').forEach((baris, i) => {
