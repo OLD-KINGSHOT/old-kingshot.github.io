@@ -111,4 +111,76 @@ t('tak ada lagi rumus jangkar yang disalin di berkas mana pun', () => {
   eq(salinan, [], 'rumus jangkar harus dipanggil, bukan disalin');
 });
 
+/* ── Castle Battle: SELALU Sabtu ────────────────────────────────────────
+   kingshotwiki: "first Castle Battle within the first 54 days; after that biweekly on
+   Saturday". Model lama memakai hari-54 telanjang → Minggu untuk 2114, Senin untuk 2184.
+   Klaim "tiap 18 hari" ditolak karena 18 bukan kelipatan 7. */
+const hariUTC = iso => new Date(iso + 'T00:00:00Z').getUTCDay();
+const envBuka = startISO => createEnv({ storage: {
+  ks_activePid: JSON.stringify('c'), ks_profilesV: '1',
+  ks_p_c_profile: JSON.stringify({ pid: 'c', kingdom: '9999', start: startISO }),
+} });
+
+t('Castle Battle pertama selalu Sabtu, apa pun hari buka kingdom', () => {
+  const semingguPenuh = ['2026-06-08','2026-06-09','2026-06-10','2026-06-11','2026-06-12','2026-06-13','2026-06-14'];
+  for (const s of semingguPenuh) {
+    const ev = envBuka(s).evalIn;
+    const f = ev('castleFirstDay')();
+    ok(f <= 54, 'buka ' + s + ': harus dalam 54 hari pertama, dapat hari ' + f);
+    ok(f > 40, 'buka ' + s + ': jangan terlalu awal, dapat hari ' + f);
+    eq(hariUTC(iso(s, f)), 6, 'buka ' + s + ' → hari ' + f + ' = ' + iso(s, f) + ' harus SABTU');
+  }
+});
+
+t('iterasi Castle berikutnya melangkah 14 hari dan tetap Sabtu', () => {
+  const ev = envBuka(K['2114']).evalIn;
+  const f = ev('castleFirstDay')();
+  let sebelum = f;
+  for (const umur of [f, f + 1, f + 14, f + 15, f + 40]) {
+    const nd = ev('nextCastleDay')(umur);
+    ok(nd >= umur, 'tak boleh menunjuk ke masa lalu');
+    eq((nd - f) % 14, 0, 'selalu kelipatan 14 dari jangkar');
+    eq(hariUTC(iso(K['2114'], nd)), 6, 'hari ' + nd + ' harus Sabtu');
+    ok(nd >= sebelum, 'monoton'); sebelum = nd;
+  }
+  eq(ev('nextCastleDay')(f - 1), f, 'sebelum yang pertama → tunjuk yang pertama');
+});
+
+t('kartu Castle tidak lagi menulis "18 hari" ke pengguna', () => {
+  const isi = fs.readFileSync(path.join(SRC, '01_fa4c6c09.js'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '');                    /* komentar boleh menjelaskan kenapa 18 salah */
+  ok(!/18 hari|18 days/.test(isi), 'teks yang dibaca pengguna harus ikut berubah, bukan cuma kodenya');
+});
+
+/* ── Strongest Governor: BULANAN, bukan siklus 28 hari ──────────────────
+   Lima sumber sepakat SG itu event bulanan lintas-kingdom yang mulai minggu pertama tiap
+   bulan. Model lama (H75 + 28 hari) meleset ~2,4 hari tiap bulan dan menumpuk. */
+t('SG jatuh di awal bulan, bukan kelipatan 28 hari dari H75', () => {
+  const ev = envFor('2114').evalIn;
+  const start = new Date(K['2114'] + 'T00:00:00Z');
+  for (const umur of [80, 100, 140, 200, 300]) {
+    const sg = ev('predictedEvents')(start, umur).filter(e => e.type === 'sg');
+    eq(sg.length, 1, 'harus ada tepat satu SG berikutnya');
+    eq(new Date(sg[0].date + 'T00:00:00Z').getUTCDate(), 1, 'umur ' + umur + ': SG mulai di awal bulan');
+    ok(sg[0].day >= 75, 'tak boleh sebelum gerbang H75');
+    ok(sg[0].day + 6 >= umur, 'tak boleh menunjuk SG yang sudah selesai');
+  }
+});
+
+t('jarak antar SG mengikuti panjang BULAN, bukan 28 hari mati', () => {
+  const ev = envFor('2114').evalIn;
+  const start = new Date(K['2114'] + 'T00:00:00Z');
+  const tanggal = [];
+  for (let umur = 80; umur <= 260; umur += 30) {
+    const sg = ev('predictedEvents')(start, umur).filter(e => e.type === 'sg')[0];
+    if (sg && tanggal.indexOf(sg.date) < 0) tanggal.push(sg.date);
+  }
+  ok(tanggal.length >= 4, 'butuh beberapa kejadian untuk dibandingkan');
+  const jarak = [];
+  for (let i = 1; i < tanggal.length; i++)
+    jarak.push(Math.round((Date.parse(tanggal[i]) - Date.parse(tanggal[i - 1])) / 86400000));
+  ok(jarak.every(j => j >= 28 && j <= 31), 'jarak harus panjang bulan sungguhan: ' + jarak.join(','));
+  ok(jarak.some(j => j !== 28), 'kalau semuanya 28, berarti model lama masih hidup: ' + jarak.join(','));
+});
+
 done();

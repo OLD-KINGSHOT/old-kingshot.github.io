@@ -284,4 +284,77 @@ t('event yang tak terukur dilaporkan apa adanya, tidak dikarang poinnya', () => 
   ok(P.baris.some(b => /Defeat Nearby Beasts/.test(b.nama)), 'daftarnya harus memuat event pemakan stamina lain');
 });
 
+/* ── Tabel poin KvK & Strongest Governor (kingshotguide.org, 30 Jul 2026) ──
+   Bahaya terbesar di sini adalah menyatukan tabel: skala KvK/SG jauh berbeda dari HoG
+   (troop 1-60 vs 90-1.960; charm 36-70 vs 1.000). Test di bawah menjaga keduanya terpisah
+   dan menjaga angka kunci yang terverifikasi. */
+const EV_POIN = ev('EV_POIN');
+
+t('struktur EV_POIN waras: tiap baris [label, poin>0, satuan]', () => {
+  eq(Object.keys(EV_POIN).sort(), ['kvk', 'sg']);
+  eq(EV_POIN.kvk.stages.length, 5, 'KvK: hanya fase Preparation 5 hari yang berpoin');
+  eq(EV_POIN.sg.stages.length, 7, 'SG: 7 hari');
+  for (const k of ['kvk', 'sg']) {
+    ok(EV_POIN[k].sumber, k + ' harus menyebut sumbernya');
+    for (const [nama, rows] of EV_POIN[k].stages) {
+      ok(nama && rows.length, k + ' stage ' + nama + ' tak boleh kosong');
+      for (const r of rows) {
+        eq(typeof r[0], 'string'); ok(r[1] > 0, k + '/' + nama + ': ' + r[0] + ' poin harus > 0');
+        eq(typeof r[2], 'string', 'satuan wajib ada supaya UI tak menebak');
+      }
+    }
+  }
+});
+
+t('angka kunci yang terverifikasi tidak boleh bergeser', () => {
+  const cari = (k, si, frag) => (EV_POIN[k].stages[si][1].find(r => r[0].includes(frag)) || [])[1];
+  eq(cari('sg', 1, 'Mithril'), 40000, 'SG D2 Mithril');
+  eq(cari('sg', 1, 'Roulette'), 8000, 'SG D2 Hero Roulette');
+  eq(cari('sg', 1, 'Mythic'), 3040, 'SG D2 Mythic shard');
+  eq(cari('kvk', 0, 'Intel'), 6000, 'KvK D1 Intel Mission');
+  eq(cari('kvk', 0, 'Truegold'), 2000, 'KvK D1 Truegold');
+  eq(cari('kvk', 3, 'Lv10'), 60, 'KvK D4 troop Lv10');
+  eq(cari('sg', 3, 'Lv10'), 39, 'SG D4 troop Lv10');
+  eq(cari('sg', 0, 'Charm'), 70, 'charm 70 di hari awal');
+  eq(cari('sg', 5, 'Charm'), 36, 'charm turun jadi 36 di D6 — beda per stage, jangan disamakan');
+});
+
+t('tabel KvK/SG TIDAK memakai skala HoG', () => {
+  const troopHoG = HOG_SCORING.troop.pts;
+  for (const k of ['kvk', 'sg']) {
+    for (const [nama, rows] of EV_POIN[k].stages) {
+      for (const r of rows) {
+        if (/Latih troop/.test(r[0])) ok(troopHoG.indexOf(r[1]) < 0,
+          k + '/' + nama + ': ' + r[0] + ' = ' + r[1] + ' bertabrakan dengan skala HoG');
+        if (/Charm/.test(r[0])) ok(r[1] !== 1000, 'charm HoG (1.000) bocor ke ' + k);
+      }
+    }
+  }
+});
+
+t('hitungan per stage & total event', () => {
+  const s = ev('evStagePoin')('sg', 1, { 0: 2 });          /* 2 Mithril di SG D2 */
+  eq(s.pts, 80000);
+  eq(s.baris[0].unit, 'mithril');
+  eq(ev('evStagePoin')('sg', 1, {}).pts, 0, 'kosong → 0');
+  eq(ev('evStagePoin')('sg', 99, { 0: 5 }).pts, 0, 'stage tak ada → 0, bukan meledak');
+  const tot = ev('evTotalPoin')('sg', { 1: { 0: 2 }, 3: { 0: 1 } });
+  eq(tot.total, 80000 + 40000, 'total = jumlah semua stage');
+  eq(tot.per.length, 7);
+});
+
+t('rencana KvK/SG tersimpan per profil, terpisah antar event', () => {
+  ev('evPlanSet')('kvk', { 0: { 0: 3 } });
+  ev('evPlanSet')('sg', { 0: { 0: 9 } });
+  eq(ev('evPlanGet')('kvk')[0][0], 3);
+  eq(ev('evPlanGet')('sg')[0][0], 9, 'dua event tak boleh saling menimpa');
+  ok(env.storage.has('ks_p_' + PID + '_evPlan'), 'harus di slot per-profil');
+});
+
+t('kartu KvK/SG ter-render tanpa undefined', () => {
+  const h = ev('evCalcHTML')(), b = ev('evCalcBody')();
+  ok(/Kalkulator Poin/.test(h) && /evcalc/.test(h));
+  ok(b.length > 300 && !/undefined|NaN/.test(b));
+});
+
 done();

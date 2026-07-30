@@ -441,6 +441,65 @@ const HOG_GUDANG=[
   {f:'spT',k:['spT'],lbl:'⏩ Speedup Train/Promote (menit)'},
   {f:'gath',k:['gath'],lbl:'🌾 Task gather selesai'},
 ];
+/* ── Tabel poin KvK & Strongest Governor ─────────────────────────────────
+   Sumber: kingshotguide.org (ditarik 30 Jul 2026) — "Kingshot KvK Event: Kingdom of Power"
+   & "Ultimate Kingshot Strongest Governor Guide: Stages, Points & Rewards"; nilai kunci
+   (Truegold 2.000 · Intel Mission 6.000 · Roulette 8.000 · shard 350/1.220/3.040 · Taming
+   Mark 15.000/1.150 · Forgehammer 4.000 · Widget 8.000) dikuatkan transkrip video panduan KvK.
+   SKALANYA JAUH BEDA dari HoG — di sini troop cuma 1-60 poin/unit dan charm 36-70 per score,
+   sementara di HoG troop 90-1.960 dan charm 1.000. Jangan pernah memakai satu tabel untuk
+   dua event; itu sumber kesalahan terbesar kalau tabelnya digabung.
+   Bentuk baris: [label, poin, satuan]. */
+const _TR_SG=[1,2,3,5,7,11,16,23,30,39], _TR_KVK=[3,4,5,8,12,18,25,35,45,60];
+const _trRows=arr=>arr.map((p,i)=>['⚔️ Latih troop Lv'+(i+1),p,'troop']);
+const _SPD=n=>[['⏩ Speedup Construction',n,'menit'],['⏩ Speedup Research',n,'menit'],['⏩ Speedup Train/Promote',n,'menit']];
+const EV_POIN={
+  kvk:{nama:'Kingdom of Power (KvK)',fase:'fase Preparation (5 hari) — hanya fase ini yang berpoin',
+    sumber:'kingshotguide.org, 30 Jul 2026',
+    stages:[
+      ['D1 City Construction',[['💎 Truegold (upgrade bangunan)',2000,'truegold'],['🕵️ Intel Mission selesai',6000,'misi'],
+        ['💠 Governor Charm +1 max score',70,'score']].concat(_SPD(30))],
+      ['D2 Basic Skills Up',[['🎰 Hero Roulette',8000,'spin'],['🦸 Mythic Hero Shard',3040,'shard'],
+        ['🦸 Epic Hero Shard',1220,'shard'],['🦸 Rare Hero Shard',350,'shard'],
+        ['💎 Truegold (upgrade bangunan)',2000,'truegold'],['🌾 Gather (1.000 bread/wood · 200 stone · 50 iron)',2,'task']].concat(_SPD(30))],
+      ['D3 Pet Training',[['🐾 Advanced Taming Mark',15000,'mark'],['🎰 Hero Roulette',8000,'spin'],
+        ['🕵️ Intel Mission selesai',6000,'misi'],['🦸 Mythic Hero Shard',3040,'shard'],['🦸 Epic Hero Shard',1220,'shard'],
+        ['🐾 Common Taming Mark',1150,'mark'],['🦸 Rare Hero Shard',350,'shard'],
+        ['💠 Governor Charm +1 max score',70,'score'],['🐾 Pet advancement +1 score',50,'score']]],
+      ['D4 Hero Development',[['⛏️ Mithril',40000,'mithril'],['🔨 Widget Hero Exclusive Gear',8000,'widget'],
+        ['🔨 Forgehammer',4000,'hammer'],['💠 Governor Charm +1 max score',70,'score'],
+        ['🌾 Gather (1.000 bread/wood · 200 stone · 50 iron)',2,'task']].concat(_trRows(_TR_KVK))],
+      ['D5 Power Boost',[['⛏️ Mithril',40000,'mithril'],['🐾 Advanced Taming Mark',15000,'mark'],
+        ['🔨 Widget Hero Exclusive Gear',8000,'widget'],['🕵️ Intel Mission selesai',6000,'misi'],
+        ['🔨 Forgehammer',4000,'hammer'],['💎 Truegold (upgrade bangunan)',2000,'truegold'],
+        ['🐾 Common Taming Mark',1150,'mark'],['🐾 Pet advancement +1 score',50,'score'],
+        ['🛡️ Governor Gear +1 max score',36,'score'],
+        ['🌾 Gather (1.000 bread/wood · 200 stone · 50 iron)',2,'task']].concat(_SPD(30))]]},
+  sg:{nama:'Strongest Governor',fase:'7 hari · bulanan · lintas 6 kingdom',
+    sumber:'kingshotguide.org, 30 Jul 2026',
+    stages:[
+      ['D1 City Construction',[['💎 Truegold (upgrade bangunan)',2000,'truegold'],
+        ['💠 Governor Charm +1 max score',70,'score']].concat(_SPD(30))],
+      ['D2 Hero Development',[['⛏️ Mithril',40000,'mithril'],['🔨 Widget Hero Exclusive Gear',8000,'widget'],
+        ['🎰 Hero Roulette',8000,'spin'],['🔨 Forgehammer',4000,'hammer'],['🦸 Mythic Hero Shard',3040,'shard'],
+        ['💎 Truegold (upgrade bangunan)',2000,'truegold'],['🦸 Epic Hero Shard',1220,'shard'],
+        ['🦸 Rare Hero Shard',350,'shard']].concat(_SPD(30))],
+      ['D3 Basic Skills Up',[['🐾 Advanced Taming Mark',15000,'mark'],['🎰 Hero Roulette',8000,'spin'],
+        ['🦸 Mythic Hero Shard',3040,'shard'],['🦸 Epic Hero Shard',1220,'shard'],['🐾 Common Taming Mark',1150,'mark'],
+        ['🦸 Rare Hero Shard',350,'shard'],['💠 Governor Charm +1 max score',70,'score'],
+        ['🐾 Pet advancement +1 score',50,'score']]],
+      ['D4 Combat Training',[['⛏️ Mithril',40000,'mithril'],['🔨 Widget Hero Exclusive Gear',8000,'widget'],
+        ['🔨 Forgehammer',4000,'hammer'],['💠 Governor Charm +1 max score',70,'score']].concat(_trRows(_TR_SG))],
+      ['D5 Basic Skills Up',[['⛏️ Mithril',40000,'mithril'],['🔨 Widget Hero Exclusive Gear',8000,'widget'],
+        ['🔨 Forgehammer',4000,'hammer'],['💎 Truegold (upgrade bangunan)',2000,'truegold']].concat(_SPD(30))],
+      ['D6 Combat Training',[['💠 Governor Charm +1 max score',36,'score']].concat(_trRows(_TR_SG))],
+      ['D7 Hero Development',[['🐾 Advanced Taming Mark',15000,'mark'],['🦸 Mythic Hero Shard',3040,'shard'],
+        ['💎 Truegold (upgrade bangunan)',2000,'truegold'],['🦸 Epic Hero Shard',1220,'shard'],
+        ['🐾 Common Taming Mark',1150,'mark'],['🦸 Rare Hero Shard',350,'shard'],
+        ['🐾 Pet advancement +1 score',50,'score'],['💠 Governor Charm +1 max score',36,'score'],
+        ['🌾 Gather (2.500 bread/wood · 500 stone · 100 iron)',3,'task']].concat(_SPD(30))]]},
+};
+
 /* ── Event yang MEMAKAN stamina ──────────────────────────────────────────
    Dipakai untuk mendeteksi otomatis "stamina hari ini terbayar ke mana saja". `id` HARUS
    id kanonik yang dipakai evUpcoming() (titleKey feed atau tipe event umur), supaya

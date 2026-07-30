@@ -65,7 +65,9 @@
       '📌 Day $1 = HoG #$2 anchor, outside the documented rotation (#1-#5, which ends because the KvK era begins). This is new in-game evidence.'],
     /* kalkulator poin (angka disisipkan → tak bisa dicocokkan penuh) */
     [/^([\d.]+) poin\/troop$/g, '$1 pts/troop'],
-    [/^([\d.]+)\/(spin|shard|widget|hammer|power|score|troop|task|beast|rally|menit|100 XP)$/g, '$1/$2'],
+    [/^([\d.]+)\/menit$/g, '$1/min'],
+    [/^([\d.]+)\/(spin|shard|widget|hammer|power|score|troop|task|beast|rally|100 XP|truegold|mithril|mark)$/g, '$1/$2'],
+    [/^([\d.]+)\/misi$/g, '$1/mission'],
     [/^proyeksi ([\d.]+)$/g, 'projected $1'],
     [/^Kurang ([\d.]+) poin\.$/g, 'Short by $1 pts.'],
     [/^✅ Target ([\d.]+) terlampaui — lebih ([\d.]+) poin\.$/g, '✅ Target $1 passed — $2 points to spare.'],

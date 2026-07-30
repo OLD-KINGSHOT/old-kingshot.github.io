@@ -14,7 +14,7 @@ const PROFILE_KEYS=new Set(['profile','roster','trackProg','buildDone','codesDon
   'islandMarks','islandSeedV','daily','events','notifFlags','evLog','tcOwned','tcBuffs',
   /* rencana poin HoG: gudang itu milik AKUN, bukan kingdom — dua akun di kingdom yang
      sama punya stok berbeda, jadi scoping-nya harus per-profil seperti key lain di sini. */
-  'hogPlan']);
+  'hogPlan','evPlan']);
 function _ksActivePid(){ try{ return JSON.parse(localStorage.getItem('ks_activePid'))||''; }catch(e){ return ''; } }
 function _ksRealKey(k){ return PROFILE_KEYS.has(k) ? ('p_'+_ksActivePid()+'_'+k) : k; }
 const store={
@@ -922,14 +922,33 @@ function predictedEvents(start,age){
     kvkRow={type:'kvk',day:kvk,date:addDaysISO(start,kvk),conf:'sedang',elig:true};
   }
   out.push(kvkRow);
-  /* Strongest Governor = kompetitif berbasis UMUR (gate H75, siklus 28 hari) — sama
-     modelnya dgn KvK/HoG & dgn kalender. Tanpa ini SG jatuh ke feed rotasi GLOBAL →
-     tanggal sama utk semua server (salah lintas-kingdom). */
-  let sg=age<75?75:75+Math.floor((age-75)/28)*28;
+  /* Strongest Governor = event BULANAN lintas-kingdom (6 kingdom), mulai MINGGU PERTAMA
+     tiap bulan — kingshotwiki, kingshotguide.org, kingshotguide.com, kingshotmastery, dan
+     heaven-guardian semuanya sepakat (riset 30 Jul 2026). Model lama "H75 + siklus 28 hari"
+     salah dua kali: 28 hari BUKAN sebulan (meleset ~2,4 hari tiap bulan lalu menumpuk), dan
+     jadwalnya memang TIDAK per-kingdom. Umur kingdom cuma GERBANG eligibility (Age of
+     Truegold ~H70-75). Tanggal pastinya tetap dari feed live; ini cadangan yang jujur
+     menyebut dirinya perkiraan (conf 'sedang'). */
   const slen=(EVENT_TEMPLATES.sg&&EVENT_TEMPLATES.sg.len)||7;
-  if(age>=sg+slen) sg+=28;
-  out.push({type:'sg',day:sg,date:addDaysISO(start,sg),conf:'sedang'});
+  const _sg=sgNextOccurrence(start,age,(EVENT_TEMPLATES.sg&&EVENT_TEMPLATES.sg.minDay)||75,slen);
+  if(_sg) out.push({type:'sg',day:_sg.day,date:_sg.date,conf:'sedang'});
   return out;
+}
+/* Kejadian SG berikutnya: tanggal 1 bulan yang masih relevan dan kingdom sudah cukup umur.
+   "Minggu pertama" dipakai apa adanya sebagai tanggal 1 — bukan mengarang tanggal pasti,
+   dan itulah kenapa keyakinannya 'sedang', bukan 'tinggi'. */
+function sgNextOccurrence(start,age,gate,len){
+  if(!start||age==null) return null;
+  const hariIni=new Date(start.getTime()+(age-1)*86400000);
+  const y=hariIni.getUTCFullYear(), m=hariIni.getUTCMonth();
+  for(let i=0;i<24;i++){
+    const d1=new Date(Date.UTC(y,m+i,1));
+    const day=daysBetween(start,d1)+1;
+    if(day+len-1<age) continue;      /* bulan itu sudah lewat */
+    if(day<gate) continue;           /* kingdom belum cukup umur saat itu */
+    return {day:day,date:d1.toISOString().slice(0,10)};
+  }
+  return null;
 }
 /* HoG durasi & tema per-ITERASI (bukan template len=7) — biar advisory & kalender akurat lintas-server */
 function hogAdvOccurrence(start, pfStart){
@@ -1177,6 +1196,35 @@ function hogGapEquiv(sisa,idx){
     return {lbl:r.lbl,unit:r.unit,butuh:Math.ceil(gap/r.pts),pts:r.pts};
   });
   return {gap:gap,setara:setara};
+}
+
+/* ── Kalkulator poin generik (KvK & Strongest Governor) ──────────────────
+   Bentuk datanya beda dari HoG (EV_POIN di 04: stage → baris [label, poin, satuan]), dan
+   itu DISENGAJA: skala poin kedua event ini jauh berbeda dari HoG, jadi menyatukan tabelnya
+   justru mengundang salah hitung. Yang disatukan cuma mesinnya. */
+function evPoinStages(evKey){ var e=(typeof EV_POIN!=='undefined')&&EV_POIN[evKey]; return (e&&e.stages)||[]; }
+function evStagePoin(evKey,si,input){
+  var st=evPoinStages(evKey)[si]; if(!st) return {pts:0,baris:[]};
+  var rows=st[1]||[], inp=input||{}, tot=0, baris=[];
+  rows.forEach(function(r,ri){ var q=numIn(inp[ri]); if(!q) return;
+    var p=q*r[1]; tot+=p; baris.push({lbl:r[0],qty:q,pts:p,unit:r[2]}); });
+  return {pts:tot,baris:baris};
+}
+function evTotalPoin(evKey,simpan){
+  var s=simpan||{}, tot=0, per=[];
+  evPoinStages(evKey).forEach(function(st,si){ var r=evStagePoin(evKey,si,s[si]); tot+=r.pts; per.push({nama:st[0],pts:r.pts}); });
+  return {total:tot,per:per};
+}
+/* Baris paling berharga di satu event — dipakai untuk "simpan barang ini untuk stage mana". */
+function evPoinRoi(evKey){
+  var out=[];
+  evPoinStages(evKey).forEach(function(st,si){ (st[1]||[]).forEach(function(r){
+    out.push({stage:st[0],si:si,lbl:r[0],pts:r[1],unit:r[2]}); }); });
+  return out.sort(function(a,b){ return b.pts-a.pts; });
+}
+function evPlanGet(evKey){ try{ return (store.get('evPlan',{})||{})[evKey]||{}; }catch(e){ return {}; } }
+function evPlanSet(evKey,obj){
+  try{ var all=store.get('evPlan',{})||{}; all[evKey]=obj; store.set('evPlan',all); return true; }catch(e){ return false; }
 }
 
 /* ── Deteksi otomatis: stamina hari ini terbayar ke event apa saja ────────

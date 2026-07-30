@@ -247,7 +247,8 @@ function renderEvent(){
        <h3>Hitung mundur</h3>${KVK_PREP.stockpile.map(s=>`<div class="check note"><div class="d" style="color:var(--fg)">${esc(s)}</div></div>`).join('')}
        <div class="alert warn small">\ud83d\udc3a ${esc(KVK_PREP.buffs)}</div>
        <h3>Spend per hari</h3><div class="scrollx"><table><thead><tr><th>Hari</th><th>Fokus skor</th></tr></thead><tbody>${KVK_PREP.days.map(([d,f])=>`<tr><td><b>${esc(d)}</b></td><td class="small">${esc(f)}</td></tr>`).join('')}</tbody></table></div>
-       <div class="alert inf small">\ud83c\udfe5 ${esc(KVK_PREP.revive)}</div>`),
+       <div class="alert inf small">\ud83c\udfe5 ${esc(KVK_PREP.revive)}</div>`)
+      +evCalcHTML(),
     roi: card('Nilai Item & Speedup (ROI)','\u25c6',roi+'<h3>Pakai / Tahan / Bebas</h3>'+itemGuide)
       +dtFarmHTML(),
     ency: card('Ensiklopedia Event','\u25a4',`<p class="muted small">Cara main F2P tiap event. Jadwal = perkiraan; tab Events di game = acuan final.</p>${ency}`),
@@ -292,6 +293,7 @@ function renderEvent(){
         cc.innerHTML=hogCalcBody(i); hogCalcWire(el,i); };
       const draw=i=>{ c.innerHTML=hogStageTbl(i,actStage(i)); drawCalc(i); $$('.hibtn',el).forEach(b=>b.classList.toggle('active',+b.dataset.hi===i)); if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); }; $$('.hibtn',el).forEach(b=>b.onclick=()=>draw(+b.dataset.hi)); draw(hogCurIdx(age)); } }
     if(k==='roi') dtFarmWire(el);
+    if(k==='kvk'){ const b=$('#evcalc',el); if(b){ b.innerHTML=evCalcBody(); evCalcWire(el); } }
     if(k==='adv'&&age!=null){
       const add=$('#sch_add',el); if(add) add.onclick=()=>{ const date=$('#sch_date').value; if(!date){$('#sch_date').focus();return;} const arr=store.get('events',[]); const ty=$('#sch_type').value; const i=arr.findIndex(x=>x.type===ty); if(i>=0)arr[i]={type:ty,date}; else arr.push({type:ty,date}); store.set('events',arr); renderEvent(); };
       $$('.del',el).forEach(b=>b.onclick=()=>{ const arr=store.get('events',[]); arr.splice(+b.dataset.idx,1); store.set('events',arr); renderEvent(); });
@@ -448,6 +450,58 @@ function hogStageTbl(idx,activeStage){
     + '<div style="margin-top:8px">'+rows+'</div>'
     + '<div class="alert inf small" style="margin-top:6px">'+esc(it.note)+'</div>';
 }
+/* ── Kalkulator poin KvK & Strongest Governor ─────────────────────────────
+   Terpisah dari kalkulator HoG dan memang harus begitu: skala poinnya jauh berbeda
+   (troop 1-60 di sini vs 90-1.960 di HoG; charm 36-70 vs 1.000). Menyatukan tabelnya
+   akan membuat satu event menghitung dengan angka event lain. */
+var _evCalcKey='kvk', _evCalcStage=0;
+function evCalcHTML(){
+  if(typeof EV_POIN==='undefined') return '';
+  var e=EV_POIN[_evCalcKey]; if(!e) return '';
+  var pilihEv=['kvk','sg'].map(function(k){
+    return '<button class="btn ghost sm evkbtn'+(k===_evCalcKey?' active':'')+'" data-evk="'+k+'">'+esc(EV_POIN[k].nama)+'</button>'; }).join(' ');
+  return card('Kalkulator Poin — KvK & Strongest Governor','🧮',
+    '<p class="muted small">Tabel poin KvK & SG BERBEDA JAUH dari HoG: di sini troop cuma 1-60 poin/unit dan charm 36-70 per score, sementara di HoG troop 90-1.960 dan charm 1.000. Karena itu kalkulatornya dipisah — biar tak ada event yang dihitung memakai angka event lain.</p>'
+    +'<div class="seg" style="margin:8px 0">'+pilihEv+'</div><div id="evcalc"></div>');
+}
+function evCalcBody(){
+  var e=EV_POIN[_evCalcKey]; if(!e) return '';
+  var stages=e.stages||[]; if(_evCalcStage>=stages.length) _evCalcStage=0;
+  var simpan=evPlanGet(_evCalcKey), inp=simpan[_evCalcStage]||{};
+  var st=stages[_evCalcStage];
+  var pilih='<div class="seg" style="margin-bottom:8px">'+stages.map(function(s,i){
+    return '<button class="btn ghost sm evsbtn'+(i===_evCalcStage?' active':'')+'" data-evs="'+i+'" title="'+esc(s[0])+'">D'+(i+1)+'</button>'; }).join(' ')+'</div>';
+  var form=(st[1]||[]).map(function(r,ri){
+    return '<label class="calcf"><span>'+esc(r[0])+' <span class="muted small">'+fmt(r[1])+'/'+esc(r[2])+'</span></span>'
+      +_hcInp('data-evr="'+ri+'"',inp[ri])+'</label>'; }).join('');
+  var sub=evStagePoin(_evCalcKey,_evCalcStage,inp), tot=evTotalPoin(_evCalcKey,simpan);
+  var perStage=tot.per.map(function(p,i){
+    return '<tr><td class="small">'+esc(p.nama)+'</td><td class="num">'+fmt(p.pts)+'</td></tr>'; }).join('');
+  return '<div class="muted small">'+esc(e.fase)+' · <span class="dim">sumber: '+esc(e.sumber)+'</span></div>'
+    +pilih+'<div class="lbl">'+esc(st[0])+'</div><div class="tcbuff">'+form+'</div>'
+    +'<div class="kv" style="margin-top:8px"><span>Subtotal hari ini</span><b>'+fmt(sub.pts)+'</b></div>'
+    +'<div class="scrollx" style="margin-top:8px"><table><thead><tr><th>Hari</th><th>Poin</th></tr></thead><tbody>'
+    +perStage+'<tr><td><b>TOTAL EVENT</b></td><td class="num"><b>'+fmt(tot.total)+'</b></td></tr></tbody></table></div>'
+    +'<details style="margin-top:8px"><summary>💹 Aksi paling berharga di event ini</summary><div class="dt"><div class="scrollx">'
+    +'<table><thead><tr><th>Aksi</th><th>Poin</th><th>Hari</th></tr></thead><tbody>'
+    +evPoinRoi(_evCalcKey).slice(0,12).map(function(r){
+      return '<tr><td class="small">'+esc(r.lbl)+'</td><td class="num">'+fmt(r.pts)+'</td><td class="small muted">'+esc(r.stage)+'</td></tr>'; }).join('')
+    +'</tbody></table></div></div></details>';
+}
+function evCalcWire(el){
+  var box=$('#evcalc',el); if(!box) return;
+  var ulang=function(){ box.innerHTML=evCalcBody(); evCalcWire(el);
+    if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
+  $$('.evkbtn',el).forEach(function(b){ b.onclick=function(){ _evCalcKey=b.dataset.evk; _evCalcStage=0;
+    $$('.evkbtn',el).forEach(function(x){ x.classList.toggle('active',x===b); }); ulang(); }; });
+  $$('.evsbtn',box).forEach(function(b){ b.onclick=function(){ _evCalcStage=+b.dataset.evs; ulang(); }; });
+  $$('[data-evr]',box).forEach(function(i){ i.oninput=function(){
+    var s=evPlanGet(_evCalcKey); s[_evCalcStage]=s[_evCalcStage]||{};
+    s[_evCalcStage][i.dataset.evr]=numIn(i.value); evPlanSet(_evCalcKey,s);
+    var sub=evStagePoin(_evCalcKey,_evCalcStage,s[_evCalcStage]), kv=$('.kv b',box);
+    if(kv) kv.textContent=fmt(sub.pts); else ulang(); }; });
+}
+
 /* ── Perkiraan farming stamina (Desert Trial) ─────────────────────────────
    Ditaruh di sub-tab Item & ROI, bukan HoG: Desert Trial event tersendiri. Angka gem &
    speedup adalah NILAI HARAPAN dari peluang resmi isi Challenger Pouch (DT_FARM di 04) —
@@ -1140,10 +1194,26 @@ function renderKalender(){
   if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate();
 }
 /* ===== Tab Castle Battle — riset + simulasi posisi ===== */
-/* Castle Battle biweekly (Sabtu) — siklus 14 hari, BUKAN 18. Harus kelipatan 7
-   supaya tetap jatuh di hari yang sama; 18 menggeser hari tiap iterasi (salah).
-   Silang-cek kingshotmastery + kingshot.net (24 Jul 2026). */
-function nextCastleDay(age){ if(age==null) return 54; if(age<54) return 54; return 54+Math.ceil((age-54+0.0001)/14)*14; }
+/* Castle Battle SELALU hari SABTU — kingshotwiki: "The first Castle Battle in a new kingdom
+   takes place within the first 54 days. After that, the event occurs biweekly on Saturday."
+   Model lama memakai hari-54 telanjang, dan itu jatuh MINGGU untuk Kingdom 2114 & SENIN untuk
+   2184 — tak pernah Sabtu. Persis bug jangkar HoG yang diperbaiki di b84aa3d, terulang di sini.
+   Klaim "tiap 18 hari" (kingshotguide.org, dan dulu ikut tertulis di kartu ini) DITOLAK: event
+   yang selalu Sabtu mustahil bersiklus 18 hari — 18 bukan kelipatan 7, jadi harinya akan
+   bergeser tiap iterasi. Sumber lain (kingshotwiki, kingshotguides) menyebut biweekly/2 minggu.
+   Riset 30 Jul 2026. */
+function castleFirstDay(startISO){
+  var s=startISO||_hogProfStart(); if(!s) return 54;
+  var d=new Date(s+'T00:00:00Z'); if(isNaN(d)) return 54;
+  /* hari-54 lalu MUNDUR ke Sabtu terdekat → "dalam 54 hari pertama", dan tetap Sabtu */
+  var dow54=new Date(d.getTime()+53*86400000).getUTCDay();   /* 0=Min … 6=Sab */
+  return 54-((dow54+1)%7);
+}
+function nextCastleDay(age,startISO){
+  var f=castleFirstDay(startISO);
+  if(age==null||age<f) return f;
+  return f+Math.ceil((age-f+0.0001)/14)*14;
+}
 /* Hero Castle Battle per generasi (sumber: kingshotwiki). Attack = pecah/serang; Garrison = tahan.
    Gen 1-2 belum punya hero meta (Petra/Eric/Jaeger dst) → pakai yang ada + saran F2P. */
 const CB_ATK={1:'Jabel (lead) · Amadeus (bila VIP) · Quinn',2:'Amadeus · Zoe · Marlin',3:'Amadeus · Petra · Marlin',4:'Amadeus · Petra · Rosa',5:'Amadeus · Petra/Thrud · Rosa',6:'Amadeus/Triton · Petra/Thrud · Yang',7:'Amadeus/Triton/Charles · Ava · Wee&Woo'};
@@ -1205,7 +1275,7 @@ function renderCastle(){
       `<div class="stats"><div class="stat acc"><div class="sl">${L?'Next Castle Battle':'Castle Battle berikutnya'}</div><div class="sv sm">${left<=0?(L?'≈ today':'≈ hari ini'):'~'+left+(L?' days':' hari')}</div></div>
         <div class="stat"><div class="sl">${L?'Estimated date':'Perkiraan tanggal'}</div><div class="sv sm">${addDaysFmt(start,nd)}</div></div>
         <div class="stat"><div class="sl">${L?'Server age':'Umur server'}</div><div class="sv">${L?'D':'H'}${age}</div></div></div>
-       <div class="muted small">${L?"First ~day 54, then ~every 18 days (biweekly, often Saturday). Exact timer: zoom the world map → tap the King's Castle. May be Standard or KvK Castle Battle.":"Pertama ~hari 54, lalu ~tiap 18 hari (biweekly, sering Sabtu). Timer pasti: zoom peta dunia → tap King's Castle. Format bisa Standard atau KvK Castle Battle."}</div>`,null,true);
+       <div class="muted small">${L?"First one within the first 54 days, then every 14 days — always a SATURDAY (kingshotwiki). Other guides quote a longer gap, but that cannot be right: it is not a multiple of 7, so the weekday would drift. Exact timer: zoom the world map → tap the King's Castle. May be Standard or KvK Castle Battle.":"Yang pertama dalam 54 hari pertama, lalu tiap 14 hari — selalu hari SABTU (kingshotwiki). Guide lain menyebut jarak yang lebih panjang, tapi itu tak mungkin benar: angkanya bukan kelipatan 7, jadi harinya akan bergeser terus. Timer pasti: zoom peta dunia → tap King's Castle. Format bisa Standard atau KvK Castle Battle."}</div>`,null,true);
   } else cdCard='<div class="alert inf small">'+(L?'Connect your Player ID (Profile tab) for the Castle Battle countdown.':'Hubungkan Player ID (tab Profil) untuk hitung mundur Castle Battle.')+'</div>';
   const mapCard=card(L?'Map & Position Simulator':'Simulasi Peta & Posisi','🗺',
     `<p class="muted small">${L?'5 structures: <b>Castle</b> (center) + <b>4 turrets</b>. Each turret held by the <b>enemy</b> = <b>−2%</b> troops/cycle to the castle holder (max −8%). Tap a turret to simulate (enemy → you → contested).':'5 struktur: <b>Castle</b> (tengah) + <b>4 turret</b>. Tiap turret yang dipegang <b>musuh</b> = <b>−2%</b> pasukan/siklus ke penahan castle (maks −8%). Ketuk turret untuk simulasi (musuh → kamu → rebutan).'}</p>
