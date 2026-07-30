@@ -441,6 +441,26 @@ const HOG_GUDANG=[
   {f:'spT',k:['spT'],lbl:'⏩ Speedup Train/Promote (menit)'},
   {f:'gath',k:['gath'],lbl:'🌾 Task gather selesai'},
 ];
+/* ── Event yang MEMAKAN stamina ──────────────────────────────────────────
+   Dipakai untuk mendeteksi otomatis "stamina hari ini terbayar ke mana saja". `id` HARUS
+   id kanonik yang dipakai evUpcoming() (titleKey feed atau tipe event umur), supaya
+   deteksinya memakai daftar aktif yang sama dengan tab Sekarang — bukan daftar kedua.
+   `poinPerHunt` diisi HANYA kalau angkanya terverifikasi; null berarti app menghitung
+   jumlah hunt saja dan berkata terus terang bahwa poinnya tak dipublikasikan. */
+const STAMINA_EVENTS=[
+  {id:'desertTrial',id2:'Desert Trial',nama:'Desert Trial',model:'dt',poinPerHunt:null,
+   hasil:'Clawshard & Challenger Pouch → gem, speedup, Hero XP; claw → rally Dreadwolf → shard Diana'},
+  {id:'hog',nama:'HoG — stage Beast Slay',model:'hog',stage:'Beast Slay',poinPerHunt:30000,
+   hasil:'30.000 poin/beast · Rally Terror 90.000 (hanya HoG #1)'},
+  {id:'defeatBeasts',nama:'Defeat Nearby Beasts',model:'hunt',poinPerHunt:null,
+   hasil:'poin event per beast — besaran poinnya tak pernah dipublikasikan'},
+  {id:'beastWhisperer',nama:'Beast Whisperer',model:'hunt',poinPerHunt:null,
+   hasil:'material & Hero EXP dari beast'},
+  {id:'cesaresFury',nama:'Cesare’s Fury',model:'rebel',poinPerHunt:null,
+   hasil:'shard Mythic + gem + speedup',
+   catatan:'ongkosnya beda: scout 15 · solo 10 · rally 25 stamina (hemat ~2 dengan Diana) — tidak ikut hitungan hunt'},
+];
+
 /* ── Desert Trial: farming stamina → hasil ──
    Terverifikasi 30 Jul 2026: kingshot.fandom.com + byewiki.com (drop 50/50), kingshotwiki.com
    (isi pouch, 15% stamina), heaven-guardian.com (rally 25 → 20 stamina dengan Diana maks,

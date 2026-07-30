@@ -70,11 +70,17 @@ t('hogNoForDay (umur berjalan) TIDAK ikut berubah — tetap pembulatan ke bawah'
 
 /* ── C. deteksi kingdom dari tanggal HoG ── */
 
-t('kingdomsForHogDate: 13 Jul 2026 = D1 HoG #4 Kingdom 2114', () => {
+/* KOREKSI 30 Jul: baris terakhir test ini dulu menuntut 2184 TIDAK cocok — itu
+   mengabadikan bug, dan bertentangan dengan catatan di bawahnya sendiri. 13 Jul 2026
+   adalah D1 HoG sungguhan untuk KEDUA kingdom (2114 hari 48 = #4, 2184 hari 33 = #3),
+   dua-duanya terverifikasi in-game. Assertion lama hanya lolos karena hogAnchorFit
+   memakai jangkar profil aktif untuk menilai kingdom lain, sehingga 2184 tak pernah
+   terlihat. Lihat test_22_timeline_konsisten.js. */
+t('kingdomsForHogDate: 13 Jul 2026 = D1 HoG untuk 2114 (#4) DAN 2184 (#3)', () => {
   const f = e14.evalIn('kingdomsForHogDate');
   const hit = f('2026-07-13');
   ok(hit.some(h => h.kid === '2114' && h.no === 4), 'harusnya terdeteksi 2114 #4');
-  ok(!hit.some(h => h.kid === '2184'), '2184 tidak boleh cocok (jatuh di H33)');
+  ok(hit.some(h => h.kid === '2184' && h.no === 3), 'harusnya terdeteksi 2184 #3 (hari 33)');
 });
 
 /* KOREKSI 26 Jul: test ini dulu memakai 13 Jul 2026 sebagai contoh "tak cocok

@@ -283,9 +283,9 @@ function renderEvent(){
       if(q){ q.oninput=doFilter; } doFilter(); }
     if(k==='hog'){ const c=$('#hog_st',el); if(c){
       /* stage yang sedang berjalan = hari ke-berapa dari iterasi ini (kalau memang jalan) */
+      /* satu aturan "hari ini stage apa" — dipakai bersama deteksi stamina (hogStageNow) */
       const actStage=i=>{ if(age==null||i!==hogCurIdx(age)) return null;
-        const no=hogNoForDay(age), di=age-hogStartDay(no);
-        return (di>=0&&di<hogLen(no))?di:null; };
+        const st=hogStageNow(age); return st?st.idx:null; };
       /* satu iterasi terpilih menggerakkan DUA kartu: tabel stage & kalkulator — kalau
          kalkulator tidak ikut, pengguna merencanakan iterasi yang tidak sedang dilihat. */
       const drawCalc=i=>{ const cc=$('#hogcalc',el); if(!cc) return;
@@ -340,13 +340,25 @@ function hogStartDay(no,startISO){ return hogFirstDay(startISO)+(no-1)*14; }
 /* Dipindai sampai HOG_ANCHOR_SCAN (>cap), supaya HoG nyata di H76 tidak dituduh "bukan jangkar
    kingdom ini". Yang di luar cap ditandai beyondCap — jadi app tetap jujur menyebutnya di luar
    rotasi terdokumentasi, bukan diam-diam menganggapnya normal. */
-function hogAnchorFit(day){
+/* startISO WAJIB diteruskan kalau `day` dihitung dari kingdom LAIN. Tanpa itu fungsi ini
+   diam-diam memakai tanggal buka profil aktif — dan karena jangkar bergantung pada hari
+   apa kingdom itu buka (2114 hari-6, 2184 hari-5), hari milik kingdom lain dinilai dengan
+   kisi yang salah. Itulah yang membuat kingdomsForHogDate dulu tak pernah bisa menyebut
+   kingdom lain, padahal justru itu gunanya. */
+function hogAnchorFit(day,startISO){
   var best=null, scan=(typeof HOG_ANCHOR_SCAN!=='undefined')?HOG_ANCHOR_SCAN:HOG_LAST_NO;
-  for(var no=1;no<=scan;no++){ var off=day-hogStartDay(no);
+  for(var no=1;no<=scan;no++){ var off=day-hogStartDay(no,startISO);
     if(!best||Math.abs(off)<Math.abs(best.off)) best={no:no,off:off}; }
   return {no:best.no,off:best.off,fits:best.off===0,beyondCap:!hogExists(best.no)};
 }
-function hogNoForStart(day){ return hogAnchorFit(day).no; }
+function hogNoForStart(day,startISO){ return hogAnchorFit(day,startISO).no; }
+/* Tanggal mulai iterasi dalam milidetik UTC. SATU-SATUNYA cara tampilan boleh mendapat
+   tanggal jangkar — jam-atas dulu menyalin rumus lama `6+(no-1)*14` dan jadi meleset
+   sehari untuk kingdom yang HoG-nya tidak mulai hari ke-6. */
+function hogStartUTC(startDate,no,startISO){
+  var s=(startDate instanceof Date)?startDate.getTime():Date.parse(startDate);
+  return s+(hogStartDay(no,startISO)-1)*86400000;
+}
 /* Umur tiap kingdom beda → tanggal HoG yang sama tidak berlaku lintas kingdom.
    Dipakai untuk mendeteksi "tanggal ini sebenarnya milik kingdom mana". */
 function kingdomsForHogDate(dateISO){
@@ -355,7 +367,7 @@ function kingdomsForHogDate(dateISO){
   Object.keys(KINGDOM_DATES).forEach(function(kid){
     var s=KINGDOM_DATES[kid]; if(!s) return;
     var day=daysBetween(new Date(s+'T00:00:00Z'),d)+1;
-    var fit=hogAnchorFit(day);
+    var fit=hogAnchorFit(day,s);   /* jangkar kingdom ITU, bukan profil aktif */
     if(fit.fits&&hogExists(fit.no)) out.push({kid:String(kid),no:fit.no,day:day});
   });
   return out;
@@ -375,6 +387,16 @@ const HOG_LAST_NO=5;
    meramal). Tanpa ini, HoG nyata di H76 akan dituduh "bukan jangkar kingdom ini". */
 const HOG_ANCHOR_SCAN=8;
 function hogExists(no){ return no>=1&&no<=HOG_LAST_NO; }
+/* Stage HoG yang SEDANG berjalan hari ini (atau null). Dulu aturan ini ditulis inline di
+   showSub; sekarang satu fungsi, supaya deteksi stamina & tabel stage tak bisa berbeda
+   pendapat soal "hari ini stage apa". */
+function hogStageNow(age,startISO){
+  if(age==null||typeof HOG_DETAIL==='undefined') return null;
+  var no=hogNoForDay(age,startISO), di=age-hogStartDay(no,startISO);
+  if(!hogExists(no)||di<0||di>=hogLen(no)) return null;
+  var it=HOG_DETAIL.iters[hogIdxForNo(no)]; if(!it||!it.stages[di]) return null;
+  return {no:no,idx:di,nama:it.stages[di][0],base:it.stages[di][0].replace(/^\d+\s*·\s*/,'')};
+}
 function hogCurIdx(age){
   if(age==null) return 3;
   if(age<6) return 0;
@@ -440,7 +462,6 @@ function dtFarmHTML(){
     +'<label class="calcf"><span>Rally Dreadwolf yang mau dijalankan</span>'+_hcInp('data-df="rally"',s.rally)+'</label>'
     +'<label class="calcf"><span>Wilderness Rangers % <span class="muted small">potongan stamina</span></span>'+_hcInp('data-df="rangersPct"',s.rangersPct)+'</label>'
     +'<label class="calcf chk"><input data-dfc="diana" type="checkbox"'+(s.diana?' checked':'')+'> Bawa Diana (hunt −20%, rally 25→20)</label>'
-    +'<label class="calcf chk"><input data-dfc="beastPts" type="checkbox"'+(s.beastPts?' checked':'')+'> Hitung juga poin HoG (hanya kalau stage Beast Slay aktif — HoG #1)</label>'
     +'</div><div id="dtfarm_out">'+dtFarmOut(s)+'</div>');
 }
 function dtFarmOut(s){
@@ -457,11 +478,33 @@ function dtFarmOut(s){
     +'<tr><td class="small">Hero XP</td><td class="num">'+fmt(Math.round(f.heroXp))+'</td></tr>'
     +'<tr><td class="small">Stamina kembali <span class="muted small">15%/pouch</span></td><td class="num">'+fmt(Math.round(f.staminaBalik*10)/10)+'</td></tr>';
   if(f.rally) out+='<tr><td class="small">Rally Dreadwolf ('+fmt(f.staminaRally)+' stamina)</td><td class="num">'+fmt(f.rally)+' → '+fmt(f.dianaShard[0])+'-'+fmt(f.dianaShard[1])+' shard Diana</td></tr>';
-  if(f.hogBeastPts) out+='<tr><td class="small">Poin HoG dari beast</td><td class="num">'+fmt(f.hogBeastPts)+'</td></tr>';
   out+='</tbody></table></div>'
     +'<div class="muted small" style="margin-top:4px">Gem & speedup = nilai harapan (20% → 100 gem · 50% → 10-30 gem · pasti 5-10 mnt speedup + 1.000 Hero XP). Sekali jalan bisa lebih beruntung atau lebih sial.</div>';
   if(numIn(s.rally)>f.rally) out+='<div class="alert warn small" style="margin-top:6px">Stamina hanya cukup untuk '+fmt(f.rally)+' rally dari '+fmt(numIn(s.rally))+' yang diminta.</div>';
-  return out;
+  return out+dtEventRows(s);
+}
+/* Deteksi otomatis: beast yang sama dibayar oleh SETIAP event yang sedang berjalan, jadi
+   hasilnya dijumlah per event. Status diambil dari daftar aktif yang sama dengan tab
+   Sekarang, supaya tak ada dua pendapat soal "hari ini event apa". */
+function dtEventRows(s){
+  var P=(typeof staminaPlan==='function')?staminaPlan(s.stamina,s):null;
+  if(!P) return '';
+  var rows=P.baris.map(function(b){
+    var nilai;
+    if(!b.aktif) nilai='<span class="dim">'+esc(b.sebab)+'</span>';
+    else if(b.model==='dt') nilai='<b>'+fmt(Math.round(b.gem))+'</b> gem · <b>'+fmt(Math.round(b.speedupMnt))+'</b> mnt'
+      +(b.rally?' · '+fmt(b.dianaShard[0])+'-'+fmt(b.dianaShard[1])+' shard Diana':'');
+    else if(b.poin) nilai='<b>'+fmt(b.poin)+'</b> poin';
+    else nilai='<b>'+fmt(b.hunts)+'</b> hunt — <span class="dim">poinnya tak dipublikasikan</span>';
+    /* penanda status dipisah dari nama: kalau digabung, nama event jadi dua kunci
+       terjemahan berbeda (🟢 vs ⚪) dan salah satunya pasti terlewat. */
+    return '<tr><td class="small"><span>'+(b.aktif?'🟢':'⚪')+'</span> <span>'+esc(b.nama)+'</span><div class="muted small">'+esc(b.hasil)+'</div>'
+      +(b.catatan?'<div class="muted small">'+esc(b.catatan)+'</div>':'')+'</td><td class="num">'+nilai+'</td></tr>';
+  }).join('');
+  return '<div class="lbl" style="margin-top:12px">Stamina ini terbayar ke mana saja</div>'
+    +'<div class="scrollx"><table><tbody>'+rows+'</tbody></table></div>'
+    +(P.adaAktif?'':'<div class="alert inf small" style="margin-top:6px">Tak ada event pemakan stamina yang sedang berjalan menurut jadwalmu. Kalau jadwal live belum termuat, buka tab Event → Jadwal Live dulu.</div>')
+    +'<div class="muted small" style="margin-top:4px">Status diambil dari jadwal kingdommu sendiri (koreksi manualmu menang atas model umur, model umur menang atas feed global) — sama persis dengan tab Sekarang.</div>';
 }
 function dtFarmWire(el){
   var box=$('#dtfarm_out',el); if(!box) return;

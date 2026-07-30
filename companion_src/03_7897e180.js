@@ -1179,6 +1179,44 @@ function hogGapEquiv(sisa,idx){
   return {gap:gap,setara:setara};
 }
 
+/* ── Deteksi otomatis: stamina hari ini terbayar ke event apa saja ────────
+   Sumber "sedang berjalan" = evUpcoming(), daftar yang SAMA dipakai tab Sekarang (koreksi
+   manual > model umur > feed live). Tak ada daftar event kedua yang bisa menyimpang.
+   HoG punya syarat tambahan: hanya stage Beast Slay yang membayar beast. */
+function staminaEventsNow(){
+  if(typeof STAMINA_EVENTS==='undefined') return [];
+  var aktif={};
+  try{ (evUpcoming()||[]).forEach(function(x){ if(x&&x.active&&!x.locked) aktif[x.id]=x; }); }catch(e){}
+  var age=null; try{ age=profileAge().age; }catch(e){}
+  return STAMINA_EVENTS.map(function(se){
+    var item=aktif[se.id]||null, jalan=!!item, sebab='';
+    if(!jalan) sebab='tidak sedang berjalan';
+    if(jalan&&se.stage){
+      var st=(typeof hogStageNow==='function')?hogStageNow(age):null;
+      if(!st||st.base!==se.stage){ jalan=false; sebab='HoG jalan, tapi stage hari ini bukan '+se.stage; }
+    }
+    return {ev:se,aktif:jalan,sebab:sebab,item:item};
+  });
+}
+/* Satu jumlah stamina → hasil di SETIAP event yang sedang berjalan. Beast yang sama
+   dibayar berkali-kali kalau eventnya tumpang tindih, jadi hasilnya dijumlah per event,
+   bukan dibagi. */
+function staminaPlan(stamina,opt){
+  var o=opt||{}, f=dtFarmEstimate(stamina,o); if(!f) return null;
+  var baris=staminaEventsNow().map(function(r){
+    var out={nama:r.ev.nama,aktif:r.aktif,sebab:r.sebab,hasil:r.ev.hasil,catatan:r.ev.catatan||'',
+      model:r.ev.model,hunts:r.aktif?f.hunts:0,poin:0,takTerukur:false};
+    if(!r.aktif) return out;
+    if(r.ev.model==='dt'){ out.gem=f.gem; out.speedupMnt=f.speedupMnt; out.heroXp=f.heroXp;
+      out.claw=f.claw; out.pouch=f.pouch; out.rally=f.rally; out.dianaShard=f.dianaShard; }
+    else if(r.ev.poinPerHunt) out.poin=f.hunts*r.ev.poinPerHunt;
+    else if(r.ev.model!=='rebel') out.takTerukur=true;
+    else { out.hunts=0; out.takTerukur=true; }
+    return out;
+  });
+  return {f:f,baris:baris,adaAktif:baris.some(function(b){ return b.aktif; })};
+}
+
 /* ── Simpanan rencana: per PROFIL (lewat PROFILE_KEYS) dan per ITERASI ────
    'hogPlan' ada di PROFILE_KEYS, jadi store sudah menyimpannya sebagai ks_p_<pid>_hogPlan —
    isolasi antar akun/server ikut mekanisme yang sudah terbukti, tanpa logika scoping kedua

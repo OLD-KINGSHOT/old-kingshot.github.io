@@ -77,6 +77,9 @@
     [/^Rally Dreadwolf \(([\d.]+) stamina\)$/g, 'Dreadwolf rallies ($1 stamina)'],
     [/^Stamina hanya cukup untuk ([\d.]+) rally dari ([\d.]+) yang diminta\.$/g,
       'Stamina only covers $1 of the $2 rallies requested.'],
+    [/^HoG jalan, tapi stage hari ini bukan (.+)$/g, 'HoG is running, but today’s stage is not $1'],
+    [/^([\d.]+) hunt$/g, '$1 hunts'],
+    [/^([\d.]+) gem · ([\d.]+) mnt$/g, '$1 gems · $2 min'],
     /* event advisory (dynamic, number-interpolated) */
     [/Server masih baru \(hari/g, 'Server is still new (day'],
     [/baru aktif/g, 'becomes active'],

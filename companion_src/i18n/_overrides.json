@@ -936,5 +936,19 @@
   "Troop Lv7": "Lv7 troop",
   "Troop Lv8": "Lv8 troop",
   "Troop Lv9": "Lv9 troop",
-  "Troop Lv10": "Lv10 troop"
+  "Troop Lv10": "Lv10 troop",
+  "Stamina ini terbayar ke mana saja": "Where this stamina gets paid out",
+  "tidak sedang berjalan": "not currently running",
+  "HoG — stage Beast Slay": "HoG — Beast Slay stage",
+  "30.000 poin/beast · Rally Terror 90.000 (hanya HoG #1)": "30,000 pts/beast · Rally Terror 90,000 (HoG #1 only)",
+  "poin event per beast — besaran poinnya tak pernah dipublikasikan": "event points per beast — the point value has never been published",
+  "material & Hero EXP dari beast": "materials & Hero EXP from beasts",
+  "ongkosnya beda: scout 15 · solo 10 · rally 25 stamina (hemat ~2 dengan Diana) — tidak ikut hitungan hunt": "different cost: scout 15 · solo 10 · rally 25 stamina (~2 less with Diana) — not included in the hunt maths",
+  "Status diambil dari jadwal kingdommu sendiri (koreksi manualmu menang atas model umur, model umur menang atas feed global) — sama persis dengan tab Sekarang.": "Status comes from your own kingdom schedule (your manual corrections beat the age model, the age model beats the global feed) — exactly the same as the Now tab.",
+  "poinnya tak dipublikasikan": "point value not published",
+  "Clawshard & Challenger Pouch → gem, speedup, Hero XP; claw → rally Dreadwolf → shard Diana": "Clawshards & Challenger Pouches → gems, speedups, Hero XP; claws → Dreadwolf rallies → Diana shards",
+  "Desert Trial": "Desert Trial",
+  "Defeat Nearby Beasts": "Defeat Nearby Beasts",
+  "Beast Whisperer": "Beast Whisperer",
+  "Tak ada event pemakan stamina yang sedang berjalan menurut jadwalmu. Kalau jadwal live belum termuat, buka tab Event → Jadwal Live dulu.": "No stamina-consuming event is running according to your schedule. If the live schedule has not loaded yet, open the Events tab → Live Schedule first."
 }

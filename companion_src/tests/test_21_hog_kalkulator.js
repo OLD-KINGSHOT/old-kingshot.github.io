@@ -230,4 +230,58 @@ t('kartu farming stamina ter-render dan angkanya cocok dengan mesin', () => {
   eq(ev('dtFarmOut')({}).indexOf('Isi stamina') >= 0, true, 'tanpa input: minta isi, jangan tampilkan nol-nol');
 });
 
+/* ── Deteksi otomatis: stamina hari ini terbayar ke event apa saja.
+   Sumber status HARUS evUpcoming() — daftar aktif yang sama dipakai tab Sekarang. Kalau
+   deteksi ini punya daftar sendiri, ia akan menyimpang persis seperti bug jangkar jam-atas
+   yang dijaga test_22. Umur dibuat relatif terhadap jam app supaya test tak basi. */
+const envUmur = umur => {
+  const bootstrap = createEnv({ storage: { ks_activePid: JSON.stringify('x'), ks_profilesV: '1' } });
+  const hariIni = bootstrap.evalIn('ksClock').now().getTime();
+  const start = new Date(hariIni - (umur - 1) * 86400000).toISOString().slice(0, 10);
+  return createEnv({ storage: {
+    ks_activePid: JSON.stringify('x'), ks_profilesV: '1',
+    ks_p_x_profile: JSON.stringify({ pid: 'x', kingdom: '2114', start }),
+  } });
+};
+
+t('poin beast HoG hanya dihitung saat stage Beast Slay benar-benar berjalan', () => {
+  /* HoG #1 = 5 stage; stage 4 (Beast Slay) jatuh di hari ke-4 iterasi. */
+  const e = envUmur(9).evalIn;
+  const st = e('hogStageNow')(9);
+  ok(st, 'HoG #1 harus sedang berjalan di hari 9');
+  eq(st.base, 'Beast Slay', 'hari 9 = stage ke-4 HoG #1');
+  const P = e('staminaPlan')(80, {});
+  const hog = P.baris.find(b => /Beast Slay/.test(b.nama));
+  eq(hog.aktif, true, 'stage-nya cocok → harus terdeteksi');
+  eq(hog.poin, 10 * 30000, '80 stamina / 8 = 10 hunt × 30.000');
+});
+
+t('stage HoG yang salah → tidak dihitung, DAN alasannya disebut', () => {
+  const e = envUmur(12).evalIn;                     /* HoG #1 (H6-H10) sudah lewat */
+  const P = e('staminaPlan')(80, {});
+  const hog = P.baris.find(b => /Beast Slay/.test(b.nama));
+  eq(hog.aktif, false);
+  ok(hog.sebab.length > 0, 'app harus bilang KENAPA, bukan diam-diam menampilkan nol');
+  eq(hog.poin, 0);
+});
+
+t('status event diambil dari evUpcoming, bukan daftar kedua', () => {
+  const e = envUmur(9).evalIn;
+  const aktifIds = new Set((e('evUpcoming')() || []).filter(x => x.active && !x.locked).map(x => x.id));
+  for (const r of e('staminaEventsNow')()) {
+    if (r.ev.stage) continue;                        /* HoG punya syarat stage tambahan */
+    eq(r.aktif, aktifIds.has(r.ev.id), r.ev.nama + ' harus mengikuti daftar aktif bersama');
+  }
+});
+
+t('event yang tak terukur dilaporkan apa adanya, tidak dikarang poinnya', () => {
+  const e = envUmur(9).evalIn;
+  const P = e('staminaPlan')(80, {});
+  for (const b of P.baris) {
+    if (b.takTerukur) eq(b.poin, 0, b.nama + ': tanpa angka terverifikasi, jangan mengarang poin');
+    ok(!isNaN(b.poin));
+  }
+  ok(P.baris.some(b => /Defeat Nearby Beasts/.test(b.nama)), 'daftarnya harus memuat event pemakan stamina lain');
+});
+
 done();

@@ -433,9 +433,12 @@ async function fillSoonEvents(age){
   const nextOccur=x=>{
     if(x.id==='hog'){
       if(!start||typeof hogNoForDay!=='function'||typeof age!=='number') return null;
-      const no=hogNoForDay(age)+1;
+      const no=hogNoForDay(age)+1;   /* hanya dipanggil untuk HoG yang SEDANG berjalan */
       if(typeof hogExists==='function'&&!hogExists(no)) return {done:true};
-      return { startUTC:start.getTime()+((6+(no-1)*14)-1)*86400000, no:no };
+      /* jangkar dari sumber resmi — rumus lama "hari ke-6" di sini membuat jam-atas
+         menyebut tanggal yang berbeda dari kalender & tab HoG untuk kingdom yang
+         bukan-Rabu (mis. 2184: 11 Agu vs 10 Agu). */
+      return { startUTC:hogStartUTC(start,no), no:no };
     }
     /* rotasi: kejadian berikutnya dari sapuan; kalau yg ketemu = kejadian yg SEDANG
        berjalan (mulai ≤ selesai sekarang), ambil siklus 4-minggu berikutnya. */
