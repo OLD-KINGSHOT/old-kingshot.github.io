@@ -118,7 +118,7 @@ function heroNowLine(age){
    LEADER / GARRISON (hero deploy penuh): naikkan SEMUA 3 skill Expedition.
    ============================================================ */
 const SITUATIONS=[
- {key:'bear-trap',name:'Bear Trap',sub:'Bear Hunt \u00b7 harian',icon:'\u25c8',kind:'rally',role:'Joiner',evType:'bear',minDay:0,daily:true,pick:1,
+ {key:'bear-trap',name:'Bear Trap',sub:'Bear Hunt \u00b7 tiap siklus (\u226546 jam)',icon:'\u25c8',kind:'rally',role:'Joiner',evType:'bear',minDay:0,daily:true,pick:1,
   heroes:[{n:'Chenko',note:'Cav'},{n:'Yeonwoo',note:'Arc'},{n:'Amane',note:'Arc'}],ratio:{inf:10,cav:30,arc:60},
   table:[['','🤝 JOINER (kamu ikut rally)','🚩 HOST / rally-lead (R4/R5)'],['Hero','Chenko / Yeonwoo / Amane — slot-1 Lethality (cuma skill #1 dihitung)','Gen 1 — Best: Amadeus*(Inf) / Jabel(Cav) / Quinn(Arc). F2P (tanpa Amadeus): Howard(Inf) / Jabel(Cav) / Quinn(Arc). *Amadeus=P2W. Quinn=skill damage; Howard/Jabel=filler isi 3-kelas. S+ joiner (Chenko/Amane/Yeonwoo) lebih untung dikirim JOIN rally lain, bukan jadi host'],['Troop','Archer-heavy per-gen: 10/30/60 (Gen1) → 1/10/89 (Gen4+)','Sama (archer-heavy per-gen) + MAX kapasitas'],['Pet','—','Mighty Bison (+15k kapasitas) — lebih troop = lebih damage']],
   skillUp:'Max skill #1 (Lethality) \u2192 Lv5 (butuh 4\u2605).',

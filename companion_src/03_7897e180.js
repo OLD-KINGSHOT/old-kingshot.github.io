@@ -1128,7 +1128,7 @@ function phasePlan(age,tc){
   if(age<45){
     a.push('\ud83e\uddb8 Naikkan skill kunci joiner Epic \u2192 4\u2605 (Chenko/Amane/Yeonwoo).');
     a.push('\ud83d\udc8e SIMPAN gem (jangan dipakai!) untuk Hero Roulette Zoe (~hari 50).');
-    a.push('\ud83d\udc3b Ikut Bear Hunt (Bear Trap) harian \u2014 sumber Forgehammer utama (rally aliansi, TANPA stamina). Diana hemat stamina hanya untuk berburu beast di MAP, bukan Bear Trap.');
+    a.push('\ud83d\udc3b Ikut Bear Hunt tiap kali aliansi memasang trap \u2014 antar sesi minimal 46 jam, jadi BUKAN harian. Sumber Forgehammer utama; rally-nya tanpa stamina dan tanpa cooldown, jadi luncurkan lagi tiap march pulang. Diana hemat stamina hanya untuk beast di MAP, bukan Bear Trap.');
   } else if(age<113){
     a.push('\ud83e\uddb8 Spin Zoe di Roulette (utamakan saat HoG Hari 2-3) + ambil Marlin di Hall of Heroes.');
   } else if(age<197){

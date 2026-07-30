@@ -989,5 +989,11 @@
   "tidak": "does not",
   ". Gathering": ". Gathering",
   " memakai stamina sama sekali — yang terpakai slot march. Jatahmu ~528/hari: 288 regen (1 per 5 menit) + 240 dari Storehouse (120 tiap 12 jam, harus dipungut). Cap 200 — begitu penuh regen BERHENTI, jadi jangan tinggalkan penuh.": " use stamina at all — what it uses is a march slot. Your daily budget is ~528: 288 from regen (1 per 5 min) + 240 from the Storehouse (120 every 12 h, must be collected). Cap is 200 — once full, regen STOPS, so never leave it capped.",
-  "🌾 Gather resource cuma 3 poin/task — abaikan untuk mengejar poin. Yang mahal BUKAN stamina: gathering tidak memakainya sama sekali (yang terpakai slot march & waktunya). Stamina habis di beast, rally, dan Intel Mission.": "🌾 Gathering is only 3 pts/task — ignore it for scoring. The cost is NOT stamina: gathering uses none at all (it uses a march slot and time). Stamina goes to beasts, rallies and Intel Missions."
+  "🌾 Gather resource cuma 3 poin/task — abaikan untuk mengejar poin. Yang mahal BUKAN stamina: gathering tidak memakainya sama sekali (yang terpakai slot march & waktunya). Stamina habis di beast, rally, dan Intel Mission.": "🌾 Gathering is only 3 pts/task — ignore it for scoring. The cost is NOT stamina: gathering uses none at all (it uses a march slot and time). Stamina goes to beasts, rallies and Intel Missions.",
+  "PILIH SATU TRAP per siklus — sudah ikut Trap 1, tak bisa ikut Trap 2. Di dalam window-nya, rally sebanyak yang sempat.": "PICK ONE TRAP per cycle — once you have joined Trap 1 you cannot join Trap 2. Inside its window, rally as many times as you can fit.",
+  "window ~30mnt, jam diatur aliansi — sumber Forgehammer. Antar sesi minimal 46 jam, jadi BUKAN harian.": "~30 min window, time set by the alliance — main Forgehammer source. Minimum 46 h between sessions, so NOT daily.",
+  "tiap siklus (≥46 jam) · 1 trap": "per cycle (≥46 h) · 1 trap",
+  "Rally aliansi (tiap siklus)": "Alliance rally (each cycle)",
+  "Bear Hunt · tiap siklus (≥46 jam)": "Bear Hunt · each cycle (≥46 h)",
+  "Sumber Forgehammer UTAMA (tiap siklus, antar sesi minimal 46 jam) - juga dari pet Lion & event": "MAIN Forgehammer source (each cycle, minimum 46 h between sessions) - also from the Lion pet & events"
 }

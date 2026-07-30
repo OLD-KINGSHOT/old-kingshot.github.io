@@ -318,7 +318,7 @@ function renderSekarang(){
   let cardsHTML='';
   /* Bear Trap */
   if(bearGen){ const done=bd.done;
-    cardsHTML+='<div class="card ev"'+(done?' style="opacity:.6"':'')+'><div class="top"><span class="ico">🐻</span><div><div class="nm">Bear Trap</div><div class="when">harian · 1×/siklus</div></div>'
+    cardsHTML+='<div class="card ev"'+(done?' style="opacity:.6"':'')+'><div class="top"><span class="ico">🐻</span><div><div class="nm">Bear Trap</div><div class="when">tiap siklus (≥46 jam) · 1 trap</div></div>'
       +(done?'<span class="pill next">Sudah ikut</span>':'<span class="pill '+(et.bear?'live':'set')+'">'+(et.bear?'Terjadwal':'Atur jam')+'</span>')+'</div>'
       +'<div class="lineup"><span class="lbl">Hero</span> <b>'+heroesLine(bearGen.s)+'</b> <span class="pick">pilih 1 · slot-1</span></div>'
       +ratioBarHTML(bearGen.r)
@@ -545,7 +545,7 @@ function renderHero(){
   const by=k=>SITUATIONS.find(s=>s.key===k);
   let nowHTML;
   if(age==null) nowHTML='<div class="alert inf small">Hubungkan Player ID di tab Profil untuk lineup hari ini.</div>';
-  else{ nowHTML='<div class="lbl" style="margin-bottom:4px">Rally harian (selalu)</div>'+lineupCard(by('bear-trap'),age);
+  else{ nowHTML='<div class="lbl" style="margin-bottom:4px">Rally aliansi (tiap siklus)</div>'+lineupCard(by('bear-trap'),age);
     const seen=new Set(); activeAdvisories(start,age).forEach(a=>{ if(a.type==='kvk'&&!seen.has('kvk')){ seen.add('kvk'); nowHTML+='<div class="lbl" style="margin:10px 0 4px">Event combat aktif</div>'+lineupCard(by('kvk-rally'),age); } });
   }
 

@@ -39,6 +39,20 @@ const SEMINGGU = ['2026-06-08','2026-06-09','2026-06-10','2026-06-11','2026-06-1
    Tiap aturan menyebut konsep, nilai yang dipegang KODE, dan pola prosa yang
    bertentangan dengannya. Sengaja eksplisit — audit yang menebak akan berisik,
    dan audit berisik akan diabaikan. */
+/* Klaim yang sudah DIBANTAH sumber dan tak boleh kembali. Tiap baris menyebut bantahannya,
+   supaya penjaga ini bisa diperiksa ulang, bukan dipercaya buta. */
+const DIBANTAH = [
+  { pola: /buang-buang stamina/i, kenapa: 'gathering TIDAK memakai stamina (seluruh panduan gathering bicara slot march & hero; FAQ komunitas membatasi hemat-stamina Diana pada beast/terror)' },
+  { pola: /hanya bisa serang (1|satu)/i, kenapa: 'Bear Hunt: yang dibatasi TRAP-nya, bukan serangannya. Di dalam window: tanpa stamina, tanpa cooldown antar-rally (kingshothandbook, mengutip Help Center)' },
+  { pola: /Bear Hunt[^.]{0,30}harian|Bear Trap[^.]{0,30}harian/i, kenapa: 'antar sesi Bear Hunt minimal 46 jam — bukan harian' },
+];
+for (const f of berkasSumber) {
+  tanpaKomentar(isi(f)).split('\n').forEach((baris, i) => {
+    for (const d of DIBANTAH) if (d.pola.test(baris))
+      F(`${f}:${i + 1} — klaim yang sudah dibantah muncul lagi: ${d.kenapa}.\n      ${baris.trim().slice(0, 110)}`);
+  });
+}
+
 const KONTRADIKSI = [
   { konsep: 'siklus Castle Battle', kode: 14, pola: /(tiap|every)\s*~?\s*(\d{1,2})\s*(hari|days)/gi,
     hanyaDekat: /castle/i, kecuali: [14] },

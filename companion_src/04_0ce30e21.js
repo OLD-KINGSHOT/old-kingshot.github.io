@@ -143,7 +143,7 @@ const DAILY_TASKS=[
   ['Spam "Help All" alliance','Speedup gratis timbal balik'],
   ['Donasi Alliance Tech','Buff riset alliance'],
   ['Klaim Alliance gift/chest','Resource & speedup gratis'],
-  ['Bear Hunt rally (window ~30mnt)','Sumber Forgehammer UTAMA (harian) - juga dari pet Lion & event'],
+  ['Bear Hunt rally (window ~30mnt)','Sumber Forgehammer UTAMA (tiap siklus, antar sesi minimal 46 jam) - juga dari pet Lion & event'],
   ['Jalankan Intel/Watchtower mission','Resource+shard, nilai event tinggi (6k/KvK)'],
   ['Aktifkan buff online/territory/decree','Buff gratis sementara'],
   ['Redeem gift code baru (tab Kode)','Resource/speedup gratis'],
@@ -163,8 +163,8 @@ const RECURRING_WEEKLY=[
   {n:'Swordland Showdown',gi:'🗡',dows:[0],note:'Minggu (2-mingguan) · lintas-server'},
 ];
 const RECURRING_DAILY=[
-  {id:'bear',n:'Bear Hunt — Trap 1',gi:'🐻',note:'harian (~30mnt, jam diatur aliansi) — sumber Forgehammer',settable:true,daily:true},
-  {id:'bear2',n:'Bear Hunt — Trap 2',gi:'🐻',note:'PILIH SATU: hanya bisa serang 1× — ikut Trap 1 ATAU Trap 2, bukan keduanya',settable:true,daily:true},
+  {id:'bear',n:'Bear Hunt — Trap 1',gi:'🐻',note:'window ~30mnt, jam diatur aliansi — sumber Forgehammer. Antar sesi minimal 46 jam, jadi BUKAN harian.',settable:true,daily:true},
+  {id:'bear2',n:'Bear Hunt — Trap 2',gi:'🐻',note:'PILIH SATU TRAP per siklus — sudah ikut Trap 1, tak bisa ikut Trap 2. Di dalam window-nya, rally sebanyak yang sempat.',settable:true,daily:true},
   {n:'Arena',gi:'🥊',note:'harian 5×, reset 07:00'},
   {n:'Mystic Trial',gi:'🔮',note:'Sen-Sel Coliseum · Rab-Kam Forest · Jum-Sab Nexus · Min semua'},
 ];
@@ -226,7 +226,7 @@ const KVK_PREP={
 /* ── Ensiklopedia event (condensed, refer ke SITUATIONS) ── */
 const EVENTS_INFO=[
  {g:'Rutin (harian / mingguan)', items:[
-   {n:'Bear Hunt (Bear Trap)',cat:'PvE \u00b7 harian \u00b7 penting',freq:'Per siklus (aliansi pasang 2 trap, jam beda)',what:'Rally beruang bareng aliansi (TANPA stamina \u2014 rally Bear Trap tidak makan stamina, bisa join sebanyak mungkin). Beruang = INFANTRY \u2192 ARCHER +10%. Sumber utama Forgehammer. \u26a0 Hanya bisa serang SATU KALI per siklus \u2014 pilih Trap 1 ATAU Trap 2 sesuai jam onlinemu; sudah ikut satu, BT berikutnya muncul siklus depan.',sit:'bear-trap'},
+   {n:'Bear Hunt (Bear Trap)',cat:'PvE \u00b7 tiap siklus \u00b7 penting',freq:'Per siklus (aliansi pasang 2 trap, jam beda)',what:'Rally beruang bareng aliansi (TANPA stamina \u2014 rally Bear Trap tidak makan stamina, bisa join sebanyak mungkin). Beruang = INFANTRY \u2192 ARCHER +10%. Sumber utama Forgehammer. \u26a0 Yang dibatasi TRAP-nya, BUKAN serangannya: sudah ikut Trap 1, kamu tak bisa ikut Trap 2 (trap kedua ~2 hari kemudian). Di DALAM window 30 menit rally TIDAK dibatasi \u2014 tanpa stamina, tanpa cooldown antar-rally; yang membatasi cuma waktu march, jadi luncurkan lagi tiap kali march pulang. Beruang TIDAK menyerang balik: tak ada korban, dan hero/gear defensif (Gordon/Howard) sia-sia di sini. Antar sesi minimal 46 jam menurut Help Center \u2014 jadi bukan harian.',sit:'bear-trap'},
    {n:'Mystic Trial',cat:'PvE \u00b7 mingguan',freq:'Rotasi harian: Sen-Sel Coliseum \u00b7 Rab-Kam Forest+Crystal \u00b7 Jum-Sab Nexus+Molten \u00b7 Min Radiant Spire',what:'\u2192 Detail 6 zona + kalkulator formasi: tab Event \u2192 sub-tab \ud83d\udd2e Mystic Trial. Dungeon solo. Sumber Misty Crystal \u2192 Mithril (bottleneck crafting gear). Kerjakan tiap buka. \u2694 COLISEUM (Sen-Sel) = "gear-only": Pet/Charm/Governor Gear/Academy DIABAIKAN \u2014 cuma Hero Gear (per-hero) + troop + skill yang dihitung. Formasi 50/10/40; rotasi 1 set Hero Gear terbaik antar tim (gear-swap) > sebar gear lemah. F2P: tembus Stage 10. Reward Crystal + Hero Gear material. CATATAN: Coliseum = satu-satunya tempat Hero Gear-mu kepakai PENUH (di rally kamu joiner \u2192 Hero Gear sia-sia), jadi 1 set Hero Gear rapi terbayar di sini.',sit:'coliseum'},
    {n:'Hall of Heroes',cat:'PvE \u00b7 hero',freq:'~3 hari',what:'Pertarungan hero bertahap. Sumber shard Marlin (F2P) + mat progres hero.'},
  ]},
