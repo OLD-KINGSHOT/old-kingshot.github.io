@@ -51,6 +51,20 @@ const envRobot = (opts = {}) => {
     ok(/ksRobotRedeem/.test(init.slice(0, 6000)), 'init() harus memanggil robot saat app dibuka');
   });
 
+  /* Bug yang HANYA kelihatan di browser sungguhan (30 Jul 2026, Playwright): pemicu
+     gambar-ulang dulu berbunyi "hanya kalau ada kode yang ditembak", sedangkan kasus
+     Kingdom-kosong punya dicoba=0 — jadi peringatan "isi Kingdom dulu" tak pernah
+     muncul saat app dibuka, padahal justru itu pesan yang dibutuhkan orang yang
+     redeem-nya buntu. Unit test tak bisa melihat ini (tak ada render), jadi dikunci
+     di tingkat sumber. */
+  t('peringatan "isi Kingdom" ikut memicu gambar ulang saat app dibuka', () => {
+    const src = require('fs').readFileSync(require('path').join(__dirname, '..', '01_fa4c6c09.js'), 'utf8');
+    const i = src.indexOf('ksRobotRedeem().then');
+    ok(i > 0, 'pemanggil robot di init tak ditemukan');
+    ok(/kingdom-kosong/.test(src.slice(i, i + 600)),
+      'syarat gambar-ulang harus ikut menyertakan kasus kingdom-kosong, bukan hanya dicoba>0');
+  });
+
   {
     const env = envRobot({ profiles: [] });
     const h = await env.evalIn('ksRobotRedeem')();

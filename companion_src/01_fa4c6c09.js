@@ -2276,9 +2276,13 @@ function init(){
   .finally(()=>{
     if(typeof ksRobotRedeem!=='function') return;
     ksRobotRedeem().then(h=>{
-      /* gambar ulang HANYA kalau ada yang benar-benar ditembak, dan hanya kalau
-         pengguna sedang di tab Sekarang tanpa sedang mengetik */
-      if(!h||!h.dicoba) return;
+      /* Gambar ulang kalau ada yang PERLU DILIHAT — bukan hanya kalau ada kode yang
+         ditembak. Terbukti di browser sungguhan (30 Jul 2026): kasus "Kingdom kosong"
+         punya dicoba=0, jadi syarat lama membuat peringatan "isi Kingdom dulu" tak
+         pernah muncul saat app dibuka — padahal justru itu pesan yang dibutuhkan orang
+         yang redeem-nya buntu. Sisanya (tanpa profil, baru saja jalan) memang tak
+         menghasilkan tampilan apa pun, jadi tak perlu menggambar ulang. */
+      if(!h||(!h.dicoba&&h.alasan!=='kingdom-kosong')) return;
       const ae=document.activeElement;
       if(store.get('lastTab','sekarang')==='sekarang'&&(!ae||!/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))) activate('sekarang');
     }).catch(()=>{});

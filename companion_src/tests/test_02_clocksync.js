@@ -243,6 +243,20 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
     ok(!/timeapi\.io/.test(src), 'timeapi.io masih dipanggil di kode');
   });
 
+  /* Worker menyajikan /events dengan Cache-Control max-age=1800 — benar untuk JADWAL,
+     racun untuk JAM. Sumber jam yang membaca respons ber-cache akan melaporkan waktu
+     yang tertinggal sampai setengah jam, dan itu persis alasan timeapi.io dibuang. */
+  {
+    const skew = 0;
+    const { ksClock, s: stub } = envSync([[OWN + '/time', 'fail'], [CF, cfTrace(skew)], [FEED, feed(skew)]]);
+    await ksClock.sync();
+    const feedCall = stub.calls.find(u => u.includes('/events'));
+    t('probe jam ke feed menembus cache (query unik)', () => {
+      ok(feedCall, 'feed harus ditanya');
+      ok(/[?&]_ts=\d+/.test(feedCall), 'URL harus dibuat unik supaya tak dilayani cache: ' + feedCall);
+    });
+  }
+
   t('waktu selalu diambil dari BODY, tak pernah dari header Date', () => {
     /* Diukur 30 Jul 2026: github, jsdelivr, worldtimeapi, worldclockapi — TAK SATU PUN
        mengekspos `Date` lewat Access-Control-Expose-Headers, jadi di browser semuanya

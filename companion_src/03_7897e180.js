@@ -182,7 +182,7 @@ const ksClock={
      masuk ke sign, `time` yang dikirim jadi bergeser sesuai selera user. */
   signNow(){ return Date.now()+this.offset; },
   setNudge(min){ this.nudge=Number(min)||0; store.set('clockNudge',this.nudge); },
-  _race(u){ return Promise.race([fetch(u),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000))]); },
+  _race(u,init){ return Promise.race([fetch(u,init),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000))]); },
   _applyOffset(off){ if(!isFinite(off)) return false; this.offset=off;
     store.set('clockOffset',off); store.set('clockSyncAt',Date.now()); store.set('clockOffsetV',2); this.synced=true; return true; },
   /* sync gagal = tak ada yang lebih tahu dari jam perangkat. Buang offset yang
@@ -216,8 +216,20 @@ const ksClock={
        worldclockapi) mengekspos header `Date` lewat Access-Control-Expose-Headers,
        jadi di browser semuanya terbaca null — persis jebakan yang sudah kita kenal. */
     /* Feed kingshot.net: `timestamp` dari server, terukur +0,5 dtk. Sudah diambil app
-       untuk jadwal live, dan lewat proxy worker sendiri yang memang ber-CORS. */
-    async function(){ const r=await this._race(ksOwnProxy('https://kingshot.net/api/events'));
+       untuk jadwal live, dan lewat proxy worker sendiri yang memang ber-CORS.
+
+       WAJIB menembus cache. Worker menyajikan /events dengan Cache-Control
+       max-age=1800 (server/worker.js) — masuk akal untuk JADWAL, tapi mematikan untuk
+       JAM: respons ber-cache membawa `timestamp` yang bisa tertinggal setengah jam,
+       dan sumber jam yang tertinggal adalah persis racun yang membuat timeapi.io
+       dibuang. Query unik + no-store memaksa permintaan baru.
+       Catatan jujur soal batasnya: kalau suatu saat cache di sisi worker tetap
+       menyajikan timestamp basi, aturan korroborasi akan melihatnya BERBEDA dari
+       cloudflare lalu membuang offset — jadi kegagalannya "tidak sinkron", bukan
+       "sinkron ke waktu yang salah". Itu arah gagal yang benar. */
+    async function(){
+      const u=ksOwnProxy('https://kingshot.net/api/events');
+      const r=await this._race(u+(u.indexOf('?')<0?'?':'&')+'_ts='+Date.now(),{cache:'no-store'});
       const j=await r.json(); const t=j&&(j.timestamp||(j.data&&j.data.timestamp));
       return t?Date.parse(t):NaN; },
   ],
