@@ -21,7 +21,14 @@ const { createEnv, t, eq, ok, done } = require('./harness.js');
 
 const OWN = 'old-kingshot-api.old-kingshot.workers.dev';
 const CF = 'cdn-cgi/trace';
-const TAPI = 'timeapi.io';
+/* Babak ketiga (30 Jul 2026): timeapi.io DIBUANG — diukur ulang meleset -952 detik
+   (~16 menit), tiga kali lipat lebar jendela server. Penggantinya feed kingshot.net
+   (`timestamp` di BODY, terukur +0,5 dtk) yang memang sudah diambil app lewat proxy
+   worker sendiri. Sumber kedua ini penting: tanpa dia, korroborasi tak pernah tercapai
+   dan jam perangkat yang meleset tak bisa dikoreksi sama sekali. */
+/* app menembaknya lewat proxy worker sendiri (ksOwnProxy), jadi URL akhirnya
+   berakhiran /events di host worker — bukan kingshot.net langsung. */
+const FEED = 'workers.dev/events';
 
 /* fetch stub: mencatat panggilan, membalas per-host.
    - objek  -> dibalas sebagai JSON
@@ -53,11 +60,7 @@ function stubFetch(routes) {
 /* sumber-sumber yang melaporkan jam = jam perangkat + `skewMs` */
 const worker = skew => ({ now: Date.now() + skew });
 const cfTrace = skew => 'fl=1\nh=cloudflare.com\nts=' + ((Date.now() + skew) / 1000).toFixed(3) + '\n';
-const timeapi = skew => {
-  const d = new Date(Date.now() + skew);
-  return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate(),
-    hour: d.getUTCHours(), minute: d.getUTCMinutes(), seconds: d.getUTCSeconds(), milliSeconds: d.getUTCMilliseconds() };
-};
+const feed = skew => ({ timestamp: new Date(Date.now() + skew).toISOString() });
 
 function envSync(routes) {
   const s = stubFetch(routes);
@@ -73,7 +76,7 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
   /* ---- 1. dua sumber sepakat -> offset dipakai ---- */
   {
     const SKEW = 4 * 60000;   // kedua sumber bilang jam perangkat telat 4 menit
-    const { ksClock } = envSync([[OWN + '/time', worker(SKEW)], [CF, cfTrace(SKEW)], [TAPI, 'fail']]);
+    const { ksClock } = envSync([[OWN + '/time', worker(SKEW)], [CF, cfTrace(SKEW)], [FEED, 'fail']]);
     const okRes = await ksClock.sync();
     t('dua sumber sepakat -> sync berhasil', () => ok(okRes === true, 'sync mengembalikan ' + okRes));
     t('offset mendarat di waktu yang disepakati', () => {
@@ -87,7 +90,7 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
      Inilah bug 21 Jul 2026: cuma timeapi.io yang hidup, dan dia meleset 9 menit.
      Satu sumber tanpa pembanding TIDAK BOLEH menggeser jam. */
   {
-    const { ksClock } = envSync([[OWN + '/time', 'fail'], [CF, 'fail'], [TAPI, timeapi(-554000)]]);
+    const { ksClock } = envSync([[OWN + '/time', 'fail'], [CF, 'fail'], [FEED, feed(-554000)]]);
     const okRes = await ksClock.sync();
     t('satu sumber sendirian ditolak (tak ada pembanding)', () => {
       ok(okRes === false, 'sync mengembalikan ' + okRes);
@@ -105,7 +108,7 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
      itu yang menang, bukan rata-rata (rata-rata akan tertarik ke yang salah). */
   {
     const SKEW = 2 * 60000;
-    const { ksClock } = envSync([[OWN + '/time', worker(SKEW)], [CF, cfTrace(SKEW)], [TAPI, timeapi(-554000)]]);
+    const { ksClock } = envSync([[OWN + '/time', worker(SKEW)], [CF, cfTrace(SKEW)], [FEED, feed(-554000)]]);
     const okRes = await ksClock.sync();
     t('sumber menyimpang diabaikan, mayoritas menang', () => {
       ok(okRes === true, 'sync mengembalikan ' + okRes);
@@ -117,7 +120,7 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
   /* ---- 4. semua sumber saling tidak sepakat -> jangan tebak ---- */
   {
     const { ksClock } = envSync([
-      [OWN + '/time', worker(600000)], [CF, cfTrace(-600000)], [TAPI, timeapi(1800000)],
+      [OWN + '/time', worker(600000)], [CF, cfTrace(-600000)], [FEED, feed(1800000)],
     ]);
     const okRes = await ksClock.sync();
     t('sumber saling bertentangan -> tolak, pakai jam perangkat', () => {
@@ -129,7 +132,7 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
 
   /* ---- 5. semua mati -> gagal jujur, jam perangkat, tak mengaku synced ---- */
   {
-    const { ksClock } = envSync([[OWN + '/time', 'fail'], [CF, 'fail'], [TAPI, 'fail']]);
+    const { ksClock } = envSync([[OWN + '/time', 'fail'], [CF, 'fail'], [FEED, 'fail']]);
     const okRes = await ksClock.sync();
     t('semua sumber mati -> sync melapor gagal dan tidak mengaku synced', () => {
       ok(okRes === false, 'sync mengembalikan ' + okRes);
@@ -143,7 +146,7 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
     const SKEW = 90000;
     const { ksClock } = envSync([
       [OWN + '/time', { error: 'notfound' }],   // 404 body, tanpa `now`
-      [CF, cfTrace(SKEW)], [TAPI, timeapi(SKEW)],
+      [CF, cfTrace(SKEW)], [FEED, feed(SKEW)],
     ]);
     const okRes = await ksClock.sync();
     t('worker 404 tidak merusak sinkronisasi selama 2 sumber lain sepakat', () => {
@@ -155,7 +158,7 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
 
   /* ---- 7. cloudflare trace memang dipakai (sumber tanpa-CORS-drama) ---- */
   {
-    const { s, ksClock } = envSync([[OWN + '/time', 'fail'], [CF, cfTrace(0)], [TAPI, timeapi(0)]]);
+    const { s, ksClock } = envSync([[OWN + '/time', 'fail'], [CF, cfTrace(0)], [FEED, feed(0)]]);
     await ksClock.sync();
     t('cloudflare cdn-cgi/trace ikut ditanya', () =>
       ok(s.calls.some(c => c.includes(CF)), 'tidak pernah menanyakan ' + CF));
@@ -199,7 +202,7 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
 
   /* sync yang gagal harus MEMBUANG offset, bukan membiarkannya menyetir tanda tangan */
   {
-    const { ksClock } = envSync([[OWN + '/time', 'fail'], [CF, 'fail'], [TAPI, timeapi(-554000)]]);
+    const { ksClock } = envSync([[OWN + '/time', 'fail'], [CF, 'fail'], [FEED, feed(-554000)]]);
     ksClock.offset = -553770;            // nilai beracun dari sesi sebelumnya
     const okRes = await ksClock.sync();
     t('sync gagal -> offset lama dibuang, bukan dipertahankan', () => {
@@ -228,6 +231,27 @@ console.log('Fix #2 — sumber jam (butuh korroborasi)');
     const res = await env.evalIn('ksRedeem')('330300846', 'ABC123', '2114');
     t('regresi: ksRedeem jalan tanpa header Date', () => eq(res.cls, 'bad'));
   }
+
+  /* ---- penjaga: timeapi.io tak boleh diam-diam kembali ----
+     Diukur meleset -554 dtk (21 Jul) lalu -952 dtk (30 Jul) — hampir 16 menit, tiga
+     kali lipat lebar jendela server yang cuma ±5 menit. Sumber yang salahnya melebihi
+     toleransi tidak netral: begitu ia berpasangan dengan sumber lain yang ikut
+     menyimpang, app memasang offset yang menggagalkan SELURUH redeem. */
+  t('timeapi.io tidak lagi dipakai sebagai sumber jam', () => {
+    const src = require('fs').readFileSync(require('path').join(__dirname, '..', '03_7897e180.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '');            /* komentar boleh menjelaskan kenapa dibuang */
+    ok(!/timeapi\.io/.test(src), 'timeapi.io masih dipanggil di kode');
+  });
+
+  t('waktu selalu diambil dari BODY, tak pernah dari header Date', () => {
+    /* Diukur 30 Jul 2026: github, jsdelivr, worldtimeapi, worldclockapi — TAK SATU PUN
+       mengekspos `Date` lewat Access-Control-Expose-Headers, jadi di browser semuanya
+       null. Hanya body yang bisa dipercaya. */
+    const src = require('fs').readFileSync(require('path').join(__dirname, '..', '03_7897e180.js'), 'utf8');
+    const blok = src.slice(src.indexOf('_sources:'), src.indexOf('_agreeMs'));
+    ok(!/headers\s*\.\s*get\(\s*['"]date/i.test(blok), 'sumber jam tak boleh membaca header Date');
+    ok(/ts=|timestamp|j\.now/.test(blok), 'harus mengambil waktu dari body');
+  });
 
   done();
 })();

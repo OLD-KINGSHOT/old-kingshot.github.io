@@ -206,10 +206,20 @@ const ksClock={
     /* cloudflare cdn-cgi/trace: teks "ts=<epoch detik>", CORS terbuka, akurat */
     async function(){ const r=await this._race('https://cloudflare.com/cdn-cgi/trace'); const t=await r.text();
       const m=String(t).match(/ts=([\d.]+)/); return m?Math.round(parseFloat(m[1])*1000):NaN; },
-    async function(){ const r=await this._race('https://timeapi.io/api/time/current/zone?timeZone=UTC'); const j=await r.json();
-      if(j&&j.year) return Date.UTC(j.year,(j.month||1)-1,j.day||1,j.hour||0,j.minute||0,j.seconds||0,j.milliSeconds||0);
-      if(j&&j.dateTime) return Date.parse(j.dateTime.replace(/(\.\d{3})\d*$/,'$1')+'Z');
-      return NaN; },
+    /* timeapi.io DIBUANG 30 Jul 2026. Diukur meleset -554 dtk (21 Jul) lalu -952 dtk
+       (30 Jul) — hampir 16 menit, tiga kali lipat lebar jendela server yang cuma
+       ±5 menit. Sumber yang salahnya lebih besar daripada toleransi bukan cuma tak
+       berguna, ia berbahaya: begitu ia kebetulan berpasangan dengan sumber lain yang
+       ikut menyimpang, app akan memasang offset yang menggagalkan SEMUA redeem.
+       Penggantinya di bawah dipilih karena satu alasan keras: waktunya ada di BODY.
+       Diukur 30 Jul 2026, TAK SATU PUN kandidat lain (github, jsdelivr, worldtimeapi,
+       worldclockapi) mengekspos header `Date` lewat Access-Control-Expose-Headers,
+       jadi di browser semuanya terbaca null — persis jebakan yang sudah kita kenal. */
+    /* Feed kingshot.net: `timestamp` dari server, terukur +0,5 dtk. Sudah diambil app
+       untuk jadwal live, dan lewat proxy worker sendiri yang memang ber-CORS. */
+    async function(){ const r=await this._race(ksOwnProxy('https://kingshot.net/api/events'));
+      const j=await r.json(); const t=j&&(j.timestamp||(j.data&&j.data.timestamp));
+      return t?Date.parse(t):NaN; },
   ],
   /* Dua sumber dianggap sepakat bila selisihnya <= 30 detik. */
   _agreeMs:30000,
@@ -221,7 +231,14 @@ const ksClock={
      dan satu-satunya sumber tersisa, timeapi.io, meleset -554 detik: app memasang
      offset -9 menit dan SEMUA redeem gagal, padahal jam perangkat sudah benar.
      Dengan jendela sesempit ini, offset SALAH lebih berbahaya daripada tanpa
-     offset — kalau ragu, percayai jam perangkat. */
+     offset — kalau ragu, percayai jam perangkat.
+
+     30 Jul 2026: aturannya dipertahankan, tapi daftar sumbernya dibersihkan. Dulu
+     dua dari tiga sumber praktis mati (worker /time 404, timeapi.io meleset 16 menit),
+     jadi korroborasi TAK PERNAH tercapai dan app selalu jatuh ke jam perangkat —
+     aman, tapi berarti jam perangkat yang meleset tak bisa dikoreksi sama sekali.
+     Dengan feed kingshot.net sebagai sumber kedua yang terukur akurat, aturan ini
+     sekarang benar-benar bisa dipenuhi lagi. */
   async sync(){
     const offs=(await Promise.all(this._sources.map(f=>this._probe(f))))
       .filter(o=>o!==null&&isFinite(o));
@@ -433,7 +450,11 @@ async function ksRedeem(fid,code,kid){
      ±5 menit milik server. Pesan lama menyuruh pengguna melapor bug, padahal yang
      perlu terjadi adalah menyinkronkan jam lalu mencoba lagi — dan itu bisa
      dilakukan app sendiri (lihat ksRedeemAuto). */
-  if(m.includes('TIME EXPIRED'))
+  /* "time error" (bukan "time Expired") muncul saat `time` tak masuk akal sama sekali —
+     terpancing di probe dengan time=0, dan jawabannya BAHKAN TANPA err_code. Sebelumnya
+     jatuh ke aturan TIME generik di bawah tanpa penanda clockOff, jadi tak ikut
+     disembuhkan otomatis. Sekarang diperlakukan sama: ini soal jam. */
+  if(m.includes('TIME EXPIRED')||m.includes('TIME ERROR'))
     return {cls:'warn',txt:'Jam meleset dari server (jendela ±5 menit) — disinkronkan lalu dicoba lagi',clockOff:true};
   if(m.includes('CDK')||m.includes('NOT FOUND')) return {cls:'bad',txt:'Kode salah/tak ada'};
   if(m.includes('CAPTCHA')) return {cls:'warn',txt:'Butuh captcha \u2014 redeem in-game'};

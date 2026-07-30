@@ -231,6 +231,18 @@ console.log('Fix #1 — protokol redeem baru (kid + detik + tanpa login)');
     });
   }
 
+  /* ---- 5b. "time error" (BUKAN "time Expired") — terpancing dengan time=0, dan
+     jawabannya bahkan TANPA err_code. Dulu jatuh ke aturan TIME generik tanpa penanda
+     clockOff, jadi tak ikut disembuhkan otomatis. ---- */
+  {
+    const { env } = envWithGiftResponse({ code: 1, msg: 'time error' });
+    const res = await env.evalIn('ksRedeem')(FID, CDK, KID);
+    t('"time error" juga soal jam, dan ikut disembuhkan otomatis', () => {
+      eq(res.clockOff, true, 'harus ditandai clockOff seperti "time Expired"');
+      ok(/jam/i.test(res.txt), res.txt);
+    });
+  }
+
   /* ---- 6. 40004/40009 bukan "sesi login" — langkah login sudah dihapus Century ---- */
   {
     const { env } = envWithGiftResponse({ code: 1, msg: '40004', err_code: 40004 });
