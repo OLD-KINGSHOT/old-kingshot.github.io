@@ -616,6 +616,10 @@ function dtEventRows(s){
     if(!b.aktif) nilai='<span class="dim">'+esc(b.sebab)+'</span>';
     else if(b.model==='dt') nilai='<b>'+fmt(Math.round(b.gem))+'</b> gem · <b>'+fmt(Math.round(b.speedupMnt))+'</b> mnt'
       +(b.rally?' · '+fmt(b.dianaShard[0])+'-'+fmt(b.dianaShard[1])+' shard Diana':'');
+    /* kuota punya barisnya sendiri: menampilkannya sebagai "hunt" akan menyembunyikan
+       batas 5x-nya, dan stamina berlebih terbaca seolah masih menghasilkan. */
+    else if(b.model==='kuota') nilai='<b>'+fmt(b.kuota)+'</b> Lesser Truegold '
+      +'<span class="dim">('+fmt(b.kuotaStamina)+' stamina terpakai, maks 5×)</span>';
     else if(b.poin) nilai='<b>'+fmt(b.poin)+'</b> poin';
     else nilai='<b>'+fmt(b.hunts)+'</b> hunt — <span class="dim">poinnya tak dipublikasikan</span>';
     /* penanda status dipisah dari nama: kalau digabung, nama event jadi dua kunci

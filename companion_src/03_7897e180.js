@@ -1372,7 +1372,11 @@ function staminaEventsNow(){
   try{ (evUpcoming()||[]).forEach(function(x){ if(x&&x.active&&!x.locked) aktif[x.id]=x; }); }catch(e){}
   var age=null; try{ age=profileAge().age; }catch(e){}
   return STAMINA_EVENTS.map(function(se){
-    var item=aktif[se.id]||null, jalan=!!item, sebab='';
+    /* id2 = ejaan ALTERNATIF dari feed (judul, bukan camelCase). Dulu field ini
+       dideklarasikan tapi tak pernah dibaca, jadi kalau feed memakai ejaan yang lain
+       deteksinya gagal DIAM-DIAM: pemain melihat "tidak sedang berjalan" untuk event
+       yang sebenarnya jalan. */
+    var item=aktif[se.id]||(se.id2?aktif[se.id2]:null)||null, jalan=!!item, sebab='';
     if(!jalan) sebab='tidak sedang berjalan';
     if(jalan&&se.stage){
       var st=(typeof hogStageNow==='function')?hogStageNow(age):null;
@@ -1389,7 +1393,17 @@ function staminaPlan(stamina,opt){
   var baris=staminaEventsNow().map(function(r){
     var out={nama:r.ev.nama,aktif:r.aktif,sebab:r.sebab,hasil:r.ev.hasil,catatan:r.ev.catatan||'',
       model:r.ev.model,hunts:r.aktif?f.hunts:0,poin:0,takTerukur:false};
+    /* Event KUOTA tidak pernah punya "hunt": stamina-nya dibelanjakan langsung, dan
+       jumlahnya dibatasi. Hunt di-nolkan lebih dulu supaya tak ada baris yang
+       melaporkan 25 hunt untuk sesuatu yang batasnya 5. */
+    if(r.ev.model==='kuota'){ out.hunts=0; out.kuota=0; out.kuotaStamina=0; }
     if(!r.aktif) return out;
+    if(r.ev.model==='kuota'){
+      var per=numIn(r.ev.kuotaStamina)||0, maks=numIn(r.ev.kuotaMax)||0;
+      out.kuota=per>0?Math.min(Math.floor(numIn(stamina)/per),maks):0;
+      out.kuotaStamina=out.kuota*per;
+      return out;
+    }
     if(r.ev.model==='dt'){ out.gem=f.gem; out.speedupMnt=f.speedupMnt; out.heroXp=f.heroXp;
       out.claw=f.claw; out.pouch=f.pouch; out.rally=f.rally; out.dianaShard=f.dianaShard; }
     else if(r.ev.poinPerHunt) out.poin=f.hunts*r.ev.poinPerHunt;

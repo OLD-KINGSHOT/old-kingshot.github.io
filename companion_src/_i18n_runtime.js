@@ -117,6 +117,7 @@
       '🤖 Redeem robot $1: $2 codes claimed · clock resynced automatically.'],
     [/^🤖 Robot redeem ([\d:]+ UTC): (\d+) kode masuk, (\d+) tidak berlaku · jam disinkronkan otomatis\.$/g,
       '🤖 Redeem robot $1: $2 codes claimed, $3 not valid · clock resynced automatically.'],
+    [/\(([\d.,]+) stamina terpakai, maks 5×\)/g, '($1 stamina used, max 5×)'],
     [/^([\d.]+) hunt$/g, '$1 hunts'],
     [/^([\d.]+) gem · ([\d.]+) mnt$/g, '$1 gems · $2 min'],
     /* event advisory (dynamic, number-interpolated) */

@@ -558,6 +558,16 @@ const STAMINA_EVENTS=[
   {id:'championsWay',nama:'Champion’s Way (Gen 4+)',model:'hunt',poinPerHunt:null,
    hasil:'Weapon Scrap & Precious Keepsake → gem, stamina, speedup, Hero XP; scrap → rally Elite Rebel → peti di 1/3/5/7/10 kill',
    catatan:'pengganti Desert Trial sejak Gen 4 · peluang drop-nya tak dipublikasikan, jadi yang dihitung hanya jumlah hunt'},
+  /* Truegold Refinement memakai stamina dengan bentuk yang BEDA dari semua entri di
+     atas: bukan "sekian stamina per hunt", melainkan KUOTA — habiskan 50 stamina →
+     1 Lesser Truegold, maksimal 5× per event. Angkanya dari entri ensiklopedia app
+     sendiri yang sudah terverifikasi lebih dulu ("gather 25M ×5 + habiskan 50 stamina
+     ×5 — itu SEMUA yang gratis"). Memaksakannya ke model `hunt` akan melaporkan 250
+     stamina sebagai 25 hunt dan menelan batas 5×-nya. */
+  {id:'truegoldRefinement',id2:'Truegold Refinement',nama:'Truegold Refinement',model:'kuota',
+   poinPerHunt:null,kuotaStamina:50,kuotaMax:5,
+   hasil:'habiskan 50 stamina → 1 Lesser Truegold (maks 5× per event) → tukar pack Truegold di tab DEALS',
+   catatan:'kuota, bukan hunt: stamina di atas 250 tidak menambah apa pun di event ini'},
   {id:'cesaresFury',nama:'Cesare’s Fury',model:'rebel',poinPerHunt:null,
    hasil:'shard Mythic + gem + speedup',
    catatan:'ongkosnya beda: scout 15 · solo 10 · rally 25 stamina (hemat ~2 dengan Diana) — tidak ikut hitungan hunt'},
