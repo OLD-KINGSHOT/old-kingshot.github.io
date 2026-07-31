@@ -41,6 +41,10 @@
     [/\bhari ini\b/g, 'today'],
     [/sisa (\d+) hari/g, '$1 days left'],
     [/(\d+(?:[.,]\d+)?) hari\/level/g, '$1 days/level'],
+    /* "tiap ... hari" HARUS mendahului dua aturan angka+hari di bawahnya: kalau
+       kebalik, "tiap 18 hari" keluar sebagai "tiap 18 days" — setengah Indonesia. */
+    [/\btiap (\d+) hari\b/g, 'every $1 days'],
+    [/\btiap hari\b/g, 'every day'],
     [/~(\d+) hari/g, '~$1 days'],
     [/(\d+) hari\b/g, '$1 days'],
     [/\bTC masih (\d+)/g, 'TC still $1'],
@@ -49,6 +53,8 @@
        generik "hari" di bawah, yang kalau duluan akan merusak frasa penuhnya. */
     [/Kingdom (\d+) · hari (\d+)/g, 'Kingdom $1 · day $2'],
     [/Lihat semua \((\d+)\)/g, 'Show all ($1)'],
+    /* jumlah tugas ikut profil, jadi tak bisa dikunci ke satu angka */
+    [/Lihat semua (\d+) tugas →/g, 'See all $1 tasks →'],
     [/\bmulai (\d{4}-\d{2}-\d{2})/g, 'starts $1'],
     [/⚠ hari (\d+) bukan jangkar HoG kingdom ini/g, '⚠ day $1 is not this kingdom’s HoG anchor'],
     [/ — cocoknya Kingdom /g, ' — it fits Kingdom '],
@@ -125,6 +131,8 @@
     [/(\d+) jam lagi/g, 'in $1h'],
     [/(\d+) hr (\d+) jam/g, '$1d $2h'],
     [/(\d+) jam\b/g, '$1h'],
+    [/\bsudah lewat\b/g, 'already passed'],
+    [/\btidak diketahui\b/g, 'unknown'],
     [/\bAKTIF\b/g, 'ACTIVE'],
     [/\bsisa\b/g, 'left'],
     [/\btercapai\b/g, 'reached'],
