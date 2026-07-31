@@ -1233,7 +1233,6 @@
   "Inventaris": "Inventory",
   "Alat hitung: waktu bangun & speedup, inventaris & stamina, dan statistik tempur (power & rasio formasi).": "Calculators: build time & speedups, inventory & stamina, and combat stats (power & formation ratios).",
   "🎒 Kalkulator Inventaris & farming stamina kini ada di tab": "🎒 The Inventory calculator & stamina farming now live in the",
-  "berdampingan supaya lebih mudah dibaca.": "tab, side by side so they are easier to read.",
   "Buka Kalkulator →": "Open Calculator →",
   ". Claw dipakai melacak Dreadwolf (rally 25 stamina, 20 dengan Diana maks) → 2-4 shard Diana. Pouch = gem + speedup + Hero XP. Pouch punya": ". Claws are used to track a Dreadwolf (rally 25 stamina, 20 with Diana maxed) → 2-4 Diana shards. A pouch = gems + speedups + Hero XP. Pouches have",
   "dua jalur": "two paths",
@@ -1247,5 +1246,10 @@
   "Di situasi ini kamu bukan joiner — effect_op joiner tidak berlaku.": "You are not a joiner in this situation — joiner effect_ops do not apply.",
   "Situasi tidak dikenal.": "Unknown situation.",
   "Pool yang sudah dibawa anggota lain": "Pools other members already bring",
-  "(opsional — tidak disimpan)": "(optional — not saved)"
+  "(opsional — tidak disimpan)": "(optional — not saved)",
+  "(skill gathering kayu & roti) = bottleneck resource F2P. Buku Conquest: TABUNG kalau tak main Arena.": "(wood & bread gathering skill) = the F2P resource bottleneck. Conquest books: SAVE them if you do not play Arena.",
+  ", berdampingan supaya lebih mudah dibaca.": ", side by side so they are easier to read.",
+  "Kosongkan rumah + support anggota ONLINE (stage 7/14/17 = skor besar; 10/20 = HQ). Lineup: tab Hero → Viking Vengeance.": "Empty your home + support ONLINE members (stages 7/14/17 = big scores; 10/20 = HQ). Lineup: Hero tab → Viking Vengeance.",
+  "lebih kecil": "smaller",
+  "dari kenyataan.": "than reality."
 }

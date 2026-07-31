@@ -168,6 +168,11 @@
        tiap kali kapitalnya diubah. Aturan ini hanya jalan kalau kunci persis tak ada. */
     [/\bGratis\b/g, 'Free'],
     [/\bgratis\b/g, 'free'],
+    /* korban perubahan kapital yang sama: "lalu TAHAN" -> "lalu Tahan" memutus
+       kuncinya. Ditambal sebagai aturan supaya kapital berikutnya tak menelannya lagi. */
+    [/\blalu Tahan\b/g, 'then Hold'],
+    [/^Rentang TC di bawah 12 memakai bangunan yang biayanya belum ada di data \((.+?)\)\. Baris itu dilewati, jadi total di bawah$/g,
+      'TC ranges below 12 use buildings whose costs are not in the data yet ($1). Those rows are skipped, so the total below is'],
     [/\bAKTIF\b/g, 'ACTIVE'],
     [/\bsisa\b/g, 'left'],
     [/\btercapai\b/g, 'reached'],
