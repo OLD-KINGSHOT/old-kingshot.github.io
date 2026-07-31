@@ -498,7 +498,6 @@
   "Panel pemilik — daftar pengunjung app. Hanya kamu yang bisa melihat.": "Owner panel — app visitor list. Only you can see it.",
   "Khusus pemilik app.": "App owner only.",
   "Tab ini hanya untuk pemilik app (Player ID pemilik). Profil aktifmu bukan pemilik.": "This tab is for the app owner only (owner Player ID). Your active profile is not the owner.",
-  "Alat hitung: waktu bangun & speedup, dan statistik tempur (power & rasio formasi).": "Tools: build time & speedups, and combat stats (power & formation ratio).",
   "Event pertumbuhan (umur server) + rotasi mingguan live kingshot.net — sesuai server-mu.": "Growth events (server age) + live weekly rotation from kingshot.net — matched to your server.",
   "Statistik": "Statistics",
   "Dukung": "Support",
@@ -1230,5 +1229,10 @@
   "★ Punya": "★ Owned",
   "habiskan 50 stamina → 1 Lesser Truegold (maks 5× per event) → tukar pack Truegold di tab DEALS": "spend 50 stamina → 1 Lesser Truegold (max 5× per event) → trade for a Truegold pack in the DEALS tab",
   "kuota, bukan hunt: stamina di atas 250 tidak menambah apa pun di event ini": "a quota, not hunts: stamina beyond 250 adds nothing in this event",
-  "★ Joiner epic → 4★ (+25% Attack, effect 102). Chenko/Yeonwoo pakai effect 101 (Lethality) — pool BEDA, jadi mengali, bukan menjumlah seperti dua hero 101 sekaligus. ⚠ KOREKSI: untungnya nyata tapi KECIL — ~4% saat Attack & Lethality masih 100%, dan makin mengecil begitu statmu naik (~1% di 200%). Tetap campur 102 dengan 101, jangan tumpuk dua 101. Stack antar-joiner, bukan dlm 1 lineup.": "★ Epic joiner → 4★ (+25% Attack, effect 102). Chenko/Yeonwoo use effect 101 (Lethality) — a DIFFERENT pool, so they multiply instead of adding the way two 101 heroes would. ⚠ CORRECTION: the gain is real but SMALL — ~4% while your Attack & Lethality are still at 100%, and it shrinks as your stats grow (~1% at 200%). Still mix 102 with 101, just do not stack two 101s. Stack across joiners, not within one lineup."
+  "★ Joiner epic → 4★ (+25% Attack, effect 102). Chenko/Yeonwoo pakai effect 101 (Lethality) — pool BEDA, jadi mengali, bukan menjumlah seperti dua hero 101 sekaligus. ⚠ KOREKSI: untungnya nyata tapi KECIL — ~4% saat Attack & Lethality masih 100%, dan makin mengecil begitu statmu naik (~1% di 200%). Tetap campur 102 dengan 101, jangan tumpuk dua 101. Stack antar-joiner, bukan dlm 1 lineup.": "★ Epic joiner → 4★ (+25% Attack, effect 102). Chenko/Yeonwoo use effect 101 (Lethality) — a DIFFERENT pool, so they multiply instead of adding the way two 101 heroes would. ⚠ CORRECTION: the gain is real but SMALL — ~4% while your Attack & Lethality are still at 100%, and it shrinks as your stats grow (~1% at 200%). Still mix 102 with 101, just do not stack two 101s. Stack across joiners, not within one lineup.",
+  "Inventaris": "Inventory",
+  "Alat hitung: waktu bangun & speedup, inventaris & stamina, dan statistik tempur (power & rasio formasi).": "Calculators: build time & speedups, inventory & stamina, and combat stats (power & formation ratios).",
+  "🎒 Kalkulator Inventaris & farming stamina kini ada di tab": "🎒 The Inventory calculator & stamina farming now live in the",
+  "berdampingan supaya lebih mudah dibaca.": "tab, side by side so they are easier to read.",
+  "Buka Kalkulator →": "Open Calculator →"
 }

@@ -249,8 +249,11 @@ function renderEvent(){
        <h3>Spend per hari</h3><div class="scrollx"><table><thead><tr><th>Hari</th><th>Fokus skor</th></tr></thead><tbody>${KVK_PREP.days.map(([d,f])=>`<tr><td><b>${esc(d)}</b></td><td class="small">${esc(f)}</td></tr>`).join('')}</tbody></table></div>
        <div class="alert inf small">\ud83c\udfe5 ${esc(KVK_PREP.revive)}</div>`)
       +evCalcHTML(),
-    roi: card('Nilai Item & Speedup (ROI)','\u25c6',roi+'<h3>Pakai / Tahan / Bebas</h3>'+itemGuide)
-      +invCardHTML()+dtFarmHTML(),
+    /* Kalkulator Inventaris & farming stamina PINDAH ke tab Kalkulator -> Inventaris.
+       Penunjuk ini ditinggal dengan sengaja: keduanya sudah lama di sini, jadi
+       menghilangkannya tanpa jejak akan terbaca sebagai fitur yang dihapus. */
+    roi: card('Nilai Item & Speedup (ROI)','\u25c6',roi+'<h3>Pakai / Tahan / Bebas</h3>'+itemGuide
+      +'<div class="alert inf small" style="margin-top:10px">\ud83c\udf92 Kalkulator Inventaris & farming stamina kini ada di tab <b>Kalkulator</b> \u2192 sub-tab <b>Inventaris</b>, berdampingan supaya lebih mudah dibaca. <button class="btn ghost sm" data-go="kalkulator" style="margin-left:6px">Buka Kalkulator \u2192</button></div>'),
     ency: card('Ensiklopedia Event','\u25a4',`<p class="muted small">Cara main F2P tiap event. Jadwal = perkiraan; tab Events di game = acuan final.</p>${ency}`),
     anti: card('Kesalahan F2P (Anti-P2W)','\u26a0',MISTAKES.map((m,i)=>`<div class="check note"><div class="d" style="color:var(--fg)"><span class="num dim">${pad(i+1)}</span> &nbsp;${esc(m)}</div></div>`).join(''))
       +card('Trik Lawan P2W','\ud83e\udd77',`<p class="muted small">Cara F2P/low-spender bersaing & mengungguli whale. Sumber: kingshotmastery, kingshotguide, lootbar, kingshotoptimizer, komunitas (Jun 2026).</p>`
@@ -292,7 +295,11 @@ function renderEvent(){
       const drawCalc=i=>{ const cc=$('#hogcalc',el); if(!cc) return;
         cc.innerHTML=hogCalcBody(i); hogCalcWire(el,i); };
       const draw=i=>{ c.innerHTML=hogStageTbl(i,actStage(i)); drawCalc(i); $$('.hibtn',el).forEach(b=>b.classList.toggle('active',+b.dataset.hi===i)); if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); }; $$('.hibtn',el).forEach(b=>b.onclick=()=>draw(+b.dataset.hi)); draw(hogCurIdx(age)); } }
-    if(k==='roi'){ invWire(el); dtFarmWire(el); }
+    /* 'roi' tak lagi punya kartu inventaris/stamina — wiring-nya ikut pindah ke
+       renderKalkulator(). Yang tersisa cuma tombol penunjuk, dan itu HARUS diikat
+       di sini: [data-go] tidak didelegasikan, ia diikat per-render — tombol yang
+       lahir di dalam sub-tab tak pernah kebagian handler dari nav. */
+    if(k==='roi') $$('[data-go]',el).forEach(b=>b.onclick=()=>activate(b.dataset.go));
     if(k==='kvk'){ const b=$('#evcalc',el); if(b){ b.innerHTML=evCalcBody(); evCalcWire(el); } }
     if(k==='adv'&&age!=null){
       const add=$('#sch_add',el); if(add) add.onclick=()=>{ const date=$('#sch_date').value; if(!date){$('#sch_date').focus();return;} const arr=store.get('events',[]); const ty=$('#sch_type').value; const i=arr.findIndex(x=>x.type===ty); if(i>=0)arr[i]={type:ty,date}; else arr.push({type:ty,date}); store.set('events',arr); renderEvent(); };
@@ -514,7 +521,7 @@ function invCardHTML(){
       +_hcInp('data-inv="'+it.id+'"',v[it.id])+'</label>'; }).join('');
   return card('Kalkulator Inventaris — barangku dipakai di mana?','🎒',
     '<p class="muted small">Isi apa yang kamu punya, sekali saja. App mencari event berpoin TERTINGGI untuk tiap barang, menyebut harinya, dan menghitung perkiraan poinnya. Event yang tabel poinnya sudah terverifikasi: HoG, KvK, Strongest Governor.</p>'
-    +'<div class="tcbuff">'+form
+    +'<div class="tcbuff invgrid">'+form
     +'<label class="calcf"><span>🌵 Stamina yang mau dipakai <span class="muted small">hasilnya bukan poin</span></span>'+_hcInp('data-inv="stamina"',v.stamina)+'</label>'
     +'<label class="calcf"><span>🌵 Rally Dreadwolf yang mau dijalankan</span>'+_hcInp('data-inv="rally"',v.rally)+'</label>'
     +'<label class="calcf chk"><input data-invc="diana" type="checkbox"'+(v.diana?' checked':'')+'> Bawa Diana (hunt −20%, rally 25→20)</label>'
@@ -1238,17 +1245,24 @@ function wireStat(root){
 /* ===== Tab Kalkulator (Building + Statistik) ===== */
 function renderKalkulator(){
   const el=$('[data-tab=kalkulator]'); if(!el) return;
-  el.innerHTML=pageHead('Kalkulator','Alat hitung: waktu bangun & speedup, dan statistik tempur (power & rasio formasi).')
+  el.innerHTML=pageHead('Kalkulator','Alat hitung: waktu bangun & speedup, inventaris & stamina, dan statistik tempur (power & rasio formasi).')
     +`<div class="seg" id="kk_sub" style="margin:4px 0 10px">
-        <button data-s="tc">Rencana TC</button><button data-s="build">Building</button><button data-s="stat">Statistik</button><button data-s="tabel">Tabel Biaya</button>
+        <button data-s="tc">Rencana TC</button><button data-s="build">Building</button><button data-s="inv">Inventaris</button><button data-s="stat">Statistik</button><button data-s="tabel">Tabel Biaya</button>
       </div><div id="kk_subc"></div>`;
-  const KK_SUBS={ tc:tcCalcCard(), build:buildCalcCard(), stat:statCalcCard(), tabel:tcTableRefCard() };
+  /* Inventaris & farming stamina dipindah ke sini dari Event -> Item & ROI. Di sana
+     keduanya tersusun ke BAWAH di belakang tabel ROI, jadi terbaca sebagai lanjutan
+     tabel itu, bukan sebagai alat hitung tersendiri. Berdampingan (inventaris kiri,
+     stamina kanan) hubungannya langsung terlihat: barang -> poin, stamina -> hasil. */
+  const KK_SUBS={ tc:tcCalcCard(), build:buildCalcCard(),
+    inv:'<div class="gridcalc">'+invCardHTML()+dtFarmHTML()+'</div>',
+    stat:statCalcCard(), tabel:tcTableRefCard() };
   const showSub=k=>{ if(!KK_SUBS[k]) k='build'; const c=$('#kk_subc',el); if(!c) return;
     c.innerHTML=KK_SUBS[k];
     $$('#kk_sub button',el).forEach(b=>b.classList.toggle('active',b.dataset.s===k));
     store.set('kkSub',k);
     if(k==='tc') wireTc(el);
     if(k==='build') wireCalc(el);
+    if(k==='inv'){ invWire(el); dtFarmWire(el); }
     if(k==='stat') wireStat(el);
     if(k==='tabel') wireTcRef(el);
     if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
