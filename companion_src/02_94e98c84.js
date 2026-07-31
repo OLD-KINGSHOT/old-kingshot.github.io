@@ -210,7 +210,7 @@ function rosterBest(ty){ const r=rosterGet(); return HEROES.filter(h=>h.ty===ty&
    menyerang balik, tak ada korban dan komposisi murni soal damage — itulah kenapa
    rasionya menggeser ke archer begitu jumlah troop mencukupi. */
 function bearRatio(age){ return age==null?{inf:10,cav:30,arc:60} : age>=197?{inf:1,cav:10,arc:89} : age>=113?{inf:10,cav:10,arc:80} : age>=50?{inf:10,cav:20,arc:70} : {inf:10,cav:30,arc:60}; }
-function lineupCard(s,age){
+function lineupCard(s,age,poolTerisi){
   const heroes=s.heroes.map(h=>{ const st=rosterStar(h.n); return `<span class="hc">${esc(h.n)}${h.note?' <small>('+esc(h.note)+')</small>':''}${st?' <span class="pill f2p">'+st+'★</span>':''}</span>`; }).join(s.pick?'<span class="dim small" style="align-self:center">atau</span>':'');
   /* Bear Hunt: rasio bergeser ke archer tiap generasi — otomatis sesuai umur server */
   let ratio=s.ratio, ratioNote='';
@@ -225,8 +225,25 @@ function lineupCard(s,age){
     ${s.table?`<div class="scrollx" style="margin-top:9px"><table class="ltbl"><tbody>${s.table.map((row,ri)=>`<tr>${row.map((c,ci)=>ri===0?`<th>${esc(c)}</th>`:(ci===0?`<td><b>${esc(c)}</b></td>`:`<td class="small">${esc(c)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`:''}
     <div class="lrow up"><span class="lk">Skill\u2191</span>${esc(s.skillUp)}</div>
     ${rosterAny()?(function(){const inf=rosterBest('Infantry'),cav=rosterBest('Cavalry'),arc=rosterBest('Archer'),list=[inf,cav,arc].filter(Boolean),ld=list.slice().sort((a,b)=>rosterStar(b.n)-rosterStar(a.n))[0],c=(l,h)=>l+': '+(h?esc(h.n)+' '+rosterStar(h.n)+'\u2605':'\u2014');return `<div class="lrow"><span class="lk">Punyamu</span>${c('Inf',inf)} \u00b7 ${c('Cav',cav)} \u00b7 ${c('Arc',arc)}${ld?' \u00b7 \ud83d\udc51 leader '+esc(ld.n):''}</div>`;})():(age!=null&&typeof heroLeadersInline==='function'?`<div class="lrow"><span class="lk">Leader gen</span>${heroLeadersInline(age)}</div>`:'')}
+    ${joinerRow(s,poolTerisi)}
     <div class="lrow"><span class="lk">Lakukan</span>${Array.isArray(s.do)?'<ul class="doul">'+s.do.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':esc(s.do)}</div>
   </div>`;
+}
+/* Baris JOINER: mengubah saran statis "campur 101 dengan 102" jadi hitungan dari
+   roster yang benar-benar dipunya. Mesinnya (joinerPick) murni & diuji di test_27;
+   di sini hanya tampilan. Kalau roster kosong ia berkata terus terang, tidak
+   mengarang hero. */
+function joinerRow(s,poolTerisi){
+  if(typeof joinerPick!=='function') return '';
+  if(s.kind==='pvp') return '';
+  const r=joinerPick(s.key,rosterGet(),poolTerisi||[]);
+  if(!r.hero) return `<div class="lrow"><span class="lk">Joiner</span><span class="dim">${esc(r.alasan)}</span></div>`;
+  const alt=r.alternatif.length
+    ? ` <span class="dim">· lalu ${r.alternatif.map(a=>esc(a.hero)+' ('+a.op+')').join(' · ')}</span>` : '';
+  const warn=r.peringatan.map(p=>`<div class="dim small" style="margin-top:2px">⚠ ${esc(p)}</div>`).join('');
+  return `<div class="lrow"><span class="lk">Joiner</span><span><b>${esc(r.hero)}</b> `
+    +`<span class="pill f2p">${r.op} ${esc(r.stat)}</span>${alt}`
+    +`<div class="dim small" style="margin-top:2px">${esc(r.alasan)}</div>${warn}</span></div>`;
 }
 function card(title,gi,bodyHTML,meta,hud){
   return `<div class="card${hud?' hud':''}"><div class="card-h"><h2>${gi?`<span class="gi">${gi}</span>`:''}${title}</h2>${meta?`<span class="meta">${meta}</span>`:''}</div><div class="card-b">${bodyHTML}</div></div>`;
@@ -637,7 +654,22 @@ function renderHero(){
     if(which==='lineup'){
       const sp=$('#sitpick',body),sc=$('#sitcard',body);
       sp.innerHTML=SITUATIONS.map(s=>`<button data-sit="${s.key}">${s.icon} ${esc(s.name)}</button>`).join('');
-      const show=k=>{ const s=SITUATIONS.find(x=>x.key===k)||SITUATIONS[0]; sc.innerHTML=lineupCard(s,age); $$('#sitpick button',body).forEach(b=>b.classList.toggle('active',b.dataset.sit===s.key)); store.set('lastSit',s.key); };
+      /* Pool yang sudah dibawa anggota lain. SENGAJA tidak disimpan: isi rally berganti
+         tiap 30 menit, dan tebakan basi di sini lebih menyesatkan daripada tak ada
+         data. Chip cuma ada di sini — satu-satunya permukaan yang sudah punya
+         re-render sendiri; di ensiklopedia & tab Sekarang barisnya tetap muncul,
+         hanya tanpa chip. */
+      let terisi=[];
+      const POOLCHIP=[[101,'Lethality'],[102,'Attack'],[113,'Health']];
+      const show=k=>{ const s=SITUATIONS.find(x=>x.key===k)||SITUATIONS[0];
+        const chips=(s.kind==='pvp')?''
+          :'<div class="lbl" style="margin:8px 0 4px">Pool yang sudah dibawa anggota lain <span class="dim">(opsional — tidak disimpan)</span></div>'
+           +'<div class="seg" id="poolchip">'+POOLCHIP.map(p=>`<button data-pool="${p[0]}"${terisi.indexOf(p[0])>=0?' class="active"':''}>${p[0]} ${p[1]}</button>`).join('')+'</div>';
+        sc.innerHTML=chips+lineupCard(s,age,terisi);
+        $$('#poolchip button',sc).forEach(b=>b.onclick=()=>{ const o=+b.dataset.pool,i=terisi.indexOf(o);
+          if(i>=0) terisi.splice(i,1); else terisi.push(o); show(k); });
+        $$('#sitpick button',body).forEach(b=>b.classList.toggle('active',b.dataset.sit===s.key)); store.set('lastSit',s.key);
+        if(window.__getLang&&window.__getLang()==='en'&&window.__translate) window.__translate(); };
       $$('#sitpick button',body).forEach(b=>b.onclick=()=>show(b.dataset.sit));
       show(store.get('lastSit','bear-trap'));
     }

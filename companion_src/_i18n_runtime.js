@@ -101,6 +101,20 @@
       '×$1 — these have no task in HoG/KvK/SG, or we do not have that event’s point table yet.'],
     [/^×([\d.]+) — barang ini tak punya task/g, '×$1 — these have no task'],
     [/Poin sama di stage lain, jadi boleh dipindah:/g, 'Same points in other stages, so it can be moved:'],
+    /* rekomendasi joiner (effect_op) — nomor pool & nama hero disisipkan saat jalan,
+       jadi kunci penuhnya tak bisa ditulis di kamus. */
+    [/^Pool (\d+) \((.+?)\) belum ada di rally ini → mengali, bukan menjumlah\.$/g,
+      'Pool $1 ($2) is not in this rally yet → it multiplies instead of adding.'],
+    [/^Pool (\d+) sudah terisi; dia tetap yang terbaik dari roster-mu, tapi sumbangannya menjumlah\.$/g,
+      'Pool $1 is already filled; still the best in your roster, but the contribution only adds.'],
+    [/^(.+?) baru (\d)★ — skill Expedition #1 butuh 4★ supaya Lv5\.$/g,
+      '$1 is only $2★ — the Expedition #1 skill needs 4★ to reach Lv5.'],
+    [/^(.+?) & (.+?) sama-sama pool (\d+) — menjumlah, bukan mengali\. Bawa salah satu saja\.$/g,
+      '$1 & $2 are both pool $3 — they add, they do not multiply. Bring only one of them.'],
+    /* simpulnya "· lalu Amane (102)" — sudah di-trim, jadi jangan menuntut spasi depan */
+    [/·\s*lalu\s/g, '· then '],
+    [/\bpertahanan \(stat pastinya belum terbit\)/g, 'defence (exact stat not published)'],
+    [/\bkurangi damage musuh\b/g, 'reduces enemy damage'],
     /* label barang inventaris muncul DI DALAM baris rakitan, jadi kunci penuhnya
        tak pernah cocok — labelnya harus bisa diterjemahkan sendiri-sendiri. */
     [/\bPower dari latih\/promote troop\b/g, 'Power from training/promoting troops'],

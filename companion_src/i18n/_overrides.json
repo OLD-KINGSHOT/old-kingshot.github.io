@@ -1242,5 +1242,10 @@
   "💡 Level beast": "💡 Beast level",
   "mengubah ongkos stamina — Lv5 dan Lv30 sama-sama 10 (8 dengan Diana), dan peluang Clawshard/Pouch tetap 50/50. Yang naik ikut level cuma resource & Hero XP. Jadi buru level": "change the stamina cost — Lv5 and Lv30 both cost 10 (8 with Diana), and the Clawshard/Pouch odds stay 50/50. All that rises with level is resources & Hero XP. So hunt the",
   "yang masih bisa kamu habisi sekali march: hasil lebih besar, stamina sama.": "you can still clear in a single march: bigger yield, same stamina.",
-  "TERTINGGI": "HIGHEST"
+  "TERTINGGI": "HIGHEST",
+  "Belum ada hero ber-effect_op di roster-mu untuk situasi ini — isi ★ hero di tab Hero.": "No hero with an effect_op in your roster for this situation yet — set your hero ★ on the Hero tab.",
+  "Di situasi ini kamu bukan joiner — effect_op joiner tidak berlaku.": "You are not a joiner in this situation — joiner effect_ops do not apply.",
+  "Situasi tidak dikenal.": "Unknown situation.",
+  "Pool yang sudah dibawa anggota lain": "Pools other members already bring",
+  "(opsional — tidak disimpan)": "(optional — not saved)"
 }

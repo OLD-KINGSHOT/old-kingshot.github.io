@@ -230,6 +230,75 @@ const HEROES=[
   {n:'Triton',t:'Gen6',ty:'Infantry',f2p:false,note:'Legendary Gen 6.'},
   {n:'Yang',t:'Gen6',ty:'Archer',f2p:true,note:'Gen 6 Archer (standard events = F2P-accessible). ATK Gen6 tertinggi + satu-satunya Gen6 dgn buff rally Lethality — hero Gen6 F2P terbaik.'},
 ];
+/* ── effect_op joiner ─────────────────────────────────────────────────────
+   Sampai sekarang effect_op cuma hidup sebagai KALIMAT di note hero, jadi tak bisa
+   dihitung. Di sini ia jadi data.
+   Mekanikanya diverifikasi 31 Jul 2026 (kingshothandbook.com/guides/buff-stacking-guide):
+   effect_op SAMA menjumlah (satu pool), BEDA mengali. Sebagai joiner yang dihitung cuma
+   skill Expedition #1 hero PERTAMA — stat, gear, widget & consumable joiner tidak berlaku.
+   PERSENNYA SENGAJA TIDAK DIISI. Hanya empat hero yang angkanya pernah terbit (Chenko,
+   Yeonwoo, Amane, Gordon: +25%); mengisi sisanya berarti mengarang. Mesin di bawah memang
+   tak membutuhkannya — keputusannya soal pool mana yang KOSONG, bukan besar angkanya.
+   `stat` untuk 112 ditulis apa adanya: app belum pernah menyebut stat pastinya. */
+const HERO_EFFECT={
+  Amadeus:[{op:101,stat:'Lethality'}],
+  Chenko :[{op:101,stat:'Lethality'}],
+  Yeonwoo:[{op:101,stat:'Lethality'}],
+  Amane  :[{op:102,stat:'Attack'}],
+  Margot :[{op:102,stat:'Attack'}],
+  Hilde  :[{op:102,stat:'Attack'},{op:112,stat:'pertahanan (stat pastinya belum terbit)'}],
+  Saul   :[{op:112,stat:'pertahanan (stat pastinya belum terbit)'},{op:113,stat:'Health'}],
+  Gordon :[{op:113,stat:'Health'}],
+  Howard :[{op:111,stat:'Defense'}],
+  Fahd   :[{op:201,stat:'kurangi damage musuh'}],
+};
+/* Keluarga pool per jenis situasi. Viking sengaja masuk OFENSIF walau kind-nya
+   'defense': skornya dihitung dari Viking yang dibunuh troop-MU, jadi yang bekerja
+   damage — konsisten dengan daftar hero yang sudah lama ada di SITUATIONS. */
+const _POOL_OFENSIF=[101,102];
+const _POOL_DEFENSIF=[113,111,201,112];
+/* Fungsi MURNI: roster & pool-terisi masuk lewat argumen, bukan dibaca dari store,
+   supaya bisa diuji tanpa localStorage dan tak diam-diam bergantung profil aktif. */
+function joinerPick(sitKey,roster,poolTerisi){
+  var hasil={hero:null,op:null,stat:null,alasan:'',alternatif:[],peringatan:[]};
+  var S=(typeof SITUATIONS!=='undefined')?SITUATIONS.filter(function(x){return x.key===sitKey;})[0]:null;
+  if(!S){ hasil.alasan='Situasi tidak dikenal.'; return hasil; }
+  if(S.kind==='pvp'){ hasil.alasan='Di situasi ini kamu bukan joiner — effect_op joiner tidak berlaku.'; return hasil; }
+  var pref=(S.kind==='garrison')?_POOL_DEFENSIF:_POOL_OFENSIF;
+  var terisi={}; (poolTerisi||[]).forEach(function(o){ terisi[o]=true; });
+  var kand=[];
+  Object.keys(roster||{}).forEach(function(n){
+    var st=+roster[n]||0; if(st<=0) return;
+    var eff=HERO_EFFECT[n]; if(!eff) return;
+    var rel=eff.filter(function(e){ return pref.indexOf(e.op)>=0; });
+    if(!rel.length) return;
+    /* Hero dual-effect cukup punya SATU pool kosong untuk tetap mengali. */
+    var kosong=rel.filter(function(e){ return !terisi[e.op]; });
+    var dipakai=kosong[0]||rel[0];
+    kand.push({hero:n,star:st,op:dipakai.op,stat:dipakai.stat,
+      adaKosong:kosong.length>0,urut:pref.indexOf(dipakai.op)});
+  });
+  if(!kand.length){
+    hasil.alasan='Belum ada hero ber-effect_op di roster-mu untuk situasi ini — isi ★ hero di tab Hero.';
+    return hasil;
+  }
+  kand.sort(function(a,b){
+    if(a.adaKosong!==b.adaKosong) return a.adaKosong?-1:1;  /* pool kosong menang duluan */
+    if(a.star!==b.star) return b.star-a.star;                /* lalu skill paling matang */
+    return a.urut-b.urut;
+  });
+  var p=kand[0];
+  hasil.hero=p.hero; hasil.op=p.op; hasil.stat=p.stat;
+  hasil.alasan=p.adaKosong
+    ? 'Pool '+p.op+' ('+p.stat+') belum ada di rally ini → mengali, bukan menjumlah.'
+    : 'Pool '+p.op+' sudah terisi; dia tetap yang terbaik dari roster-mu, tapi sumbangannya menjumlah.';
+  hasil.alternatif=kand.slice(1,4).map(function(k){
+    return {hero:k.hero,op:k.op,stat:k.stat,star:k.star}; });
+  if(p.star<4) hasil.peringatan.push(p.hero+' baru '+p.star+'★ — skill Expedition #1 butuh 4★ supaya Lv5.');
+  if(kand.length>1&&kand[1].op===p.op)
+    hasil.peringatan.push(p.hero+' & '+kand[1].hero+' sama-sama pool '+p.op+' — menjumlah, bukan mengali. Bawa salah satu saja.');
+  return hasil;
+}
 const F2P_ORDER=[
   ['1. Saul \u2192 2\u2605','Ekonomi: speed konstruksi & potongan biaya (jangan over-invest). Spin ~35\u00d7.'],
   ['2. Zoe (Roulette)','Infantry/garrison terbaik F2P, tanpa pengganti. Target 4\u2605 \u2014 split di HoG Hari 2 & 3.'],
