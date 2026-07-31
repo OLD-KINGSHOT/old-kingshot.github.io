@@ -584,7 +584,15 @@ function dtFarmHTML(){
   if(typeof DT_FARM==='undefined') return '';
   var s=store.get('dtFarm',{})||{};
   return card('Farming Stamina → Gem & Speedup (Desert Trial)','🌵',
-    '<p class="muted small">Beast di MAP: <b>50% Clawshard / 50% Challenger Pouch</b>. Claw dipakai melacak Dreadwolf (rally 25 stamina, 20 dengan Diana maks) → 2-4 shard Diana. Pouch = gem + speedup + Hero XP.</p>'
+    '<p class="muted small">Beast di MAP: <b>50% Clawshard / 50% Challenger Pouch</b>. Claw dipakai melacak Dreadwolf (rally 25 stamina, 20 dengan Diana maks) → 2-4 shard Diana. Pouch = gem + speedup + Hero XP. Pouch punya <b>dua jalur</b>: jatuh langsung dari beast (yang dihitung tabel di bawah), <b>atau</b> ditukar dari Clawshard di halaman event — tapi penukaran itu baru terbuka setelah Diana 5★, jadi sebelum itu claw lebih baik ditahan untuk shard.</p>'
+    /* Level beast: diverifikasi 31 Jul 2026 (whiteoutsurvival.wiki/events/defeat-nearby-beasts,
+       kingshotguide.com, automationmacro auto-hunt guide) + dikonfirmasi pemain dari layar
+       game. Ongkos stamina DATAR di semua level — sumbernya eksplisit: beast level lebih
+       tinggi memberi lebih banyak resource "for the same amount of stamina". Peluang
+       claw/pouch juga tetap 50/50. Karena itu app SENGAJA tidak memasang pemilih level:
+       ia tak akan mengubah satu angka pun di tabel ini, dan kontrol yang tak mengubah
+       apa-apa cuma memberi kesan presisi yang tidak ada. */
+    +'<div class="alert ok small">💡 Level beast <b>tidak</b> mengubah ongkos stamina — Lv5 dan Lv30 sama-sama 10 (8 dengan Diana), dan peluang Clawshard/Pouch tetap 50/50. Yang naik ikut level cuma resource &amp; Hero XP. Jadi buru level <b>TERTINGGI</b> yang masih bisa kamu habisi sekali march: hasil lebih besar, stamina sama.</div>'
     +'<div class="alert inf small">Ongkos stamina: <b>hunt 10</b> · <b>mulai rally 25</b> · <b>ikut rally orang lain GRATIS</b>. Gathering <b>tidak</b> memakai stamina sama sekali — yang terpakai slot march. Jatahmu ~528/hari: 288 regen (1 per 5 menit) + 240 dari Storehouse (120 tiap 12 jam, harus dipungut). Cap 200 — begitu penuh regen BERHENTI, jadi jangan tinggalkan penuh.</div>'
     +'<div class="tcbuff">'
     +'<label class="calcf"><span>Stamina yang mau dipakai</span>'+_hcInp('data-df="stamina"',s.stamina)+'</label>'
