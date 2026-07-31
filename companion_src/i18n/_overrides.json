@@ -1205,7 +1205,6 @@
   "3★ lalu Tahan": "3★ then Hold",
   "★ Joiner garrison dual-effect (112+113), kuat saat di-stack 4×. Spin ke 2★ utk skill speed konstruksi + potongan biaya, lalu STOP (Furnace/riset juga kasih speed — jangan over-invest shard universal).": "★ Dual-effect garrison joiner (112+113), strong when stacked 4×. Spin to 2★ for the construction-speed + cost-reduction skill, then STOP (Furnace/research give speed too — do not over-invest universal shards).",
   "Gen 5 Infantry (Hero Roulette) — tank garrison terbaik Gen 5, penerus Zoe defensif. Sumber tak konsisten soal F2P.": "Gen 5 Infantry (Hero Roulette) — the best Gen 5 garrison tank, successor to defensive Zoe. Sources are inconsistent on F2P availability.",
-  "★ Joiner epic → 4★ (102 Attack). Dgn Chenko/Yeonwoo: efek 101×102 MENUMPUK multiplikatif ≈ 1,56× (vs 1,5× kalau aditif — unggul ~12%). Stack antar-joiner, bukan dlm 1 lineup.": "★ Epic joiner → 4★ (102 Attack). With Chenko/Yeonwoo: effects 101×102 STACK multiplicatively ≈ 1.56× (vs 1.5× if additive — ~12% ahead). Stack across joiners, not within one lineup.",
   "Ekonomi: speed konstruksi & potongan biaya (jangan over-invest). Spin ~35×.": "Economy: construction speed & cost reduction (do not over-invest). ~35 spins.",
   "Joiner (Epic, Gratis)": "Joiner (Epic, Free)",
   "Joiner defensif (Epic, Gratis)": "Defensive joiner (Epic, Free)",
@@ -1230,5 +1229,6 @@
   "Hadiah masuk mail in-game tiap karakter.": "Rewards arrive in the in-game mail for each character.",
   "★ Punya": "★ Owned",
   "habiskan 50 stamina → 1 Lesser Truegold (maks 5× per event) → tukar pack Truegold di tab DEALS": "spend 50 stamina → 1 Lesser Truegold (max 5× per event) → trade for a Truegold pack in the DEALS tab",
-  "kuota, bukan hunt: stamina di atas 250 tidak menambah apa pun di event ini": "a quota, not hunts: stamina beyond 250 adds nothing in this event"
+  "kuota, bukan hunt: stamina di atas 250 tidak menambah apa pun di event ini": "a quota, not hunts: stamina beyond 250 adds nothing in this event",
+  "★ Joiner epic → 4★ (+25% Attack, effect 102). Chenko/Yeonwoo pakai effect 101 (Lethality) — pool BEDA, jadi mengali, bukan menjumlah seperti dua hero 101 sekaligus. ⚠ KOREKSI: untungnya nyata tapi KECIL — ~4% saat Attack & Lethality masih 100%, dan makin mengecil begitu statmu naik (~1% di 200%). Tetap campur 102 dengan 101, jangan tumpuk dua 101. Stack antar-joiner, bukan dlm 1 lineup.": "★ Epic joiner → 4★ (+25% Attack, effect 102). Chenko/Yeonwoo use effect 101 (Lethality) — a DIFFERENT pool, so they multiply instead of adding the way two 101 heroes would. ⚠ CORRECTION: the gain is real but SMALL — ~4% while your Attack & Lethality are still at 100%, and it shrinks as your stats grow (~1% at 200%). Still mix 102 with 101, just do not stack two 101s. Stack across joiners, not within one lineup."
 }

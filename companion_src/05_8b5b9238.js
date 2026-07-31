@@ -204,7 +204,24 @@ const HEROES=[
   {n:'Diana',t:'B',ty:'Archer',f2p:true,note:'Gratis. Hemat stamina hunt beast MAP & mulai rally + march cepat \u2014 hero unggulan Desert Trial (farming), bukan rally tempur.'},
   {n:'Gordon',t:'B',ty:'Cavalry',f2p:true,note:'Joiner defensif epic (effect 113 Health).'},
   {n:'Fahd',t:'B',ty:'Cavalry',f2p:true,note:'Joiner epic (effect 201 kurangi dmg musuh).'},
-  {n:'Amane',t:'B',ty:'Archer',f2p:true,note:'★ Joiner epic → 4★ (102 Attack). Dgn Chenko/Yeonwoo: efek 101×102 MENUMPUK multiplikatif ≈ 1,56× (vs 1,5× kalau aditif — unggul ~12%). Stack antar-joiner, bukan dlm 1 lineup.'},
+  /* KOREKSI, silang-cek 31 Jul 2026 ke kingshothandbook.com/guides/buff-stacking-guide.
+     Mekanikanya BENAR dan tetap: effect_op sama = menjumlah, beda = mengali; 101 =
+     Lethality (Amadeus/Chenko/Yeonwoo), 102 = Attack (Amane); dan rumusnya memang
+     Damage ~ (VTroops x Attack x Lethality)/(Def x HP) x SkillMod, jadi Attack dan
+     Lethality memang dua faktor yang saling mengali.
+     Yang SALAH cuma angkanya, dan salahnya 3x lipat:
+       campur 101+102 : (A+0,25)(L+0,25) = 1,5625  <- hanya kalau A=L=1,0
+       dua-duanya 101 : A(L+0,50)        = 1,5
+       untung = 1,5625/1,5 = +4,17%, BUKAN 12%.
+     Angka 12,5% itu selisih porsi BONUS-nya saja (0,5625 vs 0,5) — bukan selisih
+     damage. Ditaruh persis setelah "1,56x vs 1,5x", ia terbaca sebagai damage dan
+     melebihkan untungnya 3x lipat.
+     Dan "1,56x" sendiri cuma sah di base 100%. Makin besar stat, untungnya MENGECIL:
+     ~2,1% di 150%, ~1,25% di 200%, ~0,6% di 300% — kebalikan dari intuisi "multiplikatif
+     makin unggul saat stat tinggi", yang berlaku untuk pengali sejati (widget), bukan
+     untuk membagi buff aditif ke dua stat yang saling mengali. Sarannya tetap sama;
+     yang dikoreksi cuma besar untungnya. */
+  {n:'Amane',t:'B',ty:'Archer',f2p:true,note:'★ Joiner epic → 4★ (+25% Attack, effect 102). Chenko/Yeonwoo pakai effect 101 (Lethality) — pool BEDA, jadi mengali, bukan menjumlah seperti dua hero 101 sekaligus. ⚠ KOREKSI: untungnya nyata tapi KECIL — ~4% saat Attack & Lethality masih 100%, dan makin mengecil begitu statmu naik (~1% di 200%). Tetap campur 102 dengan 101, jangan tumpuk dua 101. Stack antar-joiner, bukan dlm 1 lineup.'},
   {n:'Yeonwoo',t:'B',ty:'Archer',f2p:true,note:'\u2605 Joiner epic \u2192 4\u2605 (101 Lethality).'},
   {n:'Edwin',t:'C',ty:'Cavalry',f2p:false,note:'Rare ekonomi \u2014 early game saja, JANGAN invest tempur.'},
   {n:'Seth',t:'C',ty:'Infantry',f2p:false,note:'Rare ekonomi \u2014 early game saja.'},
