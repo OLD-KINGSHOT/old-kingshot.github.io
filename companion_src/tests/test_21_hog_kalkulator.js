@@ -238,22 +238,39 @@ t('kartu farming stamina ter-render dan angkanya cocok dengan mesin', () => {
    Sumber status HARUS evUpcoming() — daftar aktif yang sama dipakai tab Sekarang. Kalau
    deteksi ini punya daftar sendiri, ia akan menyimpang persis seperti bug jangkar jam-atas
    yang dijaga test_22. Umur dibuat relatif terhadap jam app supaya test tak basi. */
-const envUmur = umur => {
+const envUmur = (umur, geserHari = 0) => {
   const bootstrap = createEnv({ storage: { ks_activePid: JSON.stringify('x'), ks_profilesV: '1' } });
-  const hariIni = bootstrap.evalIn('ksClock').now().getTime();
+  const geser = geserHari * 86400000;
+  const hariIni = bootstrap.evalIn('ksClock').now().getTime() + geser;
   const start = new Date(hariIni - (umur - 1) * 86400000).toISOString().slice(0, 10);
-  return createEnv({ storage: {
+  const en = createEnv({ storage: {
     ks_activePid: JSON.stringify('x'), ks_profilesV: '1',
     ks_p_x_profile: JSON.stringify({ pid: 'x', kingdom: '2114', start }),
   } });
+  en.evalIn('ksClock').offset = geser;
+  return en;
+};
+
+/* Umur TIDAK boleh dipatok. Jangkar HoG jatuh di hari SENIN (lihat b84aa3d), jadi stage
+   yang berjalan hari ini ditentukan HARI DALAM MINGGU, bukan umur: Beast Slay (stage 4
+   HoG #1) selalu jatuh KAMIS. Dulu test ini memakai "hari 9" dengan tanggal-buka yang
+   diturunkan dari jam app — itu hanya benar kalau kingdom kebetulan buka Rabu, jadi ia
+   lulus 1 hari dalam seminggu dan gagal 6 hari sisanya. Sekarang jam app digeser sampai
+   stage yang dicari benar-benar berjalan. */
+const envStage = cocok => {
+  for (let geser = 0; geser < 7; geser++) {
+    for (let umur = 2; umur <= 20; umur++) {
+      const en = envUmur(umur, geser);
+      const st = en.evalIn('hogStageNow')(umur);
+      if (cocok(st)) return { e: en.evalIn, umur, geser, st };
+    }
+  }
+  throw new Error('tak ada kombinasi hari/umur yang memenuhi syarat stage');
 };
 
 t('poin beast HoG hanya dihitung saat stage Beast Slay benar-benar berjalan', () => {
-  /* HoG #1 = 5 stage; stage 4 (Beast Slay) jatuh di hari ke-4 iterasi. */
-  const e = envUmur(9).evalIn;
-  const st = e('hogStageNow')(9);
-  ok(st, 'HoG #1 harus sedang berjalan di hari 9');
-  eq(st.base, 'Beast Slay', 'hari 9 = stage ke-4 HoG #1');
+  const { e, umur, st } = envStage(s => s && s.base === 'Beast Slay');
+  eq(st.base, 'Beast Slay', 'umur ' + umur + ' = stage Beast Slay (HoG #' + st.no + ')');
   const P = e('staminaPlan')(80, {});
   const hog = P.baris.find(b => /Beast Slay/.test(b.nama));
   eq(hog.aktif, true, 'stage-nya cocok → harus terdeteksi');
@@ -261,10 +278,12 @@ t('poin beast HoG hanya dihitung saat stage Beast Slay benar-benar berjalan', ()
 });
 
 t('stage HoG yang salah → tidak dihitung, DAN alasannya disebut', () => {
-  const e = envUmur(12).evalIn;                     /* HoG #1 (H6-H10) sudah lewat */
+  /* stage lain yang sedang berjalan — bukan "HoG mati", supaya yang diuji tetap
+     "stage-nya salah", persis kasus yang dulu diam-diam menghitung poin. */
+  const { e, umur } = envStage(s => s && s.base !== 'Beast Slay');
   const P = e('staminaPlan')(80, {});
   const hog = P.baris.find(b => /Beast Slay/.test(b.nama));
-  eq(hog.aktif, false);
+  eq(hog.aktif, false, 'umur ' + umur + ' bukan Beast Slay → tidak boleh dihitung');
   ok(hog.sebab.length > 0, 'app harus bilang KENAPA, bukan diam-diam menampilkan nol');
   eq(hog.poin, 0);
 });
