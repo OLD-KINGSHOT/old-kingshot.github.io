@@ -101,6 +101,14 @@
       '×$1 — these have no task in HoG/KvK/SG, or we do not have that event’s point table yet.'],
     [/^×([\d.]+) — barang ini tak punya task/g, '×$1 — these have no task'],
     [/Poin sama di stage lain, jadi boleh dipindah:/g, 'Same points in other stages, so it can be moved:'],
+    /* sebab per-barang di kalkulator inventaris — nomor iterasi HoG disisipkan saat jalan */
+    [/^— cuma berpoin di stage HoG tertentu, dan iterasi HoG (.+?) tidak punya stage itu$/g,
+      '— only scores in a specific HoG stage, and HoG iteration $1 does not have that stage'],
+    [/^— tak ada barisnya di tabel poin KvK\/SG$/g, '— has no row in the KvK/SG point tables'],
+    [/^— tak cocok dengan stage HoG (.+?) maupun baris KvK\/SG$/g,
+      '— matches neither the HoG $1 stages nor any KvK/SG row'],
+    [/^— belum ada tabel poin event yang memuat barang ini$/g,
+      '— no event point table we have covers this item'],
     /* rekomendasi joiner (effect_op) — nomor pool & nama hero disisipkan saat jalan,
        jadi kunci penuhnya tak bisa ditulis di kamus. */
     [/^Pool (\d+) \((.+?)\) belum ada di rally ini → mengali, bukan menjumlah\.$/g,

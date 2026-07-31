@@ -560,8 +560,8 @@ function invOut(){
       +'<div class="muted small">Hasil stamina sengaja TIDAK dijadikan poin — ia menghasilkan barang (gem, speedup, shard), dan beast yang sama bisa dibayar beberapa event sekaligus. Lihat kartu farming di bawah untuk rinciannya.</div>';
   }
   if(r.takTerpakai.length) out+='<div class="alert warn small" style="margin-top:8px"><b>Belum ada tempatnya:</b> '
-    +r.takTerpakai.map(function(x){ return '<span>'+esc(x.lbl)+'</span> ×'+fmt(x.qty); }).join(' · ')
-    +' — barang ini tak punya task di HoG/KvK/SG, atau tabel poin event-nya belum kita punya.</div>';
+    +r.takTerpakai.map(function(x){ return '<div style="margin-top:2px"><span>'+esc(x.lbl)+'</span> ×'+fmt(x.qty)+' <span class="dim">— '+esc(x.sebab||'')+'</span></div>'; }).join('')
+    +'</div>';
   return out;
 }
 function invWire(el){

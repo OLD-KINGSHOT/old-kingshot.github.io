@@ -111,3 +111,30 @@ t('kartu ter-render tanpa undefined/NaN', () => {
 });
 
 done();
+
+/* Barang tanpa tempat harus menyebut ALASAN yang spesifik.
+   Dulu invPlan mendorong ke takTerpakai tanpa `sebab` sama sekali, jadi UI terpaksa
+   memakai satu kalimat tebakan untuk semua kasus: "tak punya task di HoG/KvK/SG, ATAU
+   tabel poin event-nya belum kita punya". Dua sebab yang sangat berbeda dilebur jadi
+   satu, dan pemain tak bisa tahu mana yang berlaku — apakah barangnya memang tak
+   terpakai sekarang, atau app-nya yang belum punya datanya. */
+t('barang tanpa tempat menyebut ALASAN spesifik, bukan tebakan umum', () => {
+  const INV = ev('INV_ITEMS');
+  const isi = {}; INV.forEach(i => { isi[i.id] = 5; });
+  const r = ev('invPlan')(isi);
+  ok(r.takTerpakai.length > 0, 'skenario ini memang harus menyisakan barang');
+  r.takTerpakai.forEach(x => {
+    ok(x.sebab && x.sebab.length > 0, x.lbl + ' harus menyebut sebabnya, bukan diam');
+  });
+});
+
+t('barang yang HANYA ada di HoG disebut begitu — bukan dituduh datanya hilang', () => {
+  const INV = ev('INV_ITEMS');
+  const hanyaHog = INV.filter(i => i.hog && !i.ev).map(i => i.id);
+  ok(hanyaHog.length > 0, 'harus ada barang yang cuma punya jalur HoG');
+  const isi = {}; hanyaHog.forEach(id => { isi[id] = 5; });
+  const r = ev('invPlan')(isi);
+  r.takTerpakai.forEach(x => {
+    ok(/HoG/i.test(x.sebab), x.lbl + ': sebabnya harus menyebut HoG, dapat "' + x.sebab + '"');
+  });
+});

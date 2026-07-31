@@ -1338,7 +1338,19 @@ function invPlan(inv){
       const b=_invEvBest(k,it);
       if(b) kandidat.push({ev:k,nama:(EV_POIN[k]||{}).nama||k,pts:qty*b.pts,hari:b.stage});
     });
-    if(!kandidat.length){ takTerpakai.push({lbl:it.lbl,qty:qty}); return; }
+    /* Sebab yang SPESIFIK. Dulu barisnya didorong tanpa `sebab`, jadi UI terpaksa
+       memakai satu kalimat tebakan untuk semua kasus ("tak punya task di HoG/KvK/SG,
+       ATAU tabel poinnya belum kita punya"). Dua hal yang sangat berbeda dilebur:
+       barang yang memang tak terpakai SEKARANG, versus data yang app-nya belum punya.
+       Pemain tak bisa membedakannya, dan yang kedua terbaca seperti cacat app. */
+    if(!kandidat.length){
+      var sebab;
+      if(it.hog&&!it.ev) sebab='cuma berpoin di stage HoG tertentu, dan iterasi HoG '+hogNo+' tidak punya stage itu';
+      else if(it.ev&&!it.hog) sebab='tak ada barisnya di tabel poin KvK/SG';
+      else if(it.hog&&it.ev) sebab='tak cocok dengan stage HoG '+hogNo+' maupun baris KvK/SG';
+      else sebab='belum ada tabel poin event yang memuat barang ini';
+      takTerpakai.push({lbl:it.lbl,qty:qty,sebab:sebab}); return;
+    }
     kandidat.sort(function(a,b){ return b.pts-a.pts; });
     const menang=kandidat[0];
     baris.push({id:it.id,lbl:it.lbl,qty:qty,unit:it.unit,ev:menang.ev,evNama:menang.nama,
