@@ -53,6 +53,14 @@
        generik "hari" di bawah, yang kalau duluan akan merusak frasa penuhnya. */
     [/Kingdom (\d+) · hari (\d+)/g, 'Kingdom $1 · day $2'],
     [/Lihat semua \((\d+)\)/g, 'Show all ($1)'],
+    /* Jaring pengaman untuk baris advisory yang isinya DIRAKIT saat jalan (mis. spend
+       HoG per-iterasi): kunci penuhnya tak bisa ditulis di kamus, jadi minimal
+       awalannya tak tertinggal berbahasa Indonesia. Kunci persis tetap menang. */
+    [/✅ Pakai sekarang: /g, '✅ Use now: '],
+    [/🔒 Tahan & siapkan: /g, '🔒 Hold & prepare: '],
+    [/🔒 Tahan: /g, '🔒 Hold: '],
+    [/\bUmur server:/g, 'Server age:'],
+    [/— bergeser ke archer tiap gen/g, '— shifts toward archers each gen'],
     /* jumlah tugas ikut profil, jadi tak bisa dikunci ke satu angka */
     [/Lihat semua (\d+) tugas →/g, 'See all $1 tasks →'],
     [/\bmulai (\d{4}-\d{2}-\d{2})/g, 'starts $1'],
@@ -89,7 +97,14 @@
     /* kalkulator inventaris (angka disisipkan) */
     [/^alternatif: (.+)$/g, 'alternative: $1'],
     [/^([\d.]+) hunt → ([\d.,]+) pouch$/g, '$1 hunts → $2 pouches'],
+    [/^×([\d.]+) — barang ini tak punya task di HoG\/KvK\/SG, atau tabel poin event-nya belum kita punya\.$/g,
+      '×$1 — these have no task in HoG/KvK/SG, or we do not have that event’s point table yet.'],
     [/^×([\d.]+) — barang ini tak punya task/g, '×$1 — these have no task'],
+    [/Poin sama di stage lain, jadi boleh dipindah:/g, 'Same points in other stages, so it can be moved:'],
+    /* label barang inventaris muncul DI DALAM baris rakitan, jadi kunci penuhnya
+       tak pernah cocok — labelnya harus bisa diterjemahkan sendiri-sendiri. */
+    [/\bPower dari latih\/promote troop\b/g, 'Power from training/promoting troops'],
+    [/\bPower dari\b/g, 'Power from'],
     /* redeem + robot (angka/kode disisipkan) */
     [/^Server menolak sementara \(kode (.+?)\) — dicoba lagi otomatis nanti$/g,
       'Server refused temporarily (code $1) — will retry automatically later'],
@@ -133,6 +148,11 @@
     [/(\d+) jam\b/g, '$1h'],
     [/\bsudah lewat\b/g, 'already passed'],
     [/\btidak diketahui\b/g, 'unknown'],
+    /* Jaring pengaman kata tunggal: "Gratis" muncul di banyak label yang DIRAKIT
+       (mis. "· Cavalry · Joiner (Epic, Gratis)"), dan kunci penuhnya gampang putus
+       tiap kali kapitalnya diubah. Aturan ini hanya jalan kalau kunci persis tak ada. */
+    [/\bGratis\b/g, 'Free'],
+    [/\bgratis\b/g, 'free'],
     [/\bAKTIF\b/g, 'ACTIVE'],
     [/\bsisa\b/g, 'left'],
     [/\btercapai\b/g, 'reached'],
@@ -157,12 +177,17 @@
     if (key && TR[key] !== undefined){
       return src.replace(key, TR[key]);
     }
-    var out = src, changed = false;
+    if (!key) return src;
+    /* RULES dijalankan pada teks yang SUDAH di-trim. Dulu dijalankan pada `src`
+       mentah, sehingga SETIAP aturan berjangkar ^...$ gagal diam-diam begitu simpul
+       teksnya punya spasi/newline di tepi — dan simpul dalam HTML multi-baris hampir
+       selalu punya. Spasi tepinya dikembalikan lewat replace di bawah. */
+    var out = key, changed = false;
     for (var i=0;i<RULES.length;i++){
       var n = out.replace(RULES[i][0], RULES[i][1]);
       if (n !== out){ out = n; changed = true; }
     }
-    return changed ? out : src;
+    return changed ? src.replace(key, out) : src;
   }
 
   var orig = new WeakMap();   /* textNode -> Indonesian original */

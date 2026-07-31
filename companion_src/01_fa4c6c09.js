@@ -1782,11 +1782,18 @@ function islWire(el){
     al.oninput=()=>{ trT.a=(parseInt(al.value)||45)/100; draw(); };
     delb.onclick=()=>{ trImg=null; trAdj=false; trUI(); draw(); };
   }
-  $('#isl_clear',el).onclick=()=>{ if(!confirm('Kembalikan Peta Pulauku ke template komunitas ('+((typeof ISLAND_SEED!=='undefined')?ISLAND_SEED.length:0)+' titik)? Semua editanmu dihapus.')) return;
+  /* confirm() native BUKAN simpul DOM, jadi penerjemah pasca-render tak pernah
+     menyentuhnya — di mode EN dialog ini dulu tetap berbahasa Indonesia. */
+  $('#isl_clear',el).onclick=()=>{ const _n=(typeof ISLAND_SEED!=='undefined')?ISLAND_SEED.length:0;
+    if(!confirm(_calcEN()
+      ? 'Reset My Island Map to the community template ('+_n+' points)? All your edits will be deleted.'
+      : 'Kembalikan Peta Pulauku ke template komunitas ('+_n+' titik)? Semua editanmu dihapus.')) return;
     marks={}; if(typeof ISLAND_SEED!=='undefined') ISLAND_SEED.forEach(p=>{ marks[p[0]+','+p[1]]=1; });
     store.set('islandMarks',marks); store.set('islandSeedV',3); draw(); };
   const sd=$('#isl_seed',el); if(sd&&typeof ISLAND_SEED!=='undefined') sd.onclick=()=>{
-    if(!confirm('Muat '+ISLAND_SEED.length+' titik peti dari peta komunitas sebagai template awal? (Perkiraan ±1-2 kotak — sesuaikan dengan pulaumu. Tanda yang sudah ada tidak ditimpa.)')) return;
+    if(!confirm(_calcEN()
+      ? 'Load '+ISLAND_SEED.length+' chest points from the community map as a starting template? (Accurate to ±1-2 tiles — adjust them to your own island. Marks you already placed are not overwritten.)'
+      : 'Muat '+ISLAND_SEED.length+' titik peti dari peta komunitas sebagai template awal? (Perkiraan ±1-2 kotak — sesuaikan dengan pulaumu. Tanda yang sudah ada tidak ditimpa.)')) return;
     let added=0; ISLAND_SEED.forEach(p=>{ const k=p[0]+','+p[1]; if(marks[k]===undefined){ marks[k]=1; added++; } });
     store.set('islandMarks',marks); draw();
   };
@@ -2074,7 +2081,9 @@ function renderProfil(){
   /* multi-profil: switch / hapus / tambah */
   $$('[data-sw]',el).forEach(b=>b.onclick=()=>setActiveProfile(b.dataset.sw));
   $$('[data-rm]',el).forEach(b=>b.onclick=()=>{
-    if(!confirm('Hapus profil '+b.dataset.rm+' dari daftar? Data tersimpan untuk ID ini tetap ada di perangkat (bisa ditambahkan lagi).')) return;
+    if(!confirm(_calcEN()
+      ? 'Remove profile '+b.dataset.rm+' from the list? Data saved for this ID stays on the device (you can add it back).'
+      : 'Hapus profil '+b.dataset.rm+' dari daftar? Data tersimpan untuk ID ini tetap ada di perangkat (bisa ditambahkan lagi).')) return;
     let ps=store.get('profiles',[]).filter(p=>p.pid!==b.dataset.rm); store.set('profiles',ps);
     if(_ksActivePid()===b.dataset.rm&&ps[0]) setActiveProfile(ps[0].pid);
     else { renderProfil(); if(typeof updateSideProf==='function') updateSideProf(); }
@@ -2096,7 +2105,9 @@ function renderProfil(){
   };
   $('#pf_detect',el).onclick=()=>autoDetectUI();
   const lo=$('#pf_logout',el); if(lo) lo.onclick=()=>{
-    if(!confirm('Logout? Player ID dihapus dari perangkat ini. (Jam event alliance & checklist tetap tersimpan.)')) return;
+    if(!confirm(_calcEN()
+      ? 'Log out? The Player ID is removed from this device. (Alliance event times & checklists stay saved.)'
+      : 'Logout? Player ID dihapus dari perangkat ini. (Jam event alliance & checklist tetap tersimpan.)')) return;
     const pr=store.get('profile',{});
     store.set('profile',{eventTimes:pr.eventTimes||{},bearTime:pr.bearTime||''}); /* keep alliance times — they're alliance settings, not identity */
     renderProfil(); if(typeof updateSideProf==='function') updateSideProf();
@@ -2149,7 +2160,9 @@ function renderProfil(){
     if(r==='applied'){ if(st) st.innerHTML='<div class="alert ok small">✅ Data lebih baru dari perangkat lain diterapkan — memuat ulang…</div>'; setTimeout(()=>location.reload(),800); return; }
     const ok=await ksSync.push();
     if(st) st.innerHTML=ok?'<div class="alert ok small">✅ Tersinkron (data perangkat ini terunggah).</div>':'<div class="alert bad small">Gagal — cek koneksi, akan dicoba lagi otomatis.</div>'; };
-  const so=$('#sy_off',el); if(so) so.onclick=()=>{ if(!confirm('Putuskan sinkron di perangkat INI? Data lokal tetap ada; perangkat lain tidak terpengaruh.')) return; ksSync.disconnect(); renderProfil(); };
+  const so=$('#sy_off',el); if(so) so.onclick=()=>{ if(!confirm(_calcEN()
+      ? 'Disconnect sync on THIS device? Local data stays; other devices are unaffected.'
+      : 'Putuskan sinkron di perangkat INI? Data lokal tetap ada; perangkat lain tidak terpengaruh.')) return; ksSync.disconnect(); renderProfil(); };
   const ss=$('#sy_show',el); if(ss) ss.onclick=()=>{ ss.select(); ss.setSelectionRange(0,99);
     try{ document.execCommand('copy'); const st=$('#sy_status'); if(st) st.innerHTML='<div class="alert ok small">📋 Kode disalin — tempel di perangkat lain.</div>'; }catch(e){} };
 }
