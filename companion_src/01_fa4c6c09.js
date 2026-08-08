@@ -53,6 +53,17 @@ function evGuideHTML(it){
       }).join('')+'</tbody></table></div>');
     if(t.hold) parts.push('<div class="alert inf small">🔒 '+(EN?'Hold':'Tahan')+': '+esc(t.hold)+'</div>');
     if(typeof SPEED_NOTE!=='undefined'&&SPEED_NOTE[tk]) parts.push('<div class="alert warn small">'+SPEED_NOTE[tk]+'.</div>');
+  } else if(typeof EV_LANGKAH!=='undefined'&&EV_LANGKAH[it.id]){
+    /* Langkah konkret + sumbernya. Sumber ikut ditampilkan supaya klaimnya bisa
+       diperiksa ulang pemain — bukan "percaya saja pada app". */
+    const L=EV_LANGKAH[it.id];
+    parts.push('<ul class="small" style="margin:4px 0 0 16px">'
+      +(L.langkah||[]).map(x=>'<li style="margin-bottom:4px">'+esc(x)+'</li>').join('')+'</ul>'
+      /* `verif` sengaja disimpan sebagai "terverifikasi <tgl>" — audit kesegaran
+         membaca pola itu langsung dari berkas sumber. Yang DIRENDER tetap harus ikut
+         bahasa; __TR (cocok-persis) tak bisa menolong karena barisnya disusun. */
+      +'<div class="muted small" style="margin-top:6px">'+(EN?'Source':'Sumber')+': '+esc(L.sumber)
+      +' · '+esc(EN?String(L.verif||'').replace(/^terverifikasi/i,'verified'):L.verif)+'</div>');
   } else if(typeof EV_FOKUS_OF!=='undefined'&&EV_FOKUS_OF[it.id]){
     /* satu KALIMAT fokus, bukan tabel harian — lihat catatan di EV_FOKUS_OF */
     const f=EV_FOKUS_OF[it.id], ft=EVENT_TEMPLATES[f[0]]||{};

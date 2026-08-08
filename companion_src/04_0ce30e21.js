@@ -745,6 +745,72 @@ const EV_TPL_OF={kvk:'kvk',sg:'sg',hog:'hog'};
    harian akan menyesatkan, jadi tiap varian mengambil BARISNYA SENDIRI sebagai satu
    kalimat fokus. [id kanonik] -> [template, indeks baris] */
 const EV_FOKUS_OF={armamentCompetition1:['armament',0],armamentCompetition2:['armament',1]};
+/* ── Langkah konkret per event ────────────────────────────────────────────────
+   Untuk event yang TIDAK punya jadwal per-hari (jadi tak bisa jadi tabel D1..Dn)
+   tapi punya mekanik jelas yang bisa ditindaklanjuti. Sebelum ini delapan event
+   rotasi tak punya apa pun untuk dibuka — pemain mengklik dan tak menemukan apa-apa.
+
+   ATURAN: tiap entri WAJIB membawa `sumber` + `verif` (tanggal). Audit kesegaran
+   membaca tanggalnya, dan tanpa sumber entri ini tak bisa diperiksa ulang — yang
+   berarti ia tak berbeda dari karangan. Event yang sumbernya belum ketemu TIDAK
+   masuk daftar ini; mereka mengaku kosong, dan itu jawaban yang sah. */
+const EV_LANGKAH={
+  castleBattle:{sumber:'kingshotwiki.com/events/castle-battle',verif:'terverifikasi 9 Agu 2026',
+    langkah:[
+      'Menang = kuasai kastil TOTAL 2,5 jam, atau waktu penguasaan terbanyak saat event 5 jam berakhir.',
+      'Poinmu dari tiga hal: Carnage (troop musuh yang kamu bunuh di kastil/turret), Occupation (power troop yang kamu tempatkan di dalam), Casualty (troop sendiri yang tumbang — tekan dengan rotasi, jangan dibiarkan mati).',
+      'F2P/kecil: rally kecil ke TURRET tetap membayar — turret ikut menghitung Carnage, dan itu jalan masuk yang tak butuh power besar.',
+      'Aliansi pemenang berhak menunjuk King (buff se-kingdom). Kalah pun tetap dapat material Charm — jadi ikut serta selalu lebih baik daripada absen.']},
+  kingsCastle:{sumber:'kingshotwiki.com/events/castle-battle + feed kingshot.net',verif:'terverifikasi 9 Agu 2026',
+    langkah:[
+      'Slot Sabtu yang sama dengan Castle Battle: feed menaruh "King’s Castle" di minggu-2 dan "Castle Battle" di minggu-4, dan keduanya bersama membentuk ritme dua-mingguan hari Sabtu yang disebut wiki.',
+      'Panduannya sama persis dengan Castle Battle — buka entri itu untuk cara main dan pembagian poinnya.']},
+  kvkMatchmaking:{sumber:'kingshotwiki.com/events/kingdom-of-power',verif:'terverifikasi 9 Agu 2026',
+    langkah:[
+      'Fase 2 hari untuk MENCARI lawan — tak ada yang bisa kamu lakukan untuk mengubah hasilnya.',
+      'Pasangan ditentukan generasi hero yang sama + total power 100 pemain paling AKTIF; pemain tidak aktif tidak dihitung.',
+      'JEBAKAN: reset hero, lepas gear, atau bubarkan troop TIDAK menurunkan power matchmaking. Jangan buang waktu (dan sumber daya) melakukannya.',
+      'Kadang tak ada lawan sepadan — kingdom dapat "Bye" reward yang kecil. Itu normal, bukan bug.',
+      'Yang berguna dilakukan sekarang: mulai menabung item untuk Preparation, karena di situlah poin sebenarnya.']},
+  kvkFieldTriage:{sumber:'kingshotwiki.com/events/kingdom-of-power',verif:'terverifikasi 9 Agu 2026',
+    langkah:[
+      'Mulai 22:00 UTC tepat sesudah Battle Phase, berlangsung 2 hari 2 jam. Ini fase MEMULIHKAN troop, bukan bertempur.',
+      'Tingkat revive dasar 30%. Gem menambah 10%, dan bantuan anggota aliansi menambah 50% — totalnya 90%.',
+      'Minta bantuan sebanyak mungkin, termasuk dari aliansi lain: revive bisa berulang, dan sisanya otomatis dipulihkan saat event tutup.',
+      'Jaga Infirmary jangan sampai luber — yang meluap masuk Enlistment Office dan TIDAK ikut dihitung 90% itu.']},
+  allianceMobilization:{sumber:'kingshotwiki.com/events/alliance-mobilization',verif:'terverifikasi 9 Agu 2026',
+    langkah:[
+      'Ada misi bersama se-aliansi + 2 misi eksklusif milikmu sendiri. Misi eksklusif bisa di-refresh berkali-kali (ada biaya cooldown), maksimal 4 per hari sampai reset.',
+      'Misi eksklusif membawa pengali 120%–200% — di situlah poin besarnya, bukan di misi biasa.',
+      'Tiap event kamu dapat 2 Custom Mission Voucher GRATIS dari Alliance Monument. Voucher PERTAMA boleh memilih misi 200%; sisanya 120%.',
+      'Selang-seling misi "pakai resource" dan "dapat resource" supaya gudang tetap seimbang.',
+      'Percobaan 50 gem & 200 gem umumnya untung: tiap 200 poin memberi peti, rata-rata balik ~100 gem. Kalau satu misi memberi 400 poin, kamu impas atau untung.',
+      'Percobaan 1.000 gem TIDAK disarankan — kecuali persis untuk naik satu tingkat ranking.',
+      'Ambil hanya misi yang bisa kamu selesaikan dengan barang yang SUDAH ada (atau bisa didapat dalam 1–2 jam).']},
+  defeatBeasts:{sumber:'kingshotwiki.com/events/defeat-nearby-beasts',verif:'terverifikasi 9 Agu 2026',
+    langkah:[
+      'Event 2 hari. Beast level berapa pun (Lv1–30) = 1 poin. Rally + bunuh Terror (Lv1–8) = 3 poin.',
+      'Terror lebih HEMAT: 1 Terror = 25 stamina untuk 3 poin, sedangkan 3 beast = 30 stamina untuk 3 poin yang sama.',
+      'Milestone di 1, 30, 50, dan 80 poin — milestone terakhir memberi Epic Recruitment Key + skill book Mythic.']},
+  eternitysReach:{sumber:'kingshotwiki.com/events/eternitys-reach',verif:'terverifikasi 9 Agu 2026',
+    langkah:[
+      'Dua-mingguan, selalu SELASA. Pertandingan individu 30 menit melawan ~100 pemain sepadan.',
+      'WAJIB daftar minimal 15 menit sebelum slot dibuka. Slot (UTC): 02, 05, 11, 14, 16, 18, 21.',
+      'Telat dari slotmu? JANGAN masuk — daftar saja slot berikutnya, tak ada hukuman.',
+      'Urutan skill menentukan seluruh hasilmu: R-R-L-L-R (RRLLR). Skill ke-3 yang terpenting — 5.000 copper tiap menempati vein baru, cooldown 1 menit.',
+      'Bawa 5–6 march PENUH. March setengah isi membuang efisiensi aksi.',
+      'Cesare tidak menimbulkan korban troop — tak perlu heal, jangan biarkan march menganggur.',
+      'Fractured Vein bernilai 4.000 poin dengan kecepatan 200/detik: begitu muncul, tinggalkan apa pun dan serbu.',
+      'Pusat peta (Peak of Eternity) poinnya paling besar tapi jadi magnet whale — hindari kecuali kamu memang terkuat di lobi.']},
+  vikingsVengeance:{sumber:'kingshotwiki.com/events/viking-vengeance',verif:'terverifikasi 9 Agu 2026',
+    langkah:[
+      'Viking menyerang semua anggota aliansi lewat 20 stage. Poin datang dari troop Viking yang KAMU bunuh di rumah anggota lain + yang dibunuh di rumahmu oleh anggota lain.',
+      'KOSONGKAN rumahmu: sisakan 3 hero terbaik di Guard Station, tukarkan/keluarkan troopmu. Troop yang tertinggal justru MENURUNKAN skor penolongmu.',
+      'Stage 7, 14, dan 17 hanya menyerang anggota yang ONLINE — skornya besar, jadi pastikan kamu mengirim bantuan di stage itu.',
+      'Stage 10 dan 20 menyerang HQ aliansi (Plains HQ kalau kalian punya dua). Jeda di stage ini ~3 menit, sisanya 1 menit.',
+      'JANGAN heal di tengah event: troopmu akan pulang ke rumah dan menurunkan skor anggota yang sedang membantumu.',
+      'Gagal bertahan 2 kali → Viking berhenti menyerang rumah itu untuk sisa event.']},
+};
 const EV_EMOJI={burst:'\u25c8',hog:'\u25c9',kvk:'\u2620',sg:'\u25a3',armament:'\u25c6'};
 
 /* Event yang WIKI SENDIRI nyatakan tak bisa diprediksi. Tampil TANPA angka \u2014
