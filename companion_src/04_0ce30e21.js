@@ -389,7 +389,10 @@ const EVENT_TEMPLATES={
     spend:['Pakai construction+research speedup; SELESAIKAN upgrade sekarang','Hero Roulette + Mythic shard','Advanced Taming Mark + pet','Aktifkan Training Capacity buff → Mithril + promote troop T10→T11','Buang SISA semua item (rate penuh)'],
     hold:'speedup (semua), gem, Mythic shard, Truegold, Mithril, Forgehammer, Advanced Taming Mark, troop T9 + Training Capacity buff utk promote'},
   sg:{name:'Strongest Governor',len:7,battleWIB:null,minDay:75,
-    days:['D1 City Construction','D2 Hero Dev','D3 Skill Up','D4 Combat','D5 Power Boost','D6 Combat','D7 Hero Dev'],
+    /* D5 dulu tertulis "Power Boost" di sini sementara tabel poin (dan kingshotdata)
+       menyebut Basic Skill Up — dan panel SG menampilkan keduanya bertumpuk, jadi
+       kontradiksinya terlihat langsung. Test menjaga keduanya tetap sejalan. */
+    days:['D1 City Construction','D2 Hero Dev','D3 Skill Up','D4 Combat','D5 Skill Up','D6 Combat','D7 Hero Dev'],
     spend:['Buang semua speedup (30/mnt) + selesaikan bangunan','Mithril 40k + Roulette + shard','Advanced Taming Mark (15k)','Aktifkan Training Capacity buff → promote troop (T11 49/unit)','Mithril + buang speedup','Governor Gear + Training Capacity buff → promote troop','Tempered Truegold + Taming Mark + speedup'],
     hold:'speedup (utk D1/D5/D7), Mithril (D2/D4/D5), Advanced Taming Mark (D3), troop T9 + Training Capacity buff (D4/D6), gem'},
   hog:{name:'Hall of Governors',len:7,battleWIB:null,
@@ -472,9 +475,23 @@ const HOG_GUDANG=[
    sementara di HoG troop 90-1.960 dan charm 1.000. Jangan pernah memakai satu tabel untuk
    dua event; itu sumber kesalahan terbesar kalau tabelnya digabung.
    Bentuk baris: [label, poin, satuan]. */
-const _TR_SG=[1,2,3,5,7,11,16,23,30,39], _TR_KVK=[3,4,5,8,12,18,25,35,45,60];
+/* Lv11 (49) hanya ada di tabel SG — terbuka bersama War Academy. KvK belum
+   terdaftar punya Lv11 di sumbernya, jadi jangan disamakan. */
+const _TR_SG=[1,2,3,5,7,11,16,23,30,39,49], _TR_KVK=[3,4,5,8,12,18,25,35,45,60];
 const _trRows=arr=>arr.map((p,i)=>['⚔️ Latih troop Lv'+(i+1),p,'troop']);
 const _SPD=n=>[['⏩ Speedup Construction',n,'menit'],['⏩ Speedup Research',n,'menit'],['⏩ Speedup Train/Promote',n,'menit']];
+/* Speedup Master Skills baru terdaftar di tabel SG (kingshotdata) — bukan di KvK. */
+const _SPD4=n=>_SPD(n).concat([['⏩ Speedup Master Skills',n,'menit']]);
+/* Trio Truegold: yang biasa, Dust (riset, butuh War Academy), dan Tempered. */
+const _TG3=[['💎 Truegold (upgrade bangunan)',2000,'truegold'],
+  ['💎 Truegold Dust (riset teknologi)',1000,'tgdust'],
+  ['💎 Tempered Truegold (upgrade bangunan)',30000,'tempered']];
+const _MASTER=[['🎖️ Master Emblem (apa pun)',6000,'emblem'],
+  ['📜 Master’s Manuscript',60,'manuscript']];
+/* Tabel poin KvK & Strongest Governor.
+   Sumber: kingshotguide.org (30 Jul 2026) untuk KvK; kingshotdata.com (9 Agu 2026)
+   untuk pendalaman & koreksi SG. Skalanya BERBEDA JAUH dari HoG — jangan pernah
+   digabung; ada test yang melarangnya. */
 const EV_POIN={
   kvk:{nama:'Kingdom of Power (KvK)',fase:'fase Preparation (5 hari) — hanya fase ini yang berpoin',
     sumber:'kingshotguide.org, 30 Jul 2026',
@@ -497,29 +514,36 @@ const EV_POIN={
         ['🐾 Common Taming Mark',1150,'mark'],['🐾 Pet advancement +1 score',50,'score'],
         ['🛡️ Governor Gear +1 max score',36,'score'],
         ['🌾 Gather (1.000 bread/wood · 200 stone · 50 iron)',2,'task']].concat(_SPD(30))]]},
+  /* Diperdalam 9 Agu 2026 dari kingshotdata (daftar per-task per-stage, sumber yang
+     sama yang dipakai untuk HoG). Dua koreksi ikut masuk:
+       · 36 poin di D6/D7 adalah "Governor GEAR +1 max score", BUKAN Charm — sumbernya
+         memisahkan tegas "Governor Gear Charm" (70) dari "Governor Gear" (36). Salah
+         label ini membuat kalkulator inventaris menghitung barang yang salah; blok
+         KvK di atas sudah benar sejak awal.
+       · nama stage D5 diselaraskan: "Basic Skill Up", bukan "Power Boost". */
   sg:{nama:'Strongest Governor',fase:'7 hari · bulanan · lintas 6 kingdom',
-    sumber:'kingshotguide.org, 30 Jul 2026',
+    sumber:'kingshotdata.com/events/strongest-governor-event (9 Agu 2026) + kingshotguide.org (30 Jul 2026)',
     stages:[
-      ['D1 City Construction',[['💎 Truegold (upgrade bangunan)',2000,'truegold'],
-        ['💠 Governor Charm +1 max score',70,'score']].concat(_SPD(30))],
+      ['D1 City Construction',[['💠 Governor Gear Charm +1 max score',70,'score']]
+        .concat(_TG3).concat(_SPD4(30))],
       ['D2 Hero Development',[['⛏️ Mithril',40000,'mithril'],['🔨 Widget Hero Exclusive Gear',8000,'widget'],
         ['🎰 Hero Roulette',8000,'spin'],['🔨 Forgehammer',4000,'hammer'],['🦸 Mythic Hero Shard',3040,'shard'],
-        ['💎 Truegold (upgrade bangunan)',2000,'truegold'],['🦸 Epic Hero Shard',1220,'shard'],
-        ['🦸 Rare Hero Shard',350,'shard']].concat(_SPD(30))],
-      ['D3 Basic Skills Up',[['🐾 Advanced Taming Mark',15000,'mark'],['🎰 Hero Roulette',8000,'spin'],
+        ['🦸 Epic Hero Shard',1220,'shard'],['🦸 Rare Hero Shard',350,'shard']]
+        .concat(_MASTER).concat(_TG3).concat(_SPD4(30))],
+      ['D3 Basic Skill Up',[['🐾 Advanced Taming Mark',15000,'mark'],['🎰 Hero Roulette',8000,'spin'],
         ['🦸 Mythic Hero Shard',3040,'shard'],['🦸 Epic Hero Shard',1220,'shard'],['🐾 Common Taming Mark',1150,'mark'],
-        ['🦸 Rare Hero Shard',350,'shard'],['💠 Governor Charm +1 max score',70,'score'],
-        ['🐾 Pet advancement +1 score',50,'score']]],
+        ['🦸 Rare Hero Shard',350,'shard'],['💠 Governor Gear Charm +1 max score',70,'score'],
+        ['🐾 Pet advancement +1 score',50,'score']].concat(_MASTER)],
       ['D4 Combat Training',[['⛏️ Mithril',40000,'mithril'],['🔨 Widget Hero Exclusive Gear',8000,'widget'],
-        ['🔨 Forgehammer',4000,'hammer'],['💠 Governor Charm +1 max score',70,'score']].concat(_trRows(_TR_SG))],
-      ['D5 Basic Skills Up',[['⛏️ Mithril',40000,'mithril'],['🔨 Widget Hero Exclusive Gear',8000,'widget'],
-        ['🔨 Forgehammer',4000,'hammer'],['💎 Truegold (upgrade bangunan)',2000,'truegold']].concat(_SPD(30))],
-      ['D6 Combat Training',[['💠 Governor Charm +1 max score',36,'score']].concat(_trRows(_TR_SG))],
+        ['🔨 Forgehammer',4000,'hammer'],['💠 Governor Gear Charm +1 max score',70,'score']].concat(_trRows(_TR_SG))],
+      ['D5 Basic Skill Up',[['⛏️ Mithril',40000,'mithril'],['🔨 Widget Hero Exclusive Gear',8000,'widget'],
+        ['🔨 Forgehammer',4000,'hammer']].concat(_TG3).concat(_SPD4(30))],
+      ['D6 Combat Training',[['🛡️ Governor Gear +1 max score',36,'score']].concat(_trRows(_TR_SG))],
       ['D7 Hero Development',[['🐾 Advanced Taming Mark',15000,'mark'],['🦸 Mythic Hero Shard',3040,'shard'],
-        ['💎 Truegold (upgrade bangunan)',2000,'truegold'],['🦸 Epic Hero Shard',1220,'shard'],
-        ['🐾 Common Taming Mark',1150,'mark'],['🦸 Rare Hero Shard',350,'shard'],
-        ['🐾 Pet advancement +1 score',50,'score'],['💠 Governor Charm +1 max score',36,'score'],
-        ['🌾 Gather (2.500 bread/wood · 500 stone · 100 iron)',3,'task']].concat(_SPD(30))]]},
+        ['🦸 Epic Hero Shard',1220,'shard'],['🐾 Common Taming Mark',1150,'mark'],['🦸 Rare Hero Shard',350,'shard'],
+        ['🐾 Pet advancement +1 score',50,'score'],['🛡️ Governor Gear +1 max score',36,'score'],
+        ['🌾 Gather (2.500 bread/wood · 500 stone · 100 iron)',3,'task']]
+        .concat(_TG3).concat(_SPD4(30))]]},
 };
 
 /* ── Kosakata barang untuk kalkulator inventaris ─────────────────────────
@@ -745,6 +769,50 @@ const EV_TPL_OF={kvk:'kvk',sg:'sg',hog:'hog'};
    harian akan menyesatkan, jadi tiap varian mengambil BARISNYA SENDIRI sebagai satu
    kalimat fokus. [id kanonik] -> [template, indeks baris] */
 const EV_FOKUS_OF={armamentCompetition1:['armament',0],armamentCompetition2:['armament',1]};
+/* ── Nilai poin per TUGAS (event yang bukan multi-hari) ───────────────────────
+   Officer Project bukan event bertema-harian seperti KvK/SG/HoG: ia 2 hari dengan
+   satu daftar tugas, dan daftarnya BERBEDA menurut tipe. Tipe bisa dikenali dari
+   hari mulainya — Rabu = Type 1 (hadiah akhir Forgehammer), Minggu = Type 2 (Charm
+   Design) — dan itu persis yang membedakan officerProject1/officerProject2 di feed.
+
+   ⚠ Skala troop di sini (1·2·3·4·6·9·12·17·22·30·37) BEDA dari KvK (…60), SG (…39),
+   dan HoG (…1.960). Jangan pernah menyatukan tabel-tabel ini; test menjaga itu. */
+const EV_TUGAS={
+  officerProject1:{nama:'Officer Project — Type 1',mulai:'Mulai RABU',hadiah:'Hadiah akhir: Forgehammer',
+    sumber:'kingshotdata.com/events/officer-project-event',verif:'terverifikasi 9 Agu 2026',
+    catatan:'Event 2 hari, terbuka setelah kingdom masuk Age of Truegold. Tipe bisa dicek dari kalender event SEBELUM mulai.',
+    tugas:[['💠 Governor Gear Charm +1 max score','70'],
+      ['🔨 Hero Gear Forgehammer','6.000'],
+      ['🪙 Mithril','60.000'],
+      ['🔧 Widget Hero Exclusive Gear','12.000'],
+      ['⚔️ Latih troop Lv1→Lv11','1 · 2 · 3 · 4 · 6 · 9 · 12 · 17 · 22 · 30 · 37']],
+    tabel:{judul:'Skor naik-level Governor Charm',kolom:['Level Charm','Skor'],
+      baris:[['1','625'],['2','1.250'],['3','3.125'],['4','8.750'],['5','11.250'],['6','12.500'],
+        ['7','12.500'],['8','13.000'],['9','14.000'],['10','15.000'],['11','16.000']]}},
+  officerProject2:{nama:'Officer Project — Type 2',mulai:'Mulai MINGGU',hadiah:'Hadiah akhir: Charm Design',
+    sumber:'kingshotdata.com/events/officer-project-event',verif:'terverifikasi 9 Agu 2026',
+    catatan:'Event 2 hari. Tipe ini membayar SHARD hero — tahan shard sampai tipe ini muncul, bukan dibakar di tipe 1.',
+    tugas:[['🛡️ Governor Gear +1 max score','70'],
+      ['🦸 Rare Hero Shard (ascend)','350'],
+      ['🦸 Epic Hero Shard (ascend)','1.220'],
+      ['🦸 Mythic Hero Shard (ascend)','3.040'],
+      ['🔨 Hero Gear Forgehammer','6.000'],
+      ['🔧 Widget Hero Exclusive Gear','12.000']],
+    tabel:{judul:'Skor naik-level Governor Gear',kolom:['Kelangkaan','Skor'],
+      baris:[['Uncommon','1.125'],['Uncommon ★1','1.875'],['Rare','3.000'],['Rare ★1','4.500'],
+        ['Rare ★2','5.100'],['Rare ★3','5.400'],['Epic','3.230'],['Epic ★1','3.230'],
+        ['Epic ★2','3.225'],['Epic ★3','3.225'],['Epic T1','3.440'],['Epic T1 ★1','3.440'],
+        ['Epic T1 ★2','4.085'],['Epic T1 ★3','4.085'],['Mythic','6.250'],['Mythic ★1','6.250'],
+        ['Mythic ★2','6.250'],['Mythic ★3','6.250']]}},
+  allOut:{nama:'All Out (Kill Event)',mulai:'2 hari, tiap beberapa minggu',hadiah:'Milestone + leaderboard Top 100',
+    sumber:'kingshotdata.com/events/all-out-event',verif:'terverifikasi 9 Agu 2026',
+    catatan:'Poin dari MEMBUNUH troop musuh — menyerang MAUPUN bertahan. Kalau musuh menyerangmu dan troop-mu menang, kamu tetap dapat poin: jalan paling aman untuk akun kecil. Perhatikan skalanya jauh lebih landai daripada event LATIH troop — di sini yang dibayar adalah troop musuh yang tumbang, bukan troop yang kamu buat.',
+    tugas:[['💀 Bunuh/lumpuhkan troop musuh Lv1→Lv10','1 · 1 · 2 · 3 · 4 · 5 · 7 · 9 · 11 · 13']]},
+  developNewTech:{nama:'Develop New Tech',mulai:'Beberapa kali di masa awal kingdom',hadiah:'4 tier milestone + leaderboard Top 100',
+    sumber:'kingshotdata.com/events/develop-new-tech-event',verif:'terverifikasi 9 Agu 2026',
+    catatan:'Poin HANYA dari speedup riset yang dipakai di Academy. Kursnya lurus: 1 menit speedup = 1 poin. Tier terakhir di 1.170 poin, jadi siapkan 1.170 menit speedup riset SEBELUM event muncul di kalender — kalau menabung baru saat event jalan, biasanya tak keburu.',
+    tugas:[['🔬 Speedup Research (per menit)','1'],['🏁 Tier terakhir','1.170']]},
+};
 /* ── Langkah konkret per event ────────────────────────────────────────────────
    Untuk event yang TIDAK punya jadwal per-hari (jadi tak bisa jadi tabel D1..Dn)
    tapi punya mekanik jelas yang bisa ditindaklanjuti. Sebelum ini delapan event

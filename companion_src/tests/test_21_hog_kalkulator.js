@@ -339,7 +339,16 @@ t('angka kunci yang terverifikasi tidak boleh bergeser', () => {
   eq(cari('kvk', 3, 'Lv10'), 60, 'KvK D4 troop Lv10');
   eq(cari('sg', 3, 'Lv10'), 39, 'SG D4 troop Lv10');
   eq(cari('sg', 0, 'Charm'), 70, 'charm 70 di hari awal');
-  eq(cari('sg', 5, 'Charm'), 36, 'charm turun jadi 36 di D6 — beda per stage, jangan disamakan');
+  /* KOREKSI 9 Agu 2026: yang bernilai 36 di D6/D7 adalah "Governor GEAR +1 max score",
+     bukan Charm. kingshotdata (daftar per-task, memakai kalimat tugas apa adanya)
+     memisahkan tegas "Governor Gear Charm" (70, di D1/D3/D4) dari "Governor Gear"
+     (36, di D6/D7) — dua barang berbeda yang disimpan terpisah oleh pemain. Ringkasan
+     kingshotguide.org yang dipakai 30 Jul melebur keduanya, dan blok KvK di app sudah
+     memakai label yang benar sejak awal. Salah label ini bukan kosmetik: kalkulator
+     inventaris jadi menghitung barang yang salah. */
+  eq(cari('sg', 5, 'Governor Gear +1'), 36, 'D6: Governor GEAR 36 (bukan Charm)');
+  eq(cari('sg', 6, 'Governor Gear +1'), 36, 'D7: Governor GEAR 36');
+  eq(cari('sg', 0, 'Charm'), 70, 'Charm tetap 70 di hari awal');
 });
 
 t('tabel KvK/SG TIDAK memakai skala HoG', () => {

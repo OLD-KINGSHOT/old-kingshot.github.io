@@ -22,6 +22,41 @@ function calChipOrder(evs){ return (evs||[]).slice().sort((a,b)=>(a.milestone?1:
    Aturan kerasnya: tabel per-hari HANYA untuk template yang memang punya days[]
    terverifikasi. Untuk sisanya app mengaku belum punya — mengarang jadwal harian
    untuk 21 event lain persis jenis kebohongan yang diburu audit_akurasi. */
+/* Tabel poin per hari untuk event bertema-harian (EV_POIN: kvk & sg). Datanya sudah
+   ada sejak lama tapi hanya dipakai DIAM-DIAM oleh kalkulator — itulah kenapa SG
+   terasa jauh lebih dangkal daripada HoG, yang memang menampilkan tabel per-stage-nya.
+   Satu renderer dipakai SG & KvK supaya keduanya tak bisa menyimpang. */
+function evPoinTabelHTML(key){
+  if(typeof EV_POIN==='undefined'||!EV_POIN[key]) return '';
+  const P=EV_POIN[key], EN=_calcEN();
+  const badan=(P.stages||[]).map(function(st){
+    const nama=st[0], baris=st[1]||[];
+    return '<h3 style="margin:10px 0 4px">'+esc(nama)+'</h3>'
+      +'<div class="scrollx"><table><thead><tr><th>'+(EN?'Action':'Aksi')+'</th><th>'+(EN?'Points':'Poin')+'</th></tr></thead><tbody>'
+      +baris.map(function(r){ return '<tr><td class="small">'+esc(r[0])+'</td><td class="num">'+esc(fmt(r[1]))+'</td></tr>'; }).join('')
+      +'</tbody></table></div>';
+  }).join('');
+  return '<details><summary><b>'+(EN?'Point table per day':'Tabel poin per hari')+'</b> — '
+    +(EN?'what pays how much':'apa membayar berapa')+'</summary><div class="dt">'+badan
+    +'<div class="muted small" style="margin-top:6px">'+(EN?'Source':'Sumber')+': '+esc(P.sumber||'-')+'</div></div></details>';
+}
+/* Tabel tugas untuk event yang BUKAN multi-hari (EV_TUGAS: Officer Project). */
+function evTugasHTML(id){
+  if(typeof EV_TUGAS==='undefined'||!EV_TUGAS[id]) return '';
+  const T=EV_TUGAS[id], EN=_calcEN();
+  let h='<div class="alert inf small"><b>'+esc(T.nama)+'</b> · '+esc(T.mulai)+' · '+esc(T.hadiah)+'</div>';
+  if(T.catatan) h+='<div class="small" style="margin:4px 0 6px">'+esc(T.catatan)+'</div>';
+  h+='<div class="scrollx"><table><thead><tr><th>'+(EN?'Task':'Tugas')+'</th><th>'+(EN?'Points':'Poin')+'</th></tr></thead><tbody>'
+    +(T.tugas||[]).map(function(r){ return '<tr><td class="small">'+esc(r[0])+'</td><td class="num">'+esc(r[1])+'</td></tr>'; }).join('')
+    +'</tbody></table></div>';
+  if(T.tabel) h+='<details style="margin-top:6px"><summary class="small">'+esc(T.tabel.judul)+'</summary><div class="dt">'
+    +'<div class="scrollx"><table><thead><tr>'+T.tabel.kolom.map(function(k){return '<th>'+esc(k)+'</th>';}).join('')+'</tr></thead><tbody>'
+    +T.tabel.baris.map(function(r){ return '<tr><td class="small">'+esc(r[0])+'</td><td class="num">'+esc(r[1])+'</td></tr>'; }).join('')
+    +'</tbody></table></div></div></details>';
+  h+='<div class="muted small" style="margin-top:6px">'+(EN?'Source':'Sumber')+': '+esc(T.sumber)
+    +' · '+esc(EN?String(T.verif||'').replace(/^terverifikasi/i,'verified'):T.verif)+'</div>';
+  return h;
+}
 function evGuideHTML(it){
   if(!it) return '';
   const EN=_calcEN();
@@ -31,6 +66,16 @@ function evGuideHTML(it){
   /* panduan singkat yang sudah dipunya (feed) — selalu ikut, jangan dibuang */
   const g=(typeof WEEKLY_GUIDE!=='undefined'&&(WEEKLY_GUIDE[it.srcKey]||WEEKLY_GUIDE[it.id]))||'';
   if(g) parts.push('<div class="small" style="margin-bottom:6px">'+esc(g)+'</div>');
+  /* Langkah khas FASE didahulukan lewat srcKey. evUpcoming meng-alias ketiga fase KvK
+     menjadi satu baris ber-id 'kvk'; kalau panduan cuma dicari pakai id, langkah
+     khusus Matchmaking/Field Triage yang sudah ditulis tak akan pernah sampai ke
+     pemain — dan justru di situ jebakan terbesarnya ("reset hero tidak menurunkan
+     power matchmaking"). Ini TAMBAHAN, bukan pengganti tabel poin di bawah. */
+  const lk=(typeof EV_LANGKAH!=='undefined'&&it.srcKey&&EV_LANGKAH[it.srcKey]&&it.srcKey!==it.id)?EV_LANGKAH[it.srcKey]:null;
+  if(lk) parts.push('<ul class="small" style="margin:4px 0 0 16px">'
+    +(lk.langkah||[]).map(x=>'<li style="margin-bottom:4px">'+esc(x)+'</li>').join('')+'</ul>'
+    +'<div class="muted small" style="margin:6px 0">'+(EN?'Source':'Sumber')+': '+esc(lk.sumber)
+    +' · '+esc(EN?String(lk.verif||'').replace(/^terverifikasi/i,'verified'):lk.verif)+'</div>');
   if(t&&(t.days||[]).length){
     /* hari ke-berapa event ini SEDANG berjalan (0-based); null kalau belum mulai */
     let di=null;
@@ -53,6 +98,10 @@ function evGuideHTML(it){
       }).join('')+'</tbody></table></div>');
     if(t.hold) parts.push('<div class="alert inf small">🔒 '+(EN?'Hold':'Tahan')+': '+esc(t.hold)+'</div>');
     if(typeof SPEED_NOTE!=='undefined'&&SPEED_NOTE[tk]) parts.push('<div class="alert warn small">'+SPEED_NOTE[tk]+'.</div>');
+    /* angka per-hari — inilah yang selama ini membuat SG terasa dangkal dibanding HoG */
+    parts.push(evPoinTabelHTML(tk));
+  } else if(typeof EV_TUGAS!=='undefined'&&EV_TUGAS[it.id]){
+    parts.push(evTugasHTML(it.id));
   } else if(typeof EV_LANGKAH!=='undefined'&&EV_LANGKAH[it.id]){
     /* Langkah konkret + sumbernya. Sumber ikut ditampilkan supaya klaimnya bisa
        diperiksa ulang pemain — bukan "percaya saja pada app". */
@@ -434,7 +483,8 @@ function renderEvent(){
        <h3>Hitung mundur</h3>${KVK_PREP.stockpile.map(s=>`<div class="check note"><div class="d" style="color:var(--fg)">${esc(s)}</div></div>`).join('')}
        <div class="alert warn small">\ud83d\udc3a ${esc(KVK_PREP.buffs)}</div>
        <h3>Spend per hari</h3><div class="scrollx"><table><thead><tr><th>Hari</th><th>Fokus skor</th></tr></thead><tbody>${KVK_PREP.days.map(([d,f])=>`<tr><td><b>${esc(d)}</b></td><td class="small">${esc(f)}</td></tr>`).join('')}</tbody></table></div>
-       <div class="alert inf small">\ud83c\udfe5 ${esc(KVK_PREP.revive)}</div>`)
+       <div class="alert inf small">\ud83c\udfe5 ${esc(KVK_PREP.revive)}</div>`
+       +evPoinTabelHTML('kvk'))
       +evCalcHTML(),
     /* Kalkulator Inventaris & farming stamina PINDAH ke tab Kalkulator -> Inventaris.
        Penunjuk ini ditinggal dengan sengaja: keduanya sudah lama di sini, jadi

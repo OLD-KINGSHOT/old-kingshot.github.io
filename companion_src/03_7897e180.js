@@ -1445,6 +1445,11 @@ function _invEvBest(evKey,item){
   let best=null;
   (evPoinStages(evKey)||[]).forEach(function(st,si){
     (st[1]||[]).forEach(function(r){
+      /* JENIS harus cocok, bukan cuma namanya. Pencocokan nama saja pernah membuat
+         Truegold biasa (2.000) mengambil baris "Tempered Truegold" (30.000) begitu
+         baris itu ditambahkan — 15x lipat, diam-diam. Jenis tetap disertai regex
+         karena satu jenis bisa dipakai beberapa barang ('score' = Charm/Gear/Pet). */
+      if(item.unit&&r[2]&&item.unit!==r[2]) return;
       if(!item.ev.test(r[0])) return;
       if(!best||r[1]>best.pts) best={pts:r[1],stage:st[0],si:si};
     });
