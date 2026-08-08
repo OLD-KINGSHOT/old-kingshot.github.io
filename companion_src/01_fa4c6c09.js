@@ -168,6 +168,20 @@ async function fillLiveEvents(force){
     return '<div class="obs small dim" style="margin-top:4px">'+line+'</div>'
       +'<div class="row" style="margin-top:4px"><button class="btn sec sm evlog_add" data-id="'+esc(it.id)+'">✏️ Muncul hari ini</button>'+undo+'</div>';
   }
+  /* Riwayat NYATA dari pencatatan otomatis (evLogAutoFromFeed). Ditampilkan mulai
+     2 kemunculan — satu titik tak menceritakan apa pun — dan jaraknya baru ikut
+     tampil saat evObserved berani menghitungnya (3 titik). Inilah yang kelak
+     menyelesaikan sengketa jadwal dengan DATA, bukan dengan memilih model.
+     Bilingual inline: barisnya disusun dari angka, jadi __TR (cocok-persis) tak
+     akan pernah bisa menerjemahkannya. */
+  const obsAutoHTML=it=>{
+    const o=it.observed; if(!o||o.count<2||!o.lastUTC) return '';
+    const oc=CONF.observed, en=_calcEN(), tgl=new Date(o.lastUTC).toISOString().slice(0,10);
+    const jarak=o.medianGapDays?(en?(' · real gap ~'+o.medianGapDays+' days'):(' · jarak nyata ~'+o.medianGapDays+' hari')):'';
+    return '<div class="obs small dim" style="margin-top:4px"><span title="'+esc(oc[1])+'">'+oc[0]+'</span> '
+      +(en?('logged automatically '+o.count+'× · last start '+tgl)
+          :('tercatat otomatis '+o.count+'× · terakhir mulai '+tgl))+jarak+'</div>';
+  };
   const slug=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
   function seasonalHTML(){
     const rows=(store.get('evLog',[])||[]).filter(r=>r&&/^seasonal:/.test(r.id));
@@ -194,7 +208,7 @@ async function fillLiveEvents(force){
     return '<div class="check note"'+(it.locked?' style="opacity:.6"':'')+'><div style="flex:1;min-width:0">'
       +'<div class="t">'+esc(it.title)+' <span title="'+esc(c[1])+'">'+c[0]+'</span> '+when+lock+'</div>'
       +'<div class="d">'+esc(it.why||guide||WEEKLY_GUIDE_DEFAULT)+'</div>'
-      +(it.unpredictable?obsHTML(it):'')+'</div></div>';
+      +(it.unpredictable?obsHTML(it):obsAutoHTML(it))+'</div></div>';
   };
   const sec=(label,arr)=>arr.length?('<div class="lbl" style="margin:12px 0 4px">'+label+'</div>'+arr.map(row).join('')):'';
   const n=(typeof EV_SEASONAL_NOTE!=='undefined')?EV_SEASONAL_NOTE:null;
@@ -2114,16 +2128,17 @@ function renderProfil(){
       +`${_profs.length>1?`<button class="btn ghost sm" data-rm="${esc(pr.pid)}" style="color:var(--loss);border-color:rgba(255,70,85,.45)">Hapus</button>`:''}</span></div>`;
     }).join(''))
     +`<label class="fl" style="margin-top:10px">Tambah karakter (Player ID + Kingdom)</label><div class="row"><input id="pf_add" inputmode="numeric" placeholder="Player ID" style="flex:2"><input id="pf_addk" inputmode="numeric" placeholder="Kingdom" style="flex:1"><button class="btn sec sm" id="pf_addbtn">\uff0b Tambah</button></div><div id="pf_addstatus" class="muted small">Kingdom wajib \u2014 redeem gift code sekarang menolak tanpa itu.</div>`;
-  el.innerHTML=pageHead('Profil & Koneksi','Hubungkan Player ID sekali \u2014 app baca Kingdom, TC & tanggal server otomatis dan mengingatnya.')
+  el.innerHTML=pageHead('Profil & Koneksi','Isi Player ID + Kingdom sekali \u2014 tanggal buka server diambil otomatis dari Kingdom, sisanya kamu yang isi dan app mengingatnya.')
     +card('Profil Tersimpan (multi-akun)','\ud83d\udc65',_profListHtml)
     +card('Player ID (login)','\u25c9',
       `<label class="fl">Player ID</label><input id="pf_id" value="${esc(p.pid||'')}" inputmode="numeric" placeholder="mis. 12345678">
        <div class="row" style="margin-top:12px"><button class="btn" id="pf_detect">\u26a1 Hubungkan & Deteksi</button>${p.pid?'<button class="btn ghost sm" id="pf_logout" style="color:var(--loss);border-color:rgba(255,70,85,.45)">\u23fb Logout</button>':''}</div>
        <div id="pf_status"></div>`,null,true)
     +card('Data Server','\u2691',
-      `<div class="grid2"><div><label class="fl">Kingdom #</label><input id="pf_k" value="${esc(p.kingdom||'')}" readonly tabindex="-1" placeholder="otomatis" style="opacity:.6;cursor:not-allowed"></div><div><label class="fl">Level TC</label><input id="pf_tc" type="number" value="${esc(p.tc||'')}" readonly tabindex="-1" placeholder="otomatis" style="opacity:.6;cursor:not-allowed"></div></div>
+      `<label class="fl">Nama in-game</label><input id="pf_nick" value="${esc(p.nick||'')}" placeholder="mis. INDONenen13" autocomplete="off">
+       <div class="grid2"><div><label class="fl">Kingdom #</label><input id="pf_k" value="${esc(p.kingdom||'')}" inputmode="numeric" placeholder="mis. 2114"></div><div><label class="fl">Level TC</label><input id="pf_tc" type="number" value="${esc(p.tc||'')}" placeholder="mis. 25"></div></div>
        <label class="fl">Tanggal server buka (Hari 0)</label><input id="pf_start" type="date" value="${esc(p.start||'')}"${p.start?' readonly tabindex="-1" style="opacity:.6;cursor:not-allowed"':''}>
-       <div class="alert inf small">\ud83d\udd12 Kingdom, TC & tanggal server terisi OTOMATIS dari Player ID \u2014 tekan "Hubungkan & Deteksi" untuk memperbarui.</div>
+       <div class="alert inf small">Yang OTOMATIS cuma tanggal buka server \u2014 diambil dari nomor Kingdom, dan itulah yang menggerakkan umur server, kalender & HoG. Nama, Kingdom & TC kamu yang isi: server game tak lagi membocorkannya dari Player ID (situs redeem RESMI Century pun meminta Kingdom diketik).</div>
        ${p.start?'':'<div class="alert warn small">Tanggal server belum terdeteksi. Manual: buka Monument \u2192 misi "Beast Hunting", tanggal selesai \u2212 2 hari = Hari 0.</div>'}
        <label class="fl" style="margin-top:10px">Gaya main (per server ini)</label>
        <div class="seg" id="pf_mode" style="margin:2px 0">
@@ -2340,12 +2355,15 @@ async function autoDetectProfiles(){
 function saveProfile(){
   const old=store.get('profile',{});
   const v=(id,prop)=>{ const e=$(id); return e?(e.value||'').trim():(old[prop]||''); };
-  const np=Object.assign({},old,{kingdom:v('#pf_k','kingdom'),pid:v('#pf_id','pid'),start:v('#pf_start','start'),tc:v('#pf_tc','tc')});
+  const np=Object.assign({},old,{kingdom:v('#pf_k','kingdom'),pid:v('#pf_id','pid'),start:v('#pf_start','start'),
+    tc:v('#pf_tc','tc'),nick:v('#pf_nick','nick')});
   store.set('profile',np);
   /* cerminkan ke daftar meta — kalau tidak, tanggal yang diisi manual di sini tak
-     dikenal oleh seedProfileFromMeta/autoDetectProfiles dan bisa tertimpa balik */
+     dikenal oleh seedProfileFromMeta/autoDetectProfiles dan bisa tertimpa balik.
+     Nama ikut: kartu pemilih profil & daftar redeem membacanya dari meta, jadi tanpa
+     baris ini nama yang baru diketik tetap tampil "(tanpa nama)". */
   try{ const profs=store.get('profiles',[]); const e=profs.find(x=>x&&String(x.pid)===String(np.pid));
-    if(e){ e.kingdom=np.kingdom||e.kingdom; e.tc=np.tc||e.tc; if(np.start) e.start=np.start; store.set('profiles',profs); } }catch(err){}
+    if(e){ e.kingdom=np.kingdom||e.kingdom; e.tc=np.tc||e.tc; e.nick=np.nick||e.nick; if(np.start) e.start=np.start; store.set('profiles',profs); } }catch(err){}
   renderProfil();
 }
 /* "Deteksi": dulu menanyakan nama/Kingdom/TC ke /api/player dari Player ID saja.

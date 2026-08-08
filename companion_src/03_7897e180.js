@@ -703,7 +703,14 @@ async function ksWikiCodes(){
    the response timestamp at render. */
 async function ksLiveEvents(force){
   const c=store.get('liveEvents',null);
-  if(!force&&c&&c.t&&Date.now()-c.t<6*3600*1000&&c.d&&c.d.weeks) return c.d;
+  /* Pencatatan otomatis nebeng DI SINI, bukan di init: ini satu-satunya pintu yang
+     dilewati semua pemakai feed (tab Sekarang, Event, kalender), jadi tak ada jalur
+     yang diam-diam melewatkannya. Idempoten, jadi aman dipanggil sesering apa pun —
+     termasuk di jalur cache, karena cache 6 jam tetap berisi minggu yang berjalan. */
+  if(!force&&c&&c.t&&Date.now()-c.t<6*3600*1000&&c.d&&c.d.weeks){
+    try{ evLogAutoFromFeed(); }catch(e){}
+    return c.d;
+  }
   const get=async w=>{ const target='https://kingshot.net/api/events'+(w?'?week='+w:'');
     for(const px of KS_PROXIES){ try{ const r=await ksFT(px(target)); const j=await r.json();
       if(j&&j.calendar&&j.calendar.events) return j; }catch(e){} } return null; };
@@ -714,7 +721,9 @@ async function ksLiveEvents(force){
   const weeks={}; weeks[wk]=cur.calendar.events;
   restW.forEach((w,i)=>{ if(rest[i]) weeks[w]=rest[i].calendar.events; });
   const d={kvk:cur.kvk,transfer:cur.transfer,timestamp:cur.timestamp,calendar:cur.calendar,weeks};
-  store.set('liveEvents',{t:Date.now(),d}); return d;
+  store.set('liveEvents',{t:Date.now(),d});
+  try{ evLogAutoFromFeed(); }catch(e){}
+  return d;
 }
 /* weekly events that cover a given UTC date (projected from the 4-week cycle) */
 function wkEventsOnDate(cd){
@@ -934,31 +943,82 @@ function evUpcoming(){
       recur:u.recur||'oneTime',observed:obs}));
   });
 
+  /* Observasi menempel ke SEMUA item, bukan cuma yang tak-terprediksi. Sejak feed
+     dicatat otomatis, event rotasi pun punya riwayat NYATA — dan riwayat itulah
+     yang nanti menyelesaikan sengketa jadwal (mis. SG bulanan vs siklus 28 hari)
+     tanpa harus percaya pada salah satu model. evLog dibaca SEKALI di sini. */
+  const _obsRows=store.get('evLog',[])||[];
+  out.forEach(it=>{ if(!it.observed) it.observed=evObserved(it.id,_obsRows); });
+
   out.sort(_evSort);
   return out;
 }
 /* ── Catat kemunculan: observasi pemain atas event tak-terprediksi ──
    evLog=[{id,date,title?}] (multi-baris per id), per-profil. BUKAN sumber
    countdown: estimasi TAK PERNAH ditulis ke startUTC — cuma teks. */
-function _evLogTimes(id){
-  return (store.get('evLog',[])||[]).filter(r=>r&&r.id===id&&r.date)
+function _evLogTimes(id,rows){
+  return ((rows||store.get('evLog',[]))||[]).filter(r=>r&&r.id===id&&r.date)
     .map(r=>Date.parse(r.date+'T00:00:00Z')).filter(t=>!isNaN(t))
     .sort((a,b)=>a-b).filter((t,i,a)=>i===0||t!==a[i-1]);   /* dedup tanggal identik */
 }
 function _median(arr){ if(!arr.length) return null; const s=arr.slice().sort((a,b)=>a-b),m=s.length>>1;
   return s.length%2?s[m]:Math.round((s[m-1]+s[m])/2); }
-function evObserved(id){
-  const ts=_evLogTimes(id), count=ts.length, lastUTC=count?ts[count-1]:null;
+/* `rows` opsional: evUpcoming melampirkan observasi ke PULUHAN item sekaligus, dan
+   tanpa ini tiap item memicu satu pembacaan+parse localStorage sendiri. */
+function evObserved(id,rows){
+  const ts=_evLogTimes(id,rows), count=ts.length, lastUTC=count?ts[count-1]:null;
   if(count<3) return {count:count,lastUTC:lastUTC,medianGapDays:null,nextEstUTC:null};
   const gaps=[]; for(let i=1;i<count;i++) gaps.push(Math.round((ts[i]-ts[i-1])/86400000));
   const g=_median(gaps);
   return {count:count,lastUTC:lastUTC,medianGapDays:g,nextEstUTC:lastUTC+g*86400000};
 }
-function evLogAdd(id,date,title){
-  if(!id||!date) return; const arr=store.get('evLog',[])||[];
-  if(arr.some(r=>r&&r.id===id&&r.date===date)) return;         /* idempoten (id,date) */
+/* `src` menandai ASAL catatan: kosong = mata pemain sendiri, 'feed' = dibaca app dari
+   jadwal live. Bedanya penting saat memangkas — lihat _evLogPrune. Mengembalikan
+   true kalau baris benar-benar baru, supaya pemanggil bisa melapor apa adanya. */
+function evLogAdd(id,date,title,src){
+  if(!id||!date) return false; const arr=store.get('evLog',[])||[];
+  if(arr.some(r=>r&&r.id===id&&r.date===date)) return false;    /* idempoten (id,date) */
   const row={id:String(id),date:String(date)}; if(title) row.title=String(title);
-  arr.push(row); store.set('evLog',arr);
+  if(src) row.src=String(src);
+  arr.push(row); store.set('evLog',arr); return true;
+}
+/* Catatan otomatis tumbuh sendiri (~8 event/minggu), jadi ia HARUS berbatas — tapi
+   batas itu tak boleh menyentuh catatan tangan pemain: yang ditulis manual adalah
+   satu-satunya sumber untuk event yang feed-nya memang tak punya. Buang yang
+   OTOMATIS dan TERTUA saja. */
+const EV_LOG_AUTO_MAX=400;                                     /* ~1 tahun rotasi */
+function _evLogPrune(){
+  const arr=store.get('evLog',[])||[];
+  const auto=arr.filter(r=>r&&r.src==='feed');
+  if(auto.length<=EV_LOG_AUTO_MAX) return 0;
+  const urut=auto.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const buang=new Set(urut.slice(0,auto.length-EV_LOG_AUTO_MAX));
+  const sisa=arr.filter(r=>!buang.has(r));
+  store.set('evLog',sisa); return arr.length-sisa.length;
+}
+/* ── Catat kemunculan OTOMATIS dari feed live ──
+   Sumbernya HANYA `calendar.events` milik minggu BERJALAN: di situ `isActive` dan
+   `startUtc` adalah laporan server tentang apa yang benar-benar jalan. `weeks[n]`
+   untuk minggu lain TIDAK boleh dipakai — startUtc-nya berisi kejadian LAMPAU
+   (jebakan yang sama yang membuat Champagne Fair terbaca 22 Jun; lihat nextWkStarts),
+   dan mencatatnya berarti mengarang riwayat.
+
+   Proyeksi app sendiri juga tidak dipakai: observasi yang dihasilkan dari tebakan
+   cuma akan membenarkan tebakan itu. Yang dicatat tanggal MULAI event, bukan hari
+   app kebetulan dibuka — jarak antar kemunculan hanya berarti kalau titiknya sama. */
+function evLogAutoFromFeed(){
+  const c=store.get('liveEvents',null), d=c&&c.d;
+  const ev=d&&d.calendar&&d.calendar.events;
+  if(!ev||!ev.length) return 0;
+  let n=0;
+  ev.forEach(e=>{
+    if(!e||!e.isActive||e.type==='PACK'||!e.startUtc||!e.titleKey) return;
+    const date=String(e.startUtc).slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    if(evLogAdd(evCanonId(e.titleKey),date,e.title,'feed')) n++;
+  });
+  if(n) _evLogPrune();
+  return n;
 }
 function evLogRemoveLast(id){
   const arr=store.get('evLog',[])||[];
