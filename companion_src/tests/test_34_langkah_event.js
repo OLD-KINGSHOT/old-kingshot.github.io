@@ -102,9 +102,12 @@ t('baris sumber tidak membocorkan kata Indonesia saat mode EN', () => {
 console.log('\nTask 3 — pagar anti-karangan tetap berdiri');
 
 t('event yang memang belum ada sumbernya tetap mengaku kosong', () => {
-  /* Champagne Fair: punya entri ensiklopedia, tapi TIDAK punya langkah terverifikasi */
-  ok(!L['champagneFair'], 'prasyarat: champagneFair belum boleh punya langkah');
-  const html = guide({ id:'champagneFair', title:'Champagne Fair' });
+  /* Sanctuary Battle: satu-satunya event rotasi yang kingshotwiki TIDAK punya
+     halamannya (dicek 9 Agu 2026 terhadap indeks 52 slug event). Selama itu belum
+     berubah, ia harus tetap mengaku kosong — penjaga ini yang mencegah "melengkapi
+     cakupan" berubah jadi mengarang. */
+  ok(!L['sanctuaryBattle'], 'prasyarat: sanctuaryBattle belum boleh punya langkah');
+  const html = guide({ id:'sanctuaryBattle', title:'Sanctuary Battle' });
   ok(/belum ada sumbernya/i.test(html), 'pengakuan jujur itu hilang');
   ok(!/<li/.test(html), 'langkah muncul untuk event yang datanya tak ada');
 });

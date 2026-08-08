@@ -133,7 +133,7 @@ function evGuideHTML(it){
           +'<td class="small">'+esc(d.replace(/^D\d+\s*/,''))+'</td>'
           +'<td class="small muted">'+esc((t.spend||[])[i]||(EN?'items matching the theme':'item sesuai tema'))+'</td></tr>';
       }).join('')+'</tbody></table></div>');
-    if(t.hold) parts.push('<div class="alert inf small">🔒 '+(EN?'Hold':'Tahan')+': '+esc(t.hold)+'</div>');
+    if(t.hold) parts.push('<div class="alert inf small">🔒 '+(EN?'Hold':'Tahan')+': '+esc((EN&&t.holdEN)||t.hold)+'</div>');
     if(typeof SPEED_NOTE!=='undefined'&&SPEED_NOTE[tk]) parts.push('<div class="alert warn small">'+SPEED_NOTE[tk]+'.</div>');
     /* angka per-hari — inilah yang selama ini membuat SG terasa dangkal dibanding HoG */
     parts.push(evPoinTabelHTML(tk));
@@ -156,7 +156,7 @@ function evGuideHTML(it){
     const tema=(ft.days||[])[f[1]], pakai=(ft.spend||[])[f[1]];
     if(tema) parts.push('<div class="alert ok small"><b>'+(EN?'Focus':'Fokus')+':</b> '+esc(tema)
       +(pakai?(' — '+esc(pakai)):'')+'</div>');
-    if(ft.hold) parts.push('<div class="alert inf small">🔒 '+(EN?'Hold':'Tahan')+': '+esc(ft.hold)+'</div>');
+    if(ft.hold) parts.push('<div class="alert inf small">🔒 '+(EN?'Hold':'Tahan')+': '+esc((EN&&ft.holdEN)||ft.hold)+'</div>');
   } else {
     parts.push('<div class="alert warn small">'+(EN
       ? 'No verified day-by-day plan for this event yet — only the note above. Better an honest gap than an invented schedule.'

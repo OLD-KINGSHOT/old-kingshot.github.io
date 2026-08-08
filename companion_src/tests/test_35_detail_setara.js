@@ -131,6 +131,41 @@ t('fase KvK: langkah khas fase-nya terjangkau lewat srcKey, bukan tertelan alias
   ok(/<table/.test(html), 'tabel poin KvK ikut hilang — dua-duanya harus tampil');
 });
 
+t('setiap teks Indonesia yang dirender punya jalan ke bahasa Inggris', () => {
+  /* DUA jalur berbeda, dan membedakannya penting:
+       · teks yang berdiri sendiri sebagai satu node (label tabel, kolom "pakai
+         sekarang") diterjemahkan __TR lewat cocok-persis → cukup ada di kamus;
+       · teks yang DISUSUN dari potongan ("🔒 Hold: <isi>") tak akan pernah
+         terjangkau __TR → wajib punya versi Inggrisnya sendiri (holdEN).
+     Ketahuan di browser 9 Agu 2026: baris Tahan Armament berbunyi "JANGAN buang
+     speedup di sini" di mode Inggris, sementara semua tetangganya sudah EN. */
+  const fs = require('fs'), path = require('path');
+  const kamus = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', '_merged.json'), 'utf8'));
+  const T = e.evalIn('EVENT_TEMPLATES');
+
+  /* 1) baris susunan: holdEN wajib ada dan tidak boleh sama dengan versi Indonesianya */
+  ['kvk','sg','hog','armament'].forEach(k => {
+    ok(T[k].holdEN, k + ': holdEN hilang — baris "Hold" akan berbahasa Indonesia');
+    ok(T[k].holdEN !== T[k].hold, k + ': holdEN cuma menyalin teks Indonesianya');
+  });
+  const en = createEnv({ storage: {} });
+  en.evalIn("window.__getLang=function(){return 'en';}");
+  const html = en.evalIn('evGuideHTML')({ id:'armamentCompetition1', title:'Armament 1' }) || '';
+  const hold = (html.match(/🔒 Hold:[^<]*/) || [''])[0];
+  ok(hold, 'baris Hold tak dirender');
+  ok(!/JANGAN|buang/i.test(hold), 'baris Hold masih Indonesia: ' + hold.slice(0, 80));
+
+  /* 2) node berdiri sendiri: cukup ada di kamus (atau memang sudah Inggris) */
+  const ID = /\b(buang|Pakai|selesaikan|semua|SISA|utk|Naikkan|Latih|Aktifkan|riset|apa pun|bangunan)\b/;
+  const kurang = [];
+  ['kvk','sg'].forEach(k => (e.evalIn('EV_POIN')[k].stages || []).forEach(st =>
+    (st[1] || []).forEach(r => { if (ID.test(r[0]) && !kamus[r[0]]) kurang.push(r[0]); })));
+  ['kvk','sg','hog','armament'].forEach(k => (T[k].spend || []).forEach(s => {
+    if (ID.test(s) && !kamus[s]) kurang.push(s);
+  }));
+  eq([...new Set(kurang)], [], 'teks ini akan tetap Indonesia di mode EN');
+});
+
 console.log('\nTask 3 — skala troop tak boleh tercampur antar event');
 
 t('Officer Project, KvK, SG, dan HoG memakai skala troop yang BERBEDA', () => {
