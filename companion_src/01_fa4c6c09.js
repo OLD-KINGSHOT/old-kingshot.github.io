@@ -14,6 +14,59 @@ function calDateOf(start,d){ return new Date(start.getTime()+(d-1)*86400000); }
    di 4 Agu selnya berbunyi "⚑⚑+1", dengan KvK hari-1 sebagai "+1" itu. Event nyata
    duluan; milestone tetap terbaca lengkap saat tanggalnya diketuk. */
 function calChipOrder(evs){ return (evs||[]).slice().sort((a,b)=>(a.milestone?1:0)-(b.milestone?1:0)); }
+/* "Aku harus ngapain di event ini?" — jawaban untuk SATU event, dari data yang app
+   benar-benar punya. Dulu pertanyaan ini cuma terjawab untuk HoG (sub-tab sendiri)
+   dan SG (terkubur di dalam <details> Ensiklopedia); 23 event rotasi lain hanya
+   punya satu baris, dan barisnya pun tak bisa dibuka.
+
+   Aturan kerasnya: tabel per-hari HANYA untuk template yang memang punya days[]
+   terverifikasi. Untuk sisanya app mengaku belum punya — mengarang jadwal harian
+   untuk 21 event lain persis jenis kebohongan yang diburu audit_akurasi. */
+function evGuideHTML(it){
+  if(!it) return '';
+  const EN=_calcEN();
+  const tk=(typeof EV_TPL_OF!=='undefined')&&(EV_TPL_OF[it.id]||EV_TPL_OF[it.srcKey]);
+  const t=(tk&&typeof EVENT_TEMPLATES!=='undefined')?EVENT_TEMPLATES[tk]:null;
+  const parts=[];
+  /* panduan singkat yang sudah dipunya (feed) — selalu ikut, jangan dibuang */
+  const g=(typeof WEEKLY_GUIDE!=='undefined'&&(WEEKLY_GUIDE[it.srcKey]||WEEKLY_GUIDE[it.id]))||'';
+  if(g) parts.push('<div class="small" style="margin-bottom:6px">'+esc(g)+'</div>');
+  if(t&&(t.days||[]).length){
+    /* hari ke-berapa event ini SEDANG berjalan (0-based); null kalau belum mulai */
+    let di=null;
+    if(it.active&&it.startUTC!=null){
+      /* dua-duanya dinormalkan ke tengah malam UTC: startUTC dari feed memang
+         00:00, tapi sumber lain (mis. countdown absolut) membawa jam — dan tanpa
+         normalisasi selisih 3 jam menggeser penanda "HARI INI" satu hari penuh. */
+      const s=new Date(it.startUTC);
+      const s0=Date.UTC(s.getUTCFullYear(),s.getUTCMonth(),s.getUTCDate());
+      const n=Math.round((todayMidnight().getTime()-s0)/86400000);
+      if(n>=0&&n<t.days.length) di=n;
+    }
+    parts.push('<div class="scrollx"><table><thead><tr><th>'+(EN?'Day':'Hari')+'</th><th>'+(EN?'Scoring theme':'Tema skor')+'</th><th>'+(EN?'Use now':'Pakai sekarang')+'</th></tr></thead><tbody>'
+      +t.days.map((d,i)=>{
+        const ini=(i===di);
+        return '<tr'+(ini?' style="outline:1px solid var(--accent);outline-offset:-1px"':'')+'>'
+          +'<td><b>'+esc(d.split(' ')[0])+'</b>'+(ini?' <span class="pill f2p">'+(EN?'TODAY':'HARI INI')+'</span>':'')+'</td>'
+          +'<td class="small">'+esc(d.replace(/^D\d+\s*/,''))+'</td>'
+          +'<td class="small muted">'+esc((t.spend||[])[i]||(EN?'items matching the theme':'item sesuai tema'))+'</td></tr>';
+      }).join('')+'</tbody></table></div>');
+    if(t.hold) parts.push('<div class="alert inf small">🔒 '+(EN?'Hold':'Tahan')+': '+esc(t.hold)+'</div>');
+    if(typeof SPEED_NOTE!=='undefined'&&SPEED_NOTE[tk]) parts.push('<div class="alert warn small">'+SPEED_NOTE[tk]+'.</div>');
+  } else if(typeof EV_FOKUS_OF!=='undefined'&&EV_FOKUS_OF[it.id]){
+    /* satu KALIMAT fokus, bukan tabel harian — lihat catatan di EV_FOKUS_OF */
+    const f=EV_FOKUS_OF[it.id], ft=EVENT_TEMPLATES[f[0]]||{};
+    const tema=(ft.days||[])[f[1]], pakai=(ft.spend||[])[f[1]];
+    if(tema) parts.push('<div class="alert ok small"><b>'+(EN?'Focus':'Fokus')+':</b> '+esc(tema)
+      +(pakai?(' — '+esc(pakai)):'')+'</div>');
+    if(ft.hold) parts.push('<div class="alert inf small">🔒 '+(EN?'Hold':'Tahan')+': '+esc(ft.hold)+'</div>');
+  } else {
+    parts.push('<div class="alert warn small">'+(EN
+      ? 'No verified day-by-day plan for this event yet — only the note above. Better an honest gap than an invented schedule.'
+      : 'Rencana per-hari event ini belum ada sumbernya — yang di atas itulah yang kita punya. Lebih baik mengaku kosong daripada mengarang jadwal.')+'</div>');
+  }
+  return parts.join('');
+}
 /* duration-aware: an event covers ALL its days (di = 0-based day inside the event),
    not just the start date — so "HoG D4" in the header matches the calendar. */
 function calEventsOnDay(start,d){
@@ -253,10 +306,18 @@ async function fillLiveEvents(force){
     else if(it.startUTC!=null) when='<b class="acc">'+dur(it.startUTC-now)+' lagi</b>';
     else when='';
     const lock=it.locked?' <span class="pill c">🔒 ~hari '+it.gate.minDay+'</span>':'';
+    /* Tiap baris bisa dibuka: "aku harus ngapain" adalah pertanyaan yang sama untuk
+       SEMUA event, jadi jawabannya menempel di barisnya — bukan cuma pada dua event
+       yang kebetulan punya sub-tab sendiri. */
+    const EN2=_calcEN();
     return '<div class="check note"'+(it.locked?' style="opacity:.6"':'')+'><div style="flex:1;min-width:0">'
       +'<div class="t">'+esc(it.title)+' <span title="'+esc(c[1])+'">'+c[0]+'</span> '+when+lock+'</div>'
       +'<div class="d">'+esc(it.why||guide||WEEKLY_GUIDE_DEFAULT)+'</div>'
-      +(it.unpredictable?obsHTML(it):obsAutoHTML(it))+'</div></div>';
+      +(it.unpredictable?obsHTML(it):obsAutoHTML(it))
+      +'<details class="evguide" style="margin-top:6px"><summary class="small">'
+      +(EN2?'What do I do in this event?':'Aku harus ngapain di event ini?')
+      +'</summary><div class="dt">'+evGuideHTML(it)+'</div></details>'
+      +'</div></div>';
   };
   const sec=(label,arr)=>arr.length?('<div class="lbl" style="margin:12px 0 4px">'+label+'</div>'+arr.map(row).join('')):'';
   const n=(typeof EV_SEASONAL_NOTE!=='undefined')?EV_SEASONAL_NOTE:null;
@@ -344,7 +405,7 @@ function renderEvent(){
 
   el.innerHTML=pageHead('Event','Advisory otomatis: kapan tahan item, kapan pakai, dan jam berapa \u2014 digerakkan umur server. (Kalender kini tab tersendiri.)')
     +`<div class="seg" id="ev_sub" style="margin:4px 0 10px">
-        <button data-s="adv">Hari Ini</button><button data-s="live">Jadwal Live</button><button data-s="hog">HoG</button><button data-s="mystic">Mystic Trial</button><button data-s="find">Cari Event</button><button data-s="ency">Ensiklopedia</button><button data-s="kvk">KvK Prep</button><button data-s="roi">Item & ROI</button><button data-s="anti">Anti-P2W</button><button data-s="ally">Aliansi & King</button>
+        <button data-s="adv">Hari Ini</button><button data-s="live">Jadwal Live</button><button data-s="hog">HoG</button><button data-s="sg">SG</button><button data-s="mystic">Mystic Trial</button><button data-s="find">Cari Event</button><button data-s="ency">Ensiklopedia</button><button data-s="kvk">KvK Prep</button><button data-s="roi">Item & ROI</button><button data-s="anti">Anti-P2W</button><button data-s="ally">Aliansi & King</button>
       </div><div id="ev_subc"></div>`;
 
   /* SEMUA bagian jadi sub-tab \u2014 satu bagian tampil pada satu waktu, tanpa scroll panjang */
@@ -356,6 +417,7 @@ function renderEvent(){
     mystic: mysticHTML(),
     find: eventFinderHTML(),
     hog: hogHTML(age),
+    sg: sgHTML(age),
     kvk: card('KvK Prep','\u2620',
       `<div class="alert ok small">${esc(KVK_PREP.target)}</div>
        <h3>Hitung mundur</h3>${KVK_PREP.stockpile.map(s=>`<div class="check note"><div class="d" style="color:var(--fg)">${esc(s)}</div></div>`).join('')}
@@ -431,6 +493,37 @@ function renderEvent(){
       if(s&&s.textContent.toLowerCase().indexOf(want)>=0){ ds[i].open=true; ds[i].scrollIntoView({block:'center'}); break; } } },60); }
 }
 
+/* ── Strongest Governor sub-tab ──
+   SG selama ini punya SEMUA datanya (7 tema hari + apa yang dipakai + daftar tahan +
+   tabel poin) tapi tak punya tempat: rencana hariannya terkubur di dalam <details>
+   pada sub-tab Ensiklopedia, sementara HoG punya sub-tab sendiri. Dilapor pemain
+   9 Agu 2026 sebagai "SG tidak seperti HoG". Panel ini memakai data yang sudah ada —
+   tidak ada satu pun angka baru yang dikarang di sini. */
+function sgHTML(age){
+  const EN=_calcEN();
+  const t=(typeof EVENT_TEMPLATES!=='undefined'&&EVENT_TEMPLATES.sg)||{};
+  let it=null;
+  try{ it=(evUpcoming()||[]).find(x=>x&&x.id==='sg')||null; }catch(e){}
+  const gate=t.minDay||75;
+  let status;
+  if(it&&it.active) status='<div class="alert ok small">'+(EN?'Running now':'SEDANG BERJALAN')+'.</div>';
+  else if(it&&it.startUTC!=null){
+    const d=new Date(it.startUTC);
+    status='<div class="alert inf small">'+(EN?'Next start':'Mulai berikutnya')+': <b>'+esc(d.toISOString().slice(0,10))+'</b>'
+      +(it.conf==='live'?(EN?' · from the live feed':' · dari feed live'):(EN?' · estimate':' · perkiraan'))+'</div>';
+  } else status='<div class="alert warn small">'+(EN?'Schedule not loaded yet — open the Live Schedule sub-tab.':'Jadwal belum termuat — buka sub-tab Jadwal Live.')+'</div>';
+  if(age!=null&&age<gate) status+='<div class="alert warn small">🔒 '+(EN?'Your kingdom is not eligible yet':'Kingdom-mu belum layak')+' — '+(EN?'opens at':'buka di')+' H'+gate+' ('+(EN?'now':'sekarang')+' H'+age+').</div>';
+  return card(t.name||'Strongest Governor','▣',
+    '<p class="muted small">'+(EN
+      ? 'Seven scoring days, one theme each. The whole game is: hold the items, then dump them on their theme day.'
+      : 'Tujuh hari skor, satu tema tiap hari. Intinya cuma satu: TAHAN itemnya, lalu ledakkan di hari temanya.')+'</p>'
+    +status
+    +evGuideHTML(it||{id:'sg',title:t.name||'Strongest Governor'})
+    +'<p class="muted small" style="margin-top:10px">'+(EN
+      ? 'Point tables per item live in the calculator below — the same engine KvK uses, with SG\'s own numbers.'
+      : 'Tabel poin per barang ada di kalkulator bawah — mesin yang sama dengan KvK, tapi memakai angka SG sendiri.')+'</p>')
+    +evCalcHTML();
+}
 /* ── Hall of Governors sub-tab (data: HOG_DETAIL) ── */
 /* Durasi tiap HoG BEDA: #1=5 hari, #2=6 hari, #3+=7 hari (=jumlah stage). Dipakai deteksi iterasi. */
 function hogLen(no){ return no<=1?5 : no===2?6 : 7; }

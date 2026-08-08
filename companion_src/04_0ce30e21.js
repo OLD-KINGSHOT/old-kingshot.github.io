@@ -734,6 +734,17 @@ const EV_FEED_WINS={sg:1};
    jauh) yang selalu jatuh ke bagian tersembunyi — dan pemain membacanya sebagai
    "SG tidak ada di event". Dilaporkan 9 Agu 2026. */
 const EV_UTAMA={sg:1,kvk:1,castleBattle:1,kingsCastle:1};
+/* id kanonik -> template yang punya rencana PER-HARI terverifikasi. Hanya empat
+   template yang punya days[]+spend[] (kvk, sg, hog, armament); 21 event rotasi lain
+   TIDAK punya, dan daftar ini sengaja pendek supaya tak ada yang tergoda mengarang
+   jadwal harian untuk mereka. Event di luar daftar ini menampilkan apa yang app
+   benar-benar punya, lalu mengaku belum punya sisanya. */
+const EV_TPL_OF={kvk:'kvk',sg:'sg',hog:'hog'};
+/* Armament TIDAK ikut di atas: days[]-nya berbunyi "Type 1 / Type 2" — itu dua VARIAN
+   event (Armament Competition 1 vs 2), bukan dua hari. Merendernya sebagai tabel
+   harian akan menyesatkan, jadi tiap varian mengambil BARISNYA SENDIRI sebagai satu
+   kalimat fokus. [id kanonik] -> [template, indeks baris] */
+const EV_FOKUS_OF={armamentCompetition1:['armament',0],armamentCompetition2:['armament',1]};
 const EV_EMOJI={burst:'\u25c8',hog:'\u25c9',kvk:'\u2620',sg:'\u25a3',armament:'\u25c6'};
 
 /* Event yang WIKI SENDIRI nyatakan tak bisa diprediksi. Tampil TANPA angka \u2014
