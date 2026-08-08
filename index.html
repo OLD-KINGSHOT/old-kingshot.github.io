@@ -27,9 +27,94 @@
 </div>
   <div id="__bundler_loading">Unpacking...</div>
 
+<!-- === GERBANG MAINTENANCE ==================================================
+     Sumber tunggal gerbang "situs ditutup". DULU blok ini hanya ada di index.html
+     hasil build, sementara companion_repack.js membangun ulang dari cangkang
+     KINGSHOT13.html — jadi SETIAP rebuild menghapusnya diam-diam, dan push
+     berikutnya akan membuka situs tanpa ada yang memutuskan begitu. (Ketahuan
+     9 Agu 2026, sesudah 6 rebuild.) Sekarang berkas ini versi-terkontrol dan
+     disuntikkan ulang oleh companion_repack.js ke index.html setiap build.
+
+     MEMBUKA SITUS = ubah TUTUP menjadi false di bawah. Satu baris, terlihat di
+     git diff, tidak bisa terjadi karena kecelakaan.
+
+     Salinan offline (file://) dan localhost SELALU lolos — gerbang ini hanya
+     berlaku untuk hostname online.
+     ========================================================================= -->
+  <script>
+  (function () {
+    var TUTUP = true;   // <-- false = situs DIBUKA
+    if (!TUTUP) return;
+    var h = location.hostname;
+    // Offline copy runs from file:// (empty hostname) or a local address — let it through untouched.
+    var isLocal = !h || /^(localhost$|127\.|0\.0\.0\.0$|\[?::1\]?$|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
+    if (isLocal) return;
+
+    // Online: block the whole app and show a maintenance notice.
+    window.__MAINTENANCE__ = true;
+
+    function render() {
+      document.title = 'INDONenen13 — This site is closed';
+      // Match the app's entry / loading splash: deep-space radial, blue crown mark,
+      // [ INDONenen13 ] shimmer wordmark, Tilubelas subtitle — then the closure notice.
+      document.documentElement.innerHTML =
+`<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INDONenen13 — This site is closed</title>
+<style>
+  html,body{margin:0;height:100%}
+  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:radial-gradient(circle at 50% 38%,#0c1526 0%,#070b14 55%,#04060b 100%);
+    color:#e7e9ee;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased}
+  .wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;
+    max-width:460px;animation:rise .8s cubic-bezier(.2,.8,.2,1) both}
+  .logo{color:#6b93f2;filter:drop-shadow(0 0 14px rgba(107,147,242,.55));animation:pulse 1.5s ease-in-out infinite}
+  .wm{display:flex;align-items:center;gap:6px}
+  .br{color:#6b93f2;font-weight:700;font-size:30px;line-height:1;text-shadow:0 0 12px rgba(107,147,242,.7);animation:pulse 1.5s ease-in-out infinite}
+  .title{font-weight:800;font-size:27px;letter-spacing:.2em;margin-left:.2em;display:inline-flex;align-items:center;
+    background:linear-gradient(100deg,#5c86ee 0%,#a9c6ff 22%,#eafcff 48%,#7fd7e6 64%,#5c86ee 100%);background-size:220% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:shine 3s linear infinite}
+  .c13{display:inline-grid;place-items:center;width:26px;height:26px;margin-left:7px;border-radius:7px;
+    background:linear-gradient(135deg,#f7f7f7,#98a2b6 52%,#f7f7f7);color:#06080C;-webkit-text-fill-color:#06080C;
+    font-size:13px;font-weight:800;transform:rotate(-4deg);box-shadow:inset 0 2px 4px rgba(255,255,255,.6),inset 0 -3px 6px rgba(0,0,0,.4),0 0 16px rgba(107,147,242,.4)}
+  .sub{font-size:10px;letter-spacing:.16em;color:#8794ad;text-transform:uppercase}
+  .rule{width:190px;height:1px;background:rgba(255,255,255,.10);margin:10px 0 4px}
+  h1{font-size:15px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin:0;color:#e7e9ee}
+  p{font-size:12.5px;line-height:1.7;color:#8794ad;letter-spacing:.02em;margin:0}
+  a.dm{margin-top:6px;display:inline-block;padding:11px 20px;border-radius:10px;text-decoration:none;
+    font-size:12.5px;font-weight:800;letter-spacing:.03em;color:#eafcff;
+    border:1px solid rgba(107,147,242,.55);background:rgba(107,147,242,.12);box-shadow:0 0 16px rgba(107,147,242,.25)}
+  .steam{font-size:11px;color:#5a6480;letter-spacing:.04em;word-break:break-all}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.93)}}
+  @keyframes shine{0%{background-position:200% 0}100%{background-position:-20% 0}}
+  @keyframes rise{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+</style></head>
+<body>
+  <div class="wrap">
+    <div class="logo"><svg viewBox="0 0 24 24" width="54" height="54" aria-hidden="true"><path fill="currentColor" d="M2 8.2l4.3 3.4L12 3l5.7 8.6L22 8.2l-2 10.4H4L2 8.2z"/><rect x="4" y="19.4" width="16" height="2.2" rx=".4" fill="currentColor"/></svg></div>
+    <div class="wm"><span class="br">[</span><span class="title">INDONenen<b class="c13">13</b></span><span class="br">]</span></div>
+    <div class="sub">F2P Companion · Tilubelas Gaming Network</div>
+    <div class="rule"></div>
+    <h1>This site is closed</h1>
+    <p>This site has been permanently closed and is no longer available.<br>Thank you to everyone who played with us.</p>
+    <a class="dm" href="https://steamcommunity.com/id/Faturochman13/" target="_blank" rel="noopener noreferrer">DM me on Steam if you need anything</a>
+    <div class="steam">steamcommunity.com/id/Faturochman13</div>
+  </div>
+</body>`;
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', render);
+    } else {
+      render();
+    }
+  })();
+  </script>
+
+
   <script>
     
 document.addEventListener('DOMContentLoaded', async function() {
+  if (window.__MAINTENANCE__) return;
   const loading = document.getElementById('__bundler_loading');
   function setStatus(msg) { if (loading) loading.textContent = msg; }
 
