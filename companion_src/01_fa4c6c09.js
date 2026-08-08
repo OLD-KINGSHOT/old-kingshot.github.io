@@ -24,8 +24,60 @@ function calEventsOnDay(start,d){
     if(d-ds<len) out.push({c:col,n:(t&&t.name)||type,type,di:d-ds,len,tag}); };
   rec('hog',6,14,'var(--accent)','HoG');
   rec('kvk',70,28,'var(--loss)','KvK');
-  rec('sg',75,28,'var(--pink)','SG');
+  calSgOnDay(start,d,out);
   return out;
+}
+/* Strongest Governor di kalender. BUKAN siklus per-kingdom: SG lintas-kingdom, jadi
+   tanggalnya tak boleh diturunkan dari umur server. Baris ini dulu berbunyi
+   `rec('sg',75,28,…)` — model "H75 + 28 hari" yang riset 30 Jul 2026 sudah bantah
+   (28 hari bukan sebulan, dan jadwalnya memang tidak per-kingdom). Model itu masih
+   hidup di sini berbulan-bulan setelah mesin event pindah ke sgNextOccurrence,
+   sehingga kalender, daftar event, dan feed menyebut tiga tanggal berbeda.
+
+   Urutan sumber = urutan kejujuran:
+     1) ralat manual user  — kejadian yang dia lihat sendiri di game
+     2) rotasi GLOBAL feed — data resmi kingshot.net (sumber yang sama dgn evUpcoming)
+     3) cadangan bulanan   — tanggal 1 tiap bulan, cocok dgn sgNextOccurrence, hanya
+        dipakai kalau feed belum termuat (offline/diblokir). */
+function calSgOnDay(start,d,out){
+  if(!start||d<1) return;
+  const tpl=(typeof EVENT_TEMPLATES!=='undefined'&&EVENT_TEMPLATES.sg)||{};
+  const len=tpl.len||7, gate=tpl.minDay||75;
+  const cd=new Date(start.getTime()+(d-1)*86400000);
+  const tandai=di=>out.push({c:'var(--pink)',n:tpl.name||'Strongest Governor',type:'sg',di:di,len:len,tag:'SG'});
+  /* 1) ralat manual — apa adanya, tanpa gerbang: kalau user melihatnya, itu terjadi */
+  const u=(store.get('events',[])||[]).find(x=>x&&x.type==='sg'&&x.date);
+  if(u){ const t0=Date.parse(u.date+'T00:00:00Z');
+    if(!isNaN(t0)){ const di=Math.round((cd.getTime()-t0)/86400000); if(di>=0&&di<len) tandai(di); return; } }
+  /* 2) rotasi global — TAPI hanya sejauh feed itu sendiri berlaku. Rotasi feed
+     berulang tiap 28 hari; memproyeksikannya berbulan-bulan ke depan berarti
+     mengarang kembali cadence 28-hari untuk event yang riset bilang BULANAN —
+     persis kesalahan yang baru saja dibuang dari baris 27. Jadi: sampai 28 hari
+     ke depan feed yang menjawab (termasuk saat jawabannya "tidak ada"); lebih
+     jauh dari itu tak ada yang tahu, dan model bulanan yang mengaku perkiraan
+     lebih jujur daripada proyeksi yang terdengar pasti.
+
+     Jangkauan diputuskan dari hari MULAI kejadian, bukan hari yang sedang digambar:
+     kalau tidak, event yang mulainya di dalam jangkauan tapi ekornya melewati batas
+     akan dijawab dua sumber sekaligus (feed menolaknya, model bulanan menandai
+     ekornya) — persis alarm H103/H104 yang muncul saat batas ini pertama dipasang. */
+  const hariIni=(typeof todayMidnight==='function')?todayMidnight().getTime():null;
+  const batas=(hariIni==null)?null:hariIni+28*86400000;
+  const feedSiap=(typeof wkFeedReady==='function'&&wkFeedReady()&&typeof wkOccurrenceOn==='function');
+  if(feedSiap){
+    const o=wkOccurrenceOn(cd,'sg');
+    if(o&&(batas==null||o.startUTC<=batas)){ if(d-o.di>=gate) tandai(o.di); return; }
+  }
+  /* 3) cadangan bulanan (awal bulan), gerbang umur dihitung dari hari MULAI-nya */
+  const first=Date.UTC(cd.getUTCFullYear(),cd.getUTCMonth(),1);
+  const di=Math.round((cd.getTime()-first)/86400000);
+  if(di<0||di>=len||d-di<gate) return;
+  /* Diamkan perkiraan HANYA untuk bulan yang feed memang sudah menaruh SG di dalamnya.
+     Menyaring per-HARI (mis. "tanggal 1-nya masih di dalam jangkauan feed") membuat
+     satu bulan penuh kosong tanpa sebab — dan kalender kosong terbaca "tak ada event
+     bulan ini", padahal yang benar "belum terjawab". */
+  if(feedSiap&&typeof wkStartsInMonth==='function'&&wkStartsInMonth(first,'sg',batas)) return;
+  tandai(di);
 }
 function renderCalendar(host){
   const {p,start,age}=profileAge();
@@ -2415,8 +2467,9 @@ function init(){
    Label bilingual karena tampil SEBELUM bahasa dipilih. Per-perangkat — tidak disinkron. */
 function showOnboard(){
   if(document.getElementById('onboard')) return;
-  /* GATE: tampil terus sampai bahasa+jam dipilih DAN Player ID terhubung */
-  if(store.get('onboard',0)&&(store.get('profile',{})||{}).pid) return;
+  /* GATE: tampil terus sampai bahasa+jam dipilih DAN Player ID terhubung — kecuali
+     user memang memilih "Lewati", yang dihormati sebagai jawaban tetap. */
+  if(store.get('onboard',0)&&((store.get('profile',{})||{}).pid||store.get('onboardSkip',0))) return;
   const d=document.createElement('div'); d.id='onboard';
   d.innerHTML=`<div class="ob-box">
     <div class="ob-logo"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M2 8.2l4.3 3.4L12 3l5.7 8.6L22 8.2l-2 10.4H4L2 8.2z"/><rect x="4" y="19.4" width="16" height="2.2" rx=".4" fill="currentColor"/></svg></div>
@@ -2428,7 +2481,9 @@ function showOnboard(){
     <div class="ob-row" id="ob_tz"><button data-v="WIB" class="active">WIB (UTC+7)</button><button data-v="UTC">UTC</button></div>
     <div class="ob-l">Player ID</div>
     <input id="ob_pid" inputmode="numeric" autocomplete="off" placeholder="cth / e.g. 330300846" class="ob-in">
-    <div class="ob-hint">Kingdom, TC & umur server terdeteksi otomatis / auto-detected · ID ada di profil dalam game / see your in-game profile</div>
+    <div class="ob-l">Kingdom</div>
+    <input id="ob_kid" inputmode="numeric" autocomplete="off" placeholder="cth / e.g. 2114" class="ob-in">
+    <div class="ob-hint">Umur server dihitung dari Kingdom · server date from Kingdom<br>Nama & TC diisi manual di tab Profil / fill name &amp; TC yourself in Profile<br>Keduanya ada di profil dalam game / both are in your in-game profile</div>
     <div class="ob-err" id="ob_err"></div>
     <button class="ob-go" id="ob_go">MULAI →</button>
     <button class="ob-skip" id="ob_skip" style="display:none">Lanjut tanpa ID / Continue without ID</button>
@@ -2459,24 +2514,31 @@ function showOnboard(){
     d.classList.add('off'); setTimeout(()=>d.remove(),450);
   };
   const go=d.querySelector('#ob_go'), err=d.querySelector('#ob_err');
+  /* Dulu layar ini menanyakan nama/Kingdom/TC ke /api/player hanya dari Player ID.
+     Endpoint itu dihapus Century (lihat ksPlayerLookup, yang sekarang SELALU throw),
+     jadi tombol MULAI dipastikan gagal untuk ID apa pun — perangkat baru tak pernah
+     bisa lewat, dan tanpa profil seluruh model umur (HoG/KvK/SG/kalender) diam.
+     Sekarang jalurnya sama dengan tab Profil: Kingdom diketik, tanggal buka diambil. */
   go.onclick=async()=>{
     const fid=(d.querySelector('#ob_pid').value||'').trim();
+    const kid=(d.querySelector('#ob_kid').value||'').trim();
     if(!fid){ err.textContent='Isi Player ID, atau pilih Lewati / Enter your Player ID, or Skip.'; return; }
+    if(!kid){ err.textContent='Isi Kingdom juga — umur server & redeem butuh itu. / Kingdom too — server age & redeem need it.'; return; }
     const lbl=go.textContent; go.disabled=true; go.textContent='⏳ …'; err.textContent='';
-    try{
-      const j=await ksPlayerLookup(fid);
-      if(j.code!==0||!j.data) throw new Error('notfound');
-      const dd=j.data;
-      const openDate=await fetchKingdomDate(dd.kid);
-      connectProfileTo(fid,dd,openDate);
-      finish();
-    }catch(e){
-      go.disabled=false; go.textContent=lbl;
-      err.textContent='Player ID tidak ditemukan / gagal terhubung — periksa ID lalu coba lagi. (Not found / connection failed — check the ID and retry.)';
-      d.querySelector('#ob_skip').style.display=''; /* pintu darurat hanya saat gagal */
-    }
+    let openDate='';
+    try{ openDate=await fetchKingdomDate(kid)||''; }catch(e){}
+    connectProfileTo(fid,{kid:kid},openDate);   /* profil tersimpan apa pun hasil lookup */
+    if(openDate){ finish(); return; }
+    /* Kingdom tersimpan tapi tanggal bukanya tak ketemu (offline/diblokir): jangan
+       telan diam-diam — tanpa tanggal, tab Sekarang/kalender/HoG kosong. */
+    go.disabled=false; go.textContent=lbl;
+    err.textContent='Tanggal buka Kingdom #'+kid+' tak ketemu (offline?). Coba lagi, atau lanjut lalu isi manual di tab Profil. / Kingdom open date not found — retry, or continue and fill it in Profile.';
+    d.querySelector('#ob_skip').style.display='';   /* pintu darurat hanya saat gagal */
   };
-  d.querySelector('#ob_skip').onclick=()=>finish();
+  /* Lewati = keputusan, bukan kecelakaan: dicatat supaya gerbang tak menanyai ulang
+     tiap app dibuka (dulu pintu ini menyimpan onboard=1 tanpa pid, jadi layarnya
+     muncul lagi selamanya). */
+  d.querySelector('#ob_skip').onclick=()=>{ store.set('onboardSkip',1); finish(); };
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 

@@ -80,6 +80,13 @@ const SALINAN = [
   { nama: 'jangkar HoG', pola: /\(\s*no\s*-\s*1\s*\)\s*\*\s*14/, sumber: /hogStartDay|hogFirstDay|hogStartUTC/ },
   { nama: 'jangkar Castle', pola: /\b54\s*\+\s*[^;]*\*\s*14/, sumber: /castleFirstDay|nextCastleDay/ },
   { nama: 'siklus SG 28 hari', pola: /\b75\s*\+[^;]*\*\s*28/, sumber: /sgNextOccurrence/ },
+  /* Pola di atas mencari bentuk ARITMATIKA "75 + n*28" — dan justru karena itu ia
+     buta terhadap bentuk yang benar-benar hidup di kalender selama sebulan lebih:
+     `rec('sg',75,28,…)`, model yang sama tapi sebagai ARGUMEN. Ditemukan 8 Agu 2026,
+     saat kalender (H75), daftar event (1 Sep), dan feed (24 Agu) menyebut tiga
+     tanggal berbeda untuk satu event. */
+  { nama: 'siklus SG per-kingdom (bentuk argumen)', pola: /['"]sg['"][^;]*\b75\b[^;]*\b28\b/,
+    sumber: /sgNextOccurrence|calSgOnDay/ },
   /* Rasio Bear Hunt pernah ditulis dua kali di berkas yang sama — dua bagian app bisa
      menyarankan komposisi march berbeda untuk event yang sama. */
   { nama: 'rasio Bear Hunt', pola: /arc\s*:\s*89|arc\s*:\s*80\b/, sumber: /bearRatio/ },
@@ -117,6 +124,22 @@ for (const s of SEMINGGU) {
     if (!sg) { F(`SG hilang untuk kingdom buka ${s} pada umur ${umur}`); bedaJalur++; continue; }
     if (new Date(sg.date + 'T00:00:00Z').getUTCDate() !== 1) { F(`SG ${sg.date} (buka ${s}, umur ${umur}) bukan awal bulan`); bedaJalur++; }
     if (sg.day < 75) { F(`SG hari ${sg.day} (buka ${s}) melanggar gerbang H75`); bedaJalur++; }
+  }
+  /* Kalender vs daftar event untuk SG. Penjaga pola di atas hanya melarang SATU
+     bentuk salah; ini menuntut yang sebenarnya diinginkan — dua permukaan harus
+     menyebut tanggal yang SAMA. Tanpa feed, dua-duanya wajib memakai model bulanan
+     yang sama. (Dengan feed, keduanya sama-sama membaca wkOccurrenceOn.) */
+  const kalSG = [];
+  /* sapuan harus MELEBIHI umur terjauh yang diuji (260) plus satu bulan penuh —
+     kalau tidak, SG di H266 dilaporkan "hilang" padahal cuma di luar jangkauan. */
+  for (let d = 1; d <= 320; d++)
+    if ((ev('calEventsOnDay')(start, d) || []).some(x => x && x.type === 'sg' && x.di === 0)) kalSG.push(d);
+  for (const umur of [80, 140, 260]) {
+    const sgP = ev('predictedEvents')(start, umur).filter(e => e.type === 'sg')[0];
+    if (sgP && kalSG.indexOf(sgP.day) < 0) {
+      F(`SG kingdom buka ${s}: daftar event bilang H${sgP.day} (${sgP.date}), kalender tak menandainya (kalender: H${kalSG.join(', H') || '-'})`);
+      bedaJalur++;
+    }
   }
   const hog6 = ev('predictedEvents')(start, 80).filter(e => e.type === 'hog');
   if (hog6.length) { F(`kalender meramalkan HoG setelah #5 untuk kingdom buka ${s}`); bedaJalur++; }

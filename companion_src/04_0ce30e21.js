@@ -722,6 +722,12 @@ const WEEKLY_MIN={kvkMatchmaking:70,kvkPrepPhase:70,kvkFieldTriage:70,strongestG
    Samakan supaya satu event tidak muncul dua kali dengan tanggal berbeda.
    (Fase KvK diciutkan jadi satu entri 'kvk' — granularitas fase bukan tujuan countdown.) */
 const EV_ALIAS={kvkMatchmaking:'kvk',kvkPrepPhase:'kvk',kvkFieldTriage:'kvk',strongestGovernor:'sg'};
+/* Event yang jadwalnya LINTAS-KINGDOM, bukan turunan umur server: feed global
+   mengalahkan model umur. SG = 6 kingdom bertanding di jendela yang SAMA (riset
+   30 Jul 2026), jadi tanggal per-kingdom hasil hitungan app tak pernah bisa lebih
+   benar daripada tanggal yang dikirim feed. KvK TIDAK di sini — pemilihan feed-vs-
+   model untuk KvK sudah ditangani di dalam predictedEvents (kvkGlobalStartISO). */
+const EV_FEED_WINS={sg:1};
 const EV_EMOJI={burst:'\u25c8',hog:'\u25c9',kvk:'\u2620',sg:'\u25a3',armament:'\u25c6'};
 
 /* Event yang WIKI SENDIRI nyatakan tak bisa diprediksi. Tampil TANPA angka \u2014

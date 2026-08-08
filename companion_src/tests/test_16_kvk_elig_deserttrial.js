@@ -31,10 +31,13 @@ console.log('KvK = eligibility (bukan tanggal pasti) + Desert Trial');
 
 t('prediksi KvK ditandai TIDAK DIJAMIN (elig), HoG tidak', () => {
   const pred = env.evalIn('predictedEvents');
-  const daysBetween = env.evalIn('daysBetween');
-  const todayMidnight = env.evalIn('todayMidnight');
   const start = new Date('2026-05-27T00:00:00Z');
-  const age = daysBetween(start, todayMidnight()) + 1;
+  /* Umur DIPATOK, bukan dihitung dari "hari ini". Versi lama memakai tanggal nyata,
+     jadi test ini lulus hanya selama kingdom contoh masih punya HoG di depannya —
+     dan mulai 8 Agu 2026 (H74, sesudah HoG #5 yang terakhir) ia gagal sendiri tanpa
+     ada kode yang berubah. H40 punya HoG mendatang DAN KvK masih di bawah gerbang,
+     jadi kedua sisi klaim ini benar-benar teruji. */
+  const age = 40;
   const out = pred(start, age);
   const kvk = out.find(e => e.type === 'kvk');
   ok(kvk, 'prediksi KvK ada');

@@ -778,12 +778,69 @@ function wkActiveNow(){
   return out;
 }
 const evCanonId=k=>((typeof EV_ALIAS!=='undefined'&&EV_ALIAS[k])||k);
+/* Kejadian rotasi satu event yang MENCAKUP tanggal cd, plus `di` = hari keberapa
+   (0-based) di dalam kejadian itu — supaya kalender bisa menandai seluruh rentang,
+   bukan cuma hari mulainya. Beda dari wkActiveNow: bisa untuk tanggal apa pun
+   (lampau maupun mendatang), karena rotasi 4-mingguan deterministik dari
+   cycleReference. Dipakai kalender untuk event lintas-kingdom seperti SG. */
+function wkOccurrenceOn(cd,canonId){
+  const R=_wkRef(); if(!R) return null;
+  const d0=Math.floor((cd.getTime()-R.ref)/86400000); if(d0<0) return null;
+  for(const e of wkEventsOnDate(cd)){
+    if(evCanonId(e.titleKey)!==canonId) continue;
+    for(let back=0;back<7;back++){
+      /* dd bisa negatif; % di JS ikut tanda dividen → normalkan minggu & dow */
+      const dd=d0-back, wk=((((Math.floor(dd/7)%4)+4)%4))+1;
+      if(_WK_DI[e.startDay]!==((dd%7)+7)%7) continue;
+      if(!(R.d.weeks[wk]||[]).some(x=>x.titleKey===e.titleKey)) continue;
+      const len=_wkLen(e);
+      return {titleKey:e.titleKey,title:e.title,type:e.type,di:back,len:len,
+        startUTC:R.ref+dd*86400000,endUTC:R.ref+(dd+len)*86400000-1};
+    }
+  }
+  return null;
+}
+/* Apakah feed rotasi memang ADA di perangkat ini? Membedakan "feed bilang tidak ada
+   SG hari itu" (jawaban sah) dari "feed belum termuat" (harus pakai cadangan). */
+function wkFeedReady(){ return !!_wkRef(); }
+/* Apakah rotasi feed menempatkan `canonId` MULAI di dalam bulan yang diawali firstUTC,
+   dengan hari mulainya tidak melewati `batas`? Dipakai kalender untuk memutuskan
+   per-BULAN siapa yang menjawab: kalau feed sudah menaruh event itu di bulan tsb,
+   perkiraan tak perlu ikut bicara; kalau tidak, bulan itu belum terjawab dan model
+   cadangan lebih baik daripada kalender kosong yang terbaca "tidak ada event".
+   Feed dibaca SEKALI, sisanya aritmatika — dipanggil sekali per hari yang digambar. */
+function wkStartsInMonth(firstUTC,canonId,batas){
+  const R=_wkRef(); if(!R) return false;
+  const f=new Date(firstUTC), akhir=Date.UTC(f.getUTCFullYear(),f.getUTCMonth()+1,1);
+  for(let t=firstUTC;t<akhir;t+=86400000){
+    const dd=Math.floor((t-R.ref)/86400000); if(dd<0) continue;
+    if(batas!=null&&t>batas) return false;            /* hari-hari berikutnya makin jauh */
+    const wk=((((Math.floor(dd/7)%4)+4)%4))+1, wd=((dd%7)+7)%7;
+    for(const e of (R.d.weeks[wk]||[])){
+      if(e.type==='PACK'||evCanonId(e.titleKey)!==canonId) continue;
+      if(_WK_DI[e.startDay]===wd) return true;
+    }
+  }
+  return false;
+}
 /* Bentuk item jadwal — default lengkap supaya UI tak pernah ketemu undefined. */
 /* srcKey = titleKey ASLI dari feed. WAJIB disimpan terpisah dari id: id sudah di-alias
    (kvkMatchmaking -> kvk), sedangkan WEEKLY_GUIDE di-key pakai titleKey asli — pakai id
    untuk lookup panduan = meleset diam-diam untuk tiap event yang di-alias. */
 function _evItem(o){ return Object.assign({id:'',srcKey:'',title:'',type:'',startUTC:null,endUTC:null,
   active:false,source:'',conf:'unknown',gate:null,locked:false,unpredictable:false,why:''},o); }
+/* Umur kingdom (1-based, buka = H1) pada tanggal t. */
+function _kdDayAt(start,t){ return (!start||t==null)?null:Math.floor((t-start.getTime())/86400000)+1; }
+/* TERKUNCI = kamu belum layak PADA HARI-H event itu — bukan "belum layak hari ini".
+   Dulu perbandingannya memakai umur HARI INI, jadi Strongest Governor 1 Sep (kingdom
+   sudah H98) ditandai terkunci di H74 dan UI menggantikan hitung mundurnya dengan
+   label "🔒 buka H75" — event yang tanggalnya diketahui tampil tanpa tanggal.
+   Kunci tetap dipasang kalau tanggal yang ditampilkan memang JATUH di dalam masa
+   terkunci (KvK muda: tanggalnya turunan gerbang itu sendiri, jadi day <= minDay). */
+function _evLocked(minDay,age,dayAt){
+  if(minDay==null||age==null||age>=minDay) return false;
+  return dayAt==null||dayAt<=minDay;
+}
 /* Aktif dulu; lalu paling dekat dulu; yang tak bisa diprediksi (startUTC null) selalu buncit. */
 function _evSort(a,b){
   if(a.active!==b.active) return a.active?-1:1;
@@ -799,6 +856,13 @@ function evUpcoming(){
   const add=it=>{ if(!it||!it.id||seen.has(it.id)) return; seen.add(it.id); out.push(it); };
   const pa=profileAge(), start=pa.start, age=pa.age;
   const now=ksClock.now().getTime();
+  /* Rotasi feed disapu DULU (dipakai cabang 4 di bawah), karena sebagian event
+     jadwalnya LINTAS-KINGDOM: untuk event seperti itu feed global lebih benar
+     daripada model umur per-kingdom, jadi cabang 2 harus bisa mengalah. */
+  const _act=wkActiveNow(), _nextWk=nextWkStarts(28);
+  const _feedIds=new Set();
+  const _noteFeed=e=>{ if(e.type!=='PACK') _feedIds.add(evCanonId(e.titleKey)); };
+  _act.forEach(_noteFeed); _nextWk.forEach(_noteFeed);
 
   /* 1) koreksi manual user — menang atas apa pun */
   (store.get('events',[])||[]).forEach(e=>{
@@ -814,6 +878,10 @@ function evUpcoming(){
         (HoG #4 terverifikasi in-game membuktikan model ini cocok) */
   if(start&&age!=null){
     predictedEvents(start,age).forEach(pp=>{
+      /* Jadwal LINTAS-KINGDOM (SG: 6 kingdom, satu jendela) — feed global menang,
+         model umur cuma cadangan saat feed tak termuat. Tanpa pagar ini tebakan
+         ber-conf 'inferred' membuang entri feed ber-conf 'live' lewat dedup id. */
+      if(typeof EV_FEED_WINS!=='undefined'&&EV_FEED_WINS[pp.type]&&_feedIds.has(pp.type)) return;
       const tpl=EVENT_TEMPLATES[pp.type]||{};
       const t=Date.parse(pp.date+'T00:00:00Z'); if(isNaN(t)) return;
       const len=(pp.type==='hog'&&typeof hogLen==='function')?hogLen(hogNoForDay(pp.day)):(tpl.len||1);
@@ -821,7 +889,7 @@ function evUpcoming(){
         active:(pp.day<=age&&age<pp.day+len),source:'age',
         conf:(pp.type==='hog')?'ingame':(pp.conf==='tinggi'?'wiki':'inferred'),
         gate:tpl.minDay?{minDay:tpl.minDay}:null,
-        locked:!!(tpl.minDay&&age<tpl.minDay)}));
+        locked:_evLocked(tpl.minDay==null?null:tpl.minDay,age,pp.day)}));
     });
   }
 
@@ -842,8 +910,7 @@ function evUpcoming(){
     absItem(_ld.transfer,'transfer','Kingdom Transfer');
   }
 
-  /* 4) sapuan rotasi (+ status aktif) */
-  const _act=wkActiveNow();
+  /* 4) sapuan rotasi (+ status aktif) — sapuannya sudah dihitung di atas */
   const _actKeys=new Set(_act.map(x=>x.titleKey));
   const _pushWk=(e,isActive)=>{
     if(e.type==='PACK') return;                       /* pack = bundel bayar, bukan event skor */
@@ -851,10 +918,10 @@ function evUpcoming(){
     add(_evItem({id:evCanonId(e.titleKey),srcKey:e.titleKey,title:e.title,type:e.type,
       startUTC:e.startUTC,endUTC:e.endUTC,active:!!isActive,source:'live',conf:'live',
       gate:(min==null)?null:{minDay:min},
-      locked:!!(min!=null&&age!=null&&age<min)}));
+      locked:_evLocked(min==null?null:min,age,_kdDayAt(start,e.startUTC))}));
   };
   _act.forEach(e=>_pushWk(e,true));
-  nextWkStarts(28).forEach(e=>{ if(!_actKeys.has(e.titleKey)) _pushWk(e,false); });
+  _nextWk.forEach(e=>{ if(!_actKeys.has(e.titleKey)) _pushWk(e,false); });
 
   /* 6) tak-bisa-diprediksi — masuk daftar, TANPA angka. Lampiri kelas recur +
         observasi pemain (evLog); startUTC TETAP null. Cadence DINULKAN untuk
