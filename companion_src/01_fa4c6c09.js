@@ -13,7 +13,44 @@ function calDateOf(start,d){ return new Date(start.getTime()+(d-1)*86400000); }
    sering berkerumun 2-3 di satu hari, dan dulu merekalah yang memakan kedua slot —
    di 4 Agu selnya berbunyi "⚑⚑+1", dengan KvK hari-1 sebagai "+1" itu. Event nyata
    duluan; milestone tetap terbaca lengkap saat tanggalnya diketuk. */
-function calChipOrder(evs){ return (evs||[]).slice().sort((a,b)=>(a.milestone?1:0)-(b.milestone?1:0)); }
+function calChipOrder(evs){
+  /* Urutan prioritas chip: event PERTUMBUHAN (HoG/KvK/SG/CB — yang app hitung sendiri
+     per-kingdom) dulu, lalu rotasi mingguan, milestone paling belakang. Slot chip cuma
+     tiga; yang paling menentukan hari itu harus yang bertahan, bukan yang kebetulan
+     ada duluan di array. */
+  const pangkat=x=>x&&x.milestone?2:((x&&x.type==='wk')?1:0);
+  return (evs||[]).slice().sort((a,b)=>pangkat(a)-pangkat(b));
+}
+/* Singkatan chip dari judul event: "Sanctuary Battle" -> SB, "Alliance Championship"
+   -> AC. Maksimal 3 huruf supaya sel kalender tidak pecah di layar HP. */
+function calSingkat(judul){
+  return String(judul||'').replace(/[^A-Za-z0-9 ]/g,' ').trim().split(/\s+/)
+    .map(w=>w.charAt(0)).join('').toUpperCase().slice(0,3);
+}
+/* Event rotasi mingguan pada hari-server d, MASING-MASING dengan rentangnya sendiri.
+   Dulu kalender hanya memberi satu garis biru "ada event mingguan hari ini" — dan
+   karena Alliance Championship dkk berjalan Senin-Minggu, garis itu menyala di
+   SELURUH 31 hari. Sinyal yang selalu menyala sama dengan tidak ada sinyal: kalender
+   terlihat penuh tapi tak pernah memberi tahu kapan sesuatu MULAI atau BERAKHIR.
+
+   Event yang sudah punya chip sendiri (HoG/KvK/SG/Castle) sengaja dilewati — mereka
+   dihitung per-kingdom oleh calEventsOnDay, dan menampilkannya dua kali cuma memakan
+   slot chip yang sedikit. */
+const _CAL_PUNYA_CHIP={kvk:1,sg:1,hog:1,castleBattle:1,kingsCastle:1};
+function calWeeklyOnDay(start,d){
+  if(!start||!isFinite(d)||d<1||typeof wkEventsOnDate!=='function') return [];
+  const cd=calDateOf(start,d), out=[];
+  (wkEventsOnDate(cd)||[]).forEach(function(e){
+    const id=(typeof evCanonId==='function')?evCanonId(e.titleKey):e.titleKey;
+    if(_CAL_PUNYA_CHIP[id]) return;
+    const o=(typeof wkOccurrenceOn==='function')?wkOccurrenceOn(cd,id):null;
+    const min=(typeof WEEKLY_MIN!=='undefined')?WEEKLY_MIN[e.titleKey]:null;
+    out.push({c:'var(--cyan)',n:e.title,type:'wk',id:id,srcKey:e.titleKey,
+      tag:calSingkat(e.title),di:o?o.di:0,len:o?o.len:1,
+      locked:!!(min!=null&&d<min)});
+  });
+  return out;
+}
 /* "Aku harus ngapain di event ini?" — jawaban untuk SATU event, dari data yang app
    benar-benar punya. Dulu pertanyaan ini cuma terjawab untuk HoG (sub-tab sendiri)
    dan SG (terkubur di dalam <details> Ensiklopedia); 23 event rotasi lain hanya
@@ -250,18 +287,20 @@ function renderCalendar(host){
   let cells=''; for(let i=0;i<lead;i++) cells+='<div class="calcell empty"></div>';
   for(let day=1;day<=dim;day++){
     const cd=new Date(Date.UTC(y,mo,day)); const d=daysBetween(start,cd)+1; /* 1-based: buka = H1 */
-    const evs=calEventsOnDay(start,d);
-    const wk=(typeof wkEventsOnDate==='function')?wkEventsOnDate(cd):[];
+    /* Event pertumbuhan + rotasi mingguan, masing-masing pada RENTANGNYA sendiri.
+       Garis biru "ada event mingguan" dibuang: ia menyala di semua 31 hari. */
+    const evs=calEventsOnDay(start,d).concat(calWeeklyOnDay(start,d));
     const isToday=cd.getTime()===today.getTime();
     /* labeled chips: event tag + day-in-event (HoG\u00b2, KvK\u2075 \u2026) instead of anonymous dots */
     const evsUrut=calChipOrder(evs);
-    const tags=evsUrut.slice(0,2).map(x=>`<span class="ctag" style="color:${x.c};border-color:${x.c}">${x.tag}${x.len>1&&!x.milestone?'<small>'+(x.di+1)+'</small>':''}</span>`).join('')
-      +(evsUrut.length>2?`<span class="ctag">+${evsUrut.length-2}</span>`:'');
-    cells+=`<div class="calcell${evs.length?' has':''}${wk.length?' wk':''}${isToday?' today':''}" data-d="${d}"><div class="dn num">${day}</div><div class="sd">${d>=1?'H'+d:''}</div><div class="cdots">${tags}</div></div>`;
+    const CAP=3;
+    const tags=evsUrut.slice(0,CAP).map(x=>`<span class="ctag" style="color:${x.c};border-color:${x.c}${x.locked?';opacity:.45':''}">${x.tag}${x.len>1&&!x.milestone?'<small>'+(x.di+1)+'</small>':''}</span>`).join('')
+      +(evsUrut.length>CAP?`<span class="ctag">+${evsUrut.length-CAP}</span>`:'');
+    cells+=`<div class="calcell${evs.length?' has':''}${isToday?' today':''}" data-d="${d}"><div class="dn num">${day}</div><div class="sd">${d>=1?'H'+d:''}</div><div class="cdots">${tags}</div></div>`;
   }
   host.innerHTML=`<div class="calhead"><button class="calnav" id="cprev">\u2039</button><span class="mon">${ID_MON_FULL[mo]} ${y}</span><button class="calnav" id="cnext">\u203a</button></div>
     <div class="calgrid">${dow.map(x=>`<div class="caldow">${x}</div>`).join('')}${cells}</div>
-    <div class="callegend"><b style="color:var(--profit)">B</b> Burst of Life \u00b7 <b style="color:var(--cyan)">\u2691</b> Milestone \u00b7 <b style="color:var(--accent)">HoG</b> Hall of Governors \u00b7 <b style="color:var(--loss)">KvK</b> Kingdom of Power \u00b7 <b style="color:var(--pink)">SG</b> Strongest Governor \u00b7 <b style="color:var(--cyan)">CB</b> Castle Battle (Sabtu, tiap 14 hari). Angka kecil = hari ke-berapa event (HoG<small>2</small> = hari ke-2). Garis biru bawah = ada event mingguan kingdom hari itu. <b>H51</b> = umur server. Ketuk tanggal untuk detail.</div>
+    <div class="callegend"><b style="color:var(--profit)">B</b> Burst of Life \u00b7 <b style="color:var(--cyan)">\u2691</b> Milestone \u00b7 <b style="color:var(--accent)">HoG</b> Hall of Governors \u00b7 <b style="color:var(--loss)">KvK</b> Kingdom of Power \u00b7 <b style="color:var(--pink)">SG</b> Strongest Governor \u00b7 <b style="color:var(--cyan)">CB</b> Castle Battle (Sabtu, tiap 14 hari). Event mingguan kingdom memakai singkatan judulnya (<b>SB</b> = Sanctuary Battle, <b>AC</b> = Alliance Championship) dan hanya tampil pada rentang tanggalnya sendiri. Angka kecil = hari ke-berapa event (HoG<small>2</small> = hari ke-2); chip pudar = kingdom-mu belum cukup umur. <b>H51</b> = umur server. Ketuk tanggal untuk daftar lengkap.</div>
     <div id="caldetail" style="margin-top:12px"></div>`;
   $('#cprev',host).onclick=()=>{_calOffset--;renderCalendar(host);};
   $('#cnext',host).onclick=()=>{_calOffset++;renderCalendar(host);};
