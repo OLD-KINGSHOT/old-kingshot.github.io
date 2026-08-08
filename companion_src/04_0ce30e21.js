@@ -728,6 +728,12 @@ const EV_ALIAS={kvkMatchmaking:'kvk',kvkPrepPhase:'kvk',kvkFieldTriage:'kvk',str
    benar daripada tanggal yang dikirim feed. KvK TIDAK di sini — pemilihan feed-vs-
    model untuk KvK sudah ditangani di dalam predictedEvents (kvkGlobalStartISO). */
 const EV_FEED_WINS={sg:1};
+/* Event yang TIDAK BOLEH disembunyikan di balik tombol "Lihat semua": yang
+   menentukan ranking & hadiah besar. Daftar rotasi global bisa 17 baris dan dipotong
+   di 6; karena urutannya menurut tanggal, justru Strongest Governor (jadwalnya paling
+   jauh) yang selalu jatuh ke bagian tersembunyi — dan pemain membacanya sebagai
+   "SG tidak ada di event". Dilaporkan 9 Agu 2026. */
+const EV_UTAMA={sg:1,kvk:1,castleBattle:1,kingsCastle:1};
 const EV_EMOJI={burst:'\u25c8',hog:'\u25c9',kvk:'\u2620',sg:'\u25a3',armament:'\u25c6'};
 
 /* Event yang WIKI SENDIRI nyatakan tak bisa diprediksi. Tampil TANPA angka \u2014

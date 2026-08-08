@@ -509,11 +509,19 @@ async function fillSoonEvents(age){
   /* Daftar rotasi global panjang (≈18 baris). Dulu dirender utuh selebar kartu →
      satu blok 1.100px yang menelan sepertiga halaman. Sekarang: 6 baris dulu,
      sisanya di balik "Lihat semua", dan di layar lebar dibagi 2 kolom. */
+  /* Batasnya dihitung dari baris yang BENAR-BENAR tampil, dan event utama (EV_UTAMA)
+     tak pernah ikut disembunyikan. Dulu pemotongannya buta pada indeks: karena daftar
+     ini urut menurut tanggal, event dengan jadwal terjauh selalu jatuh ke bagian
+     tersembunyi — dan itu justru Strongest Governor. */
   const GLOB_CAP=6;
-  const globArr=upcoming.filter(x=>x.source==='live').map((x,i)=>{
+  let _tampil=0;
+  const globArr=upcoming.filter(x=>x.source==='live').map(x=>{
+    const utama=!!(typeof EV_UTAMA!=='undefined'&&EV_UTAMA[x.id]);
+    const xtra=!utama&&_tampil>=GLOB_CAP;
+    if(!xtra) _tampil++;
     let r = x.locked ? ('🔒 buka ~H'+(((x.gate&&x.gate.minDay)!=null)?x.gate.minDay:'?'))
       : ('~'+esc(dateTxt(x.startUTC))+' <span class="dim">global</span>');
-    return '<div'+clk(x.id,x.title)+(i>=GLOB_CAP?' data-xtra="1"':'')+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span><b class="dim tabular" style="white-space:nowrap">'+r+'</b> <span class="dim">›</span></div>';
+    return '<div'+clk(x.id,x.title)+(xtra?' data-xtra="1"':'')+'><span style="flex:1;min-width:0">'+esc(x.title)+'</span><b class="dim tabular" style="white-space:nowrap">'+r+'</b> <span class="dim">›</span></div>';
   });
   const globRows=globArr.join('');
   const globMore=globArr.length>GLOB_CAP

@@ -4,6 +4,16 @@
 
 /* ============ EVENT ============ */
 let _calOffset=0;
+/* Tanggal UTC untuk hari-server ke-d (1-based: buka = H1). Satu-satunya tempat
+   konversi ini boleh ditulis. calDetail dulu memakai `start + d*86400000` sendiri —
+   geser satu hari — sehingga mengetuk tanggal 9 menampilkan event mingguan tanggal 10,
+   sementara grid kalendernya memakai (d-1). Dua bagian app, dua tanggal berbeda. */
+function calDateOf(start,d){ return new Date(start.getTime()+(d-1)*86400000); }
+/* Satu sel kalender cuma memuat 2 chip; sisanya jadi "+N" tanpa nama. Milestone (⚑)
+   sering berkerumun 2-3 di satu hari, dan dulu merekalah yang memakan kedua slot —
+   di 4 Agu selnya berbunyi "⚑⚑+1", dengan KvK hari-1 sebagai "+1" itu. Event nyata
+   duluan; milestone tetap terbaca lengkap saat tanggalnya diketuk. */
+function calChipOrder(evs){ return (evs||[]).slice().sort((a,b)=>(a.milestone?1:0)-(b.milestone?1:0)); }
 /* duration-aware: an event covers ALL its days (di = 0-based day inside the event),
    not just the start date — so "HoG D4" in the header matches the calendar. */
 function calEventsOnDay(start,d){
@@ -23,9 +33,46 @@ function calEventsOnDay(start,d){
       len=hogLen(_no); }
     if(d-ds<len) out.push({c:col,n:(t&&t.name)||type,type,di:d-ds,len,tag}); };
   rec('hog',6,14,'var(--accent)','HoG');
-  rec('kvk',70,28,'var(--loss)','KvK');
+  calKvkOnDay(start,d,out);
   calSgOnDay(start,d,out);
+  calCastleOnDay(start,d,out);
   return out;
+}
+/* KvK di kalender. Dulu `rec('kvk',70,28,…)` — model per-kingdom yang memberi 4 Agu
+   untuk Kingdom 2114, sementara feed (countdown resmi server) dan daftar event
+   sama-sama bilang 10 Agu. Meleset 6 hari untuk event terbesar bulan itu.
+
+   Gelombang KvK bersifat GLOBAL: semua kingdom bertanding di jendela yang sama,
+   berulang 28 hari; umur kingdom cuma GERBANG. Jadi jangkarnya tanggal global dari
+   feed, dan kalender melangkah ±28 dari situ — bukan menghitung ulang dari H70. */
+function calKvkOnDay(start,d,out){
+  if(!start||!isFinite(d)||d<1) return;
+  const tpl=(typeof EVENT_TEMPLATES!=='undefined'&&EVENT_TEMPLATES.kvk)||{};
+  const len=tpl.len||5, gate=tpl.minDay||70;
+  const tandai=di=>out.push({c:'var(--loss)',n:tpl.name||'KvK',type:'kvk',di:di,len:len,tag:'KvK'});
+  /* 1) ralat manual pemain menjangkarkan ulang gelombangnya */
+  const u=(store.get('events',[])||[]).find(x=>x&&x.type==='kvk'&&x.date);
+  let jangkar=null;
+  if(u){ const t0=Date.parse(u.date+'T00:00:00Z'); if(!isNaN(t0)) jangkar=daysBetween(start,new Date(t0))+1; }
+  /* 2) jangkar GLOBAL dari feed */
+  if(jangkar==null&&typeof kvkGlobalStartISO==='function'){
+    try{ const c=store.get('liveEvents',null); const g=kvkGlobalStartISO(c&&c.d);
+      if(g) jangkar=daysBetween(start,new Date(g+'T00:00:00Z'))+1; }catch(e){}
+  }
+  /* 3) cadangan: gerbang umur, siklus 28 hari — dipakai HANYA kalau feed tak ada */
+  if(jangkar==null) jangkar=gate;
+  const mulai=jangkar+Math.floor((d-jangkar)/28)*28;
+  if(mulai<gate||d-mulai>=len) return;
+  tandai(d-mulai);
+}
+/* Castle Battle: selalu SABTU, tiap 14 hari (castleFirstDay = hari-54 mundur ke Sabtu
+   terdekat). App sudah menghitungnya persis untuk kartu Castle, tapi kalender —
+   tempat orang mencari "tanggal berapa" — tak pernah menampilkannya sama sekali. */
+function calCastleOnDay(start,d,out){
+  if(!start||!isFinite(d)||d<1||typeof castleFirstDay!=='function') return;
+  const f=castleFirstDay(start.toISOString().slice(0,10));
+  if(d<f||(d-f)%14!==0) return;
+  out.push({c:'var(--cyan)',n:'Castle Battle',type:'castle',di:0,len:1,tag:'CB'});
 }
 /* Strongest Governor di kalender. BUKAN siklus per-kingdom: SG lintas-kingdom, jadi
    tanggalnya tak boleh diturunkan dari umur server. Baris ini dulu berbunyi
@@ -94,13 +141,14 @@ function renderCalendar(host){
     const wk=(typeof wkEventsOnDate==='function')?wkEventsOnDate(cd):[];
     const isToday=cd.getTime()===today.getTime();
     /* labeled chips: event tag + day-in-event (HoG\u00b2, KvK\u2075 \u2026) instead of anonymous dots */
-    const tags=evs.slice(0,2).map(x=>`<span class="ctag" style="color:${x.c};border-color:${x.c}">${x.tag}${x.len>1&&!x.milestone?'<small>'+(x.di+1)+'</small>':''}</span>`).join('')
-      +(evs.length>2?`<span class="ctag">+${evs.length-2}</span>`:'');
+    const evsUrut=calChipOrder(evs);
+    const tags=evsUrut.slice(0,2).map(x=>`<span class="ctag" style="color:${x.c};border-color:${x.c}">${x.tag}${x.len>1&&!x.milestone?'<small>'+(x.di+1)+'</small>':''}</span>`).join('')
+      +(evsUrut.length>2?`<span class="ctag">+${evsUrut.length-2}</span>`:'');
     cells+=`<div class="calcell${evs.length?' has':''}${wk.length?' wk':''}${isToday?' today':''}" data-d="${d}"><div class="dn num">${day}</div><div class="sd">${d>=1?'H'+d:''}</div><div class="cdots">${tags}</div></div>`;
   }
   host.innerHTML=`<div class="calhead"><button class="calnav" id="cprev">\u2039</button><span class="mon">${ID_MON_FULL[mo]} ${y}</span><button class="calnav" id="cnext">\u203a</button></div>
     <div class="calgrid">${dow.map(x=>`<div class="caldow">${x}</div>`).join('')}${cells}</div>
-    <div class="callegend"><b style="color:var(--profit)">B</b> Burst of Life \u00b7 <b style="color:var(--cyan)">\u2691</b> Milestone \u00b7 <b style="color:var(--accent)">HoG</b> Hall of Governors \u00b7 <b style="color:var(--loss)">KvK</b> Kingdom of Power \u00b7 <b style="color:var(--pink)">SG</b> Strongest Governor. Angka kecil = hari ke-berapa event (HoG<small>2</small> = hari ke-2). Garis biru bawah = ada event mingguan kingdom hari itu. <b>H51</b> = umur server. Ketuk tanggal untuk detail.</div>
+    <div class="callegend"><b style="color:var(--profit)">B</b> Burst of Life \u00b7 <b style="color:var(--cyan)">\u2691</b> Milestone \u00b7 <b style="color:var(--accent)">HoG</b> Hall of Governors \u00b7 <b style="color:var(--loss)">KvK</b> Kingdom of Power \u00b7 <b style="color:var(--pink)">SG</b> Strongest Governor \u00b7 <b style="color:var(--cyan)">CB</b> Castle Battle (Sabtu, tiap 14 hari). Angka kecil = hari ke-berapa event (HoG<small>2</small> = hari ke-2). Garis biru bawah = ada event mingguan kingdom hari itu. <b>H51</b> = umur server. Ketuk tanggal untuk detail.</div>
     <div id="caldetail" style="margin-top:12px"></div>`;
   $('#cprev',host).onclick=()=>{_calOffset--;renderCalendar(host);};
   $('#cnext',host).onclick=()=>{_calOffset++;renderCalendar(host);};
@@ -121,7 +169,7 @@ function calDetail(host,d){
   }); } else lines.push('<div class="muted small" style="margin-top:6px">Tidak ada event pertumbuhan terjadwal \u2014 fokus rutin & pondasi.</div>');
   /* weekly kingdom events on this date (projected from the live 4-week cycle) */
   if(typeof wkEventsOnDate==='function'){
-    const cd=new Date(start.getTime()+d*86400000);
+    const cd=calDateOf(start,d);
     const wk=wkEventsOnDate(cd);
     if(wk.length){
       lines.push('<div class="lbl" style="margin:10px 0 4px">Event mingguan kingdom hari ini</div>');

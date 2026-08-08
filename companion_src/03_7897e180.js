@@ -896,7 +896,10 @@ function evUpcoming(){
       const len=(pp.type==='hog'&&typeof hogLen==='function')?hogLen(hogNoForDay(pp.day)):(tpl.len||1);
       add(_evItem({id:pp.type,title:tpl.name||pp.type,type:'growth',startUTC:t,endUTC:t+len*86400000-1,
         active:(pp.day<=age&&age<pp.day+len),source:'age',
-        conf:(pp.type==='hog')?'ingame':(pp.conf==='tinggi'?'wiki':'inferred'),
+        /* `live` harus lolos apa adanya: tanggal KvK datang dari countdown SERVER
+           (kvkGlobalStartISO), dan melabelinya "perkiraan hitungan app" membuat data
+           paling kuat yang app punya terbaca sebagai tebakan. */
+        conf:(pp.conf==='live')?'live':((pp.type==='hog')?'ingame':(pp.conf==='tinggi'?'wiki':'inferred')),
         gate:tpl.minDay?{minDay:tpl.minDay}:null,
         locked:_evLocked(tpl.minDay==null?null:tpl.minDay,age,pp.day)}));
     });
